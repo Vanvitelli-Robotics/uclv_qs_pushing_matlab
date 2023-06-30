@@ -15,7 +15,7 @@ function x_dot = pusher_slider_model(u_n, u_t, x, slider)
     c_ellipse = slider.c_ellipse;
     
     % 2D Rotation matrix about z-axis
-    R_z = rotz(rad2deg(theta_s)); R_z = R_z(1:2,1:2);
+    R_z = helper.my_rotz(theta_s); R_z = R_z(1:2,1:2);
     
     
     % Model matrices

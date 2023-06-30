@@ -23,5 +23,11 @@ classdef helper
         n_f_integrand = @(p1, p2) (mu_sg * m * g / area) * sqrt([p1; p2; 0]' * [p1; p2; 0]);
         tau_max = helper.DoubleGaussQuad(n_f_integrand, -xwidth / 2, xwidth / 2, -ywidth / 2, ywidth / 2);
     end 
+
+    function R = my_rotz(theta)
+        % Rotation matrix about z-axis (theta RAD)
+        R = [cos(theta) -sin(theta) 0; sin(theta) cos(theta) 0; 0 0 1];
+    end
    end
+
 end

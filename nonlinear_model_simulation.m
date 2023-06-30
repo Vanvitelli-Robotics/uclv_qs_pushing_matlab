@@ -17,7 +17,7 @@ slider.tau_max = helper.tau_max_func(slider.mu_sg, slider.m, g, slider.area, sli
 slider.c_ellipse = slider.tau_max/slider.f_max;
 
 % Initial condition
-x0 = [0 0 deg2rad(0) -slider.xwidth/2 0]';
+x0 = [0 0 deg2rad(90) -slider.xwidth/2 0]';
 
 % Simulation
 time_sim = 10;
