@@ -10,6 +10,9 @@ function my_animate(x, y, theta, rx, ry)
     hold on
 
     % Pusher frame
+%     p0_p = helper.my_rotz(theta(1))*[rx(1) ry(1) 0]';
+%     quat0_p = quaternion(helper.my_rotz(0),'rotmat','frame');
+%     pusher_p = poseplot(quat0_p,p0_p, MeshFileName="cad model pusher\cad_model_pusher_1.stl",ScaleFactor=0.001);
     radius_pusher = 0.005;
     pusher_position = [x(1) y(1) 0]' + helper.my_rotz(theta(1))*[rx(1) ry(1) 0]';
     circle([pusher_position(1) pusher_position(2)],radius_pusher,'red','LineWidth',4);
