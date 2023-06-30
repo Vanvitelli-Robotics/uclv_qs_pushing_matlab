@@ -1,12 +1,22 @@
 
-function my_animate(x, y, theta)
+function my_animate(x, y, theta, rx, ry)
 % Function to animate the trajectory tracking of the pusher slider system
 % Input: 2D position [x,y,theta]
-    p0 = [x(1) y(1) 0];
-    quat0 = quaternion(rotz(theta(1)),'rotmat','frame');
-    patch = poseplot(quat0,p0);
-    patch.ScaleFactor = 0.1;
-    ax1 = gca; ax1.View = [0.7528 90];
+    
+    % Slider frame
+    p0_s = [x(1) y(1) 0];
+    quat0_s = quaternion(rotz(theta(1)),'rotmat','frame');
+    slider_p = poseplot(quat0_s,p0_s, ScaleFactor=0.1,PatchFaceColor="yellow"); %MeshFileName="cad model santal\cad_santal_centered.stl"
+    hold on
+
+    % Pusher frame
+    radius_pusher = 0.005;
+    pusher_position = [x(1) y(1) 0]' + rotz(theta(1))*[rx(1) ry(1) 0]';
+    circle([pusher_position(1) pusher_position(2)],radius_pusher,'red','LineWidth',4);
+    
+    hold off
+
+    ax1 = gca; ax1.View = [-0.1303  -90];
     xlim(ax1,[-0.1 0.5])
     ylim(ax1,[-0.3 0.3])
     xlabel("x [m]")
@@ -14,9 +24,13 @@ function my_animate(x, y, theta)
     zlabel("z [m]")
 
     for i = 2:1:length(x)
-        position = [x(i) y(i) 0];
-        quat = quaternion(rotz(rad2deg(theta(i))),'rotmat','frame');
-        set(patch,Orientation=quat,Position=position);
+        position_s = rotz(theta(i))*[x(i) y(i) 0]';
+        quat_s = quaternion([0 0 theta(i)],'rotvec');
+        set(slider_p,Orientation=quat_s,Position=position_s);
+        hold on
+        pusher_position = [x(i) y(i) 0]'+ rotz(theta(i))*[rx(i) ry(i) 0]';
+        circle([pusher_position(1) pusher_position(2)],radius_pusher,'red','LineWidth',4);
+
         pause(0.1)
         drawnow
     end

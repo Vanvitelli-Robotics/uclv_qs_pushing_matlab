@@ -17,13 +17,15 @@ slider.tau_max = helper.tau_max_func(slider.mu_sg, slider.m, g, slider.area, sli
 slider.c_ellipse = slider.tau_max/slider.f_max;
 
 % Initial condition
-x0 = [0 0 0 0 0]';
-
+x0 = [0 0 deg2rad(30) 0 0]';
 
 % Simulation
 time_sim = 10;
 sim('simulation_model',time_sim);
 x_s = out.signals.values(:,1);
-y_s = out.signals.values(:,1);
-% my_animate()
+y_s = out.signals.values(:,2);
+theta_s = out.signals.values(:,3);
+S_p_x = out.signals.values(:,4); 
+S_p_y = out.signals.values(:,5);
+my_animate(x_s,y_s,theta_s,S_p_x,S_p_y)
 
