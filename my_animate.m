@@ -4,9 +4,10 @@ function my_animate(x, y, theta, rx, ry)
 % Input: 2D position [x,y,theta]
 
     % Slider frame
+%     theta = -theta;
     p0_s = [x(1) y(1) 0];
     quat0_s = quaternion(helper.my_rotz(theta(1)),'rotmat','frame');
-    slider_p = poseplot(quat0_s,p0_s, MeshFileName="cad_models/cuboide_santal.stl", ScaleFactor=0.001,PatchFaceColor="yellow"); 
+    slider_p = poseplot(quat0_s,p0_s, MeshFileName="cad_models/cuboide_santal.stl", ScaleFactor=0.001);%,PatchFaceColor="yellow"); 
     hold on
 
     % Pusher frame

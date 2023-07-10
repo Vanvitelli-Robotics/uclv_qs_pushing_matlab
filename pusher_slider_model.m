@@ -19,7 +19,7 @@ function x_dot = pusher_slider_model(u_n, u_t, x, slider)
    
     % Model matrices
     factor_matrix = 1/(c_ellipse^2+S_p_x^2+S_p_y^2);
-    Q = factor_matrix*[c_ellipse^2+S_p_x^2 S_p_x*S_p_y; S_p_x*S_p_y c_ellipse^2+S_p_y^2];
+    Q = [c_ellipse^2+S_p_x^2 S_p_x*S_p_y; S_p_x*S_p_y c_ellipse^2+S_p_y^2];
     
     % Motion Cone check
     [mode, gamma_l, gamma_r] = motion_cone(u_n,u_t,x,slider);
@@ -32,26 +32,28 @@ function x_dot = pusher_slider_model(u_n, u_t, x, slider)
         case 'ST'                   
             P = eye(2);
             b = [-S_p_y S_p_x]';
-            d = [0 0]';
-            c = zeros(2,1);
+%             d = [0 0]';
+%             c = zeros(2,1);
             disp('sticking mode')
         case 'SL'                   % the pusher slides on the object surface
             P = [v_l zeros(2,1)];
             b = [-S_p_y+gamma_l*S_p_x 0]';
-            d = zeros(2,1);
-            c = [-gamma_l 0]';
+%             d = zeros(2,1);
+%             c = [-gamma_l 0]';
             disp('sliding left mode')
         case 'SR'                   % the pusher slides on the object surface
             P = [v_r zeros(2,1)];
             b = [-S_p_y+gamma_r*S_p_x 0]';
-            d = zeros(2,1);
-            c = [-gamma_r 0]';
+%             d = zeros(2,1);
+%             c = [-gamma_r 0]';
             disp('sliding right mode')
         otherwise                   % the pusher is not in contact with the slider
-            disp('no contact')      
+            disp('no contact')
+            x_dot = [0 0 0 u_n u_t]';
+            return;
     end
-    
-    F = [R_z*Q*P; factor_matrix*b'; d'; c'];
+    c = eye(2)-factor_matrix*(Q*P+[-S_p_y; S_p_x]*b');
+    F = [R_z*factor_matrix*Q*P; factor_matrix*b'; c];
     x_dot = F*[u_n u_t]';
 
 end
