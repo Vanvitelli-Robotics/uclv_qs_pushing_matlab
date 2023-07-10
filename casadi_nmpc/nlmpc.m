@@ -26,7 +26,7 @@ x_dot_ST = obj.eval_model('ST',x,u);
 x_dot_SR = obj.eval_model('SR',x,u);
 x_dot_SL = obj.eval_model('SL',x,u);
 
-f = Function('f',{x,u},{(u_fract<obj.gamma_r)*x_dot_ST*(u_fract<obj.gamma_l)...
+f = Function('f',{x,u},{(u_fract<=obj.gamma_l)*x_dot_ST*(u_fract>=obj.gamma_r)...
     + (u_fract>obj.gamma_l)*x_dot_SL...
     + (u_fract<obj.gamma_r)*x_dot_SR},{'x','u'},{'x_dot'});
 
@@ -41,7 +41,7 @@ intg_options.number_of_finite_elements = 4;
 dae = struct;
 dae.x = x; % state
 dae.p = u;
-dae.ode = f_ST(x,u);
+dae.ode = f(x,u);
 
 intg = integrator('intg','rk',dae,intg_options);
 res = intg('x0',x,'p',u);
@@ -59,12 +59,12 @@ num_controls = 2; % number of control variables
 opti = casadi.Opti();
 x = opti.variable(num_states, Hp+1); % state variables
 u = opti.variable(num_controls, Hu);
-p = opti.parameter(2,1); % initial condition
+p = opti.parameter(5,1); % initial condition
 
 opti.minimize(sumsqr(x)+sumsqr(u));
 
 for k=1:Hp
-    opti.subject_to(x(:,k+1)==f_cond(mode,x(:,k),u(:,k)));
+    opti.subject_to(x(:,k+1)==F(x(:,k),u(:,k)));
 end
 
 
@@ -78,13 +78,13 @@ opti.solver('sqpmethod',struct('qpsol','qrqp'));
 % opti.solver('ipopt');
 % sol = opti.solve();
 
-opti.set_value(p,[0;1]);
+opti.set_value(p,x0);
 sol = opti.solve();
-
+%%
 % PLOT
 figure
 hold on
-tgrid = linspace(0,1/2,Hp+1);
+tgrid = linspace(0,0.05,Hp+1);
 plot(tgrid,sol.value(x));
 stairs(tgrid, [sol.value(u) nan], '-.');
 xlabel('t [s]');
@@ -112,7 +112,6 @@ M = opti.to_function('M',{p},{u(:,1)},{'p'},{'u_opt'});
 X_log = [];
 U_log = [];
 
-x0 = [0;1];
 x = x0;
 for i=1:4*Hp
   u = full(M(x));
@@ -121,6 +120,6 @@ for i=1:4*Hp
   X_log(:,i) = x;
 
   % simulate system
-  x = full(F(x,u)) + [0;rand*0.02];
+  x = full(F(x,u)) + [0;rand*0.02;rand*0.02;rand*0.02;rand*0.02];
 end
 
