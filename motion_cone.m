@@ -11,18 +11,14 @@ function [mode, gamma_l, gamma_r] = motion_cone(u_n,u_t,x,slider)
     c_ellipse = slider.c_ellipse;
     
     % Calculating edges of motion cone
-%     gamma_l = (mu_sp*c_ellipse^2+S_p_x*S_p_y-mu_sp*S_p_x^2)/(c_ellipse^2-S_p_y^2+mu_sp*S_p_x*S_p_y);
-%     gamma_r = (-mu_sp*c_ellipse^2+S_p_x*S_p_y+mu_sp*S_p_x^2)/(c_ellipse^2-S_p_y^2-mu_sp*S_p_x*S_p_y);
-
     gamma_l = (mu_sp*c_ellipse^2-S_p_x*S_p_y+mu_sp*S_p_x^2)/(c_ellipse^2+S_p_y^2-mu_sp*S_p_x*S_p_y);
     gamma_r = (-mu_sp*c_ellipse^2-S_p_x*S_p_y-mu_sp*S_p_x^2)/(c_ellipse^2+S_p_y^2+mu_sp*S_p_x*S_p_y);
-    
-    
+   
     % Evaluating u_t/u_n
     u_fract = u_t/u_n;
     
     % Check boundary of the motion cone
-    if abs(S_p_y) > slider.ywidth/2 || (S_p_x ~= -slider.xwidth/2)
+    if abs(S_p_y) > slider.ywidth/2 %|| (S_p_x ~= -slider.xwidth/2)
         mode="NC";
         disp("Not in contact!");
     else

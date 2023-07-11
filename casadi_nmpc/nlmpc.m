@@ -1,11 +1,11 @@
 close all
 clc
-addpath("/home/workstation/casadi-3.6.3-linux64-matlab2018b");
-
-
+% addpath("/home/workstation/casadi-3.6.3-linux64-matlab2018b");
+addpath("C:\Users\saraf\casadi-3.6.3-windows64-matlab2018b");
 
 %%
 import casadi.*
+
 % State variables
 x_S = MX.sym('x_S');    % x-coordinate of the slider w.r.t. the world frame
 y_S = MX.sym('y_S');    % y-coordinate of the slider w.r.t. the world frame
@@ -13,13 +13,13 @@ theta_S = MX.sym('theta_S');    % rotation angle of the slider frame w.r.t. the 
 S_p_x = MX.sym('S_p_x');    % x-coordinate of the pusher position w.r.t. the slider frame S
 S_p_y = MX.sym('S_p_y');    % y-coordinate of the pusher position w.r.t. the slider frame S
 x = [x_S y_S theta_S S_p_x S_p_y]';
-mode = MX.sym('mode');
+
 % Control variables
 u_n = MX.sym('u_n');
 u_t = MX.sym('u_t');
 u = [u_n u_t]';
 u_fract = u_t/u_n;
-% f = Function('f',{x,u},{model},{'x','u'},{'model'});
+
 obj = PusherSliderModel('obj', slider);
 
 x_dot_ST = obj.eval_model('ST',x,u);
@@ -32,9 +32,16 @@ f = Function('f',{x,u},{(u_fract<=obj.gamma_l)*x_dot_ST*(u_fract>=obj.gamma_r)..
 
 
 %%
+%MPC Parameters
+Hp = 20; % prediction horizon
+Hu = Hp; % control horizon
+num_states = 5; % number of state variables
+num_controls = 2; % number of control variables
+T = 0.05; %sample time
+
 % Integration of function
 intg_options = struct;
-intg_option.tf = 0.05;
+intg_option.tf = Hp*T;
 intg_option.simplify = true;
 intg_options.number_of_finite_elements = 4;
 
@@ -49,12 +56,6 @@ x_new = res.xf;
 
 F = Function('F',{x,u},{x_new},{'x','u'},{'x_next'});
 %%
-%MPC Parameters
-Hp = 20; % prediction horizon
-Hu = Hp; % control horizon
-num_states = 5; % number of state variables
-num_controls = 2; % number of control variables
-
 % Optimal control problem
 opti = casadi.Opti();
 x = opti.variable(num_states, Hp+1); % state variables

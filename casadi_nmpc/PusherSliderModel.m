@@ -22,8 +22,6 @@ classdef PusherSliderModel < casadi.Callback
             construct(self, name);
         end
         
-        
-        
         function x_dot = eval_model(self,mode,x,u)
             % Pusher-Slider non linear model x_dot = f(x,u)
             % Input: x = [x_s, y_s, theta_s (rad), r_y],
