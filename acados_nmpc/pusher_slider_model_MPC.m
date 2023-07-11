@@ -81,24 +81,23 @@ F_sr = [R_z*factor_matrix*Q*P_sr; factor_matrix*b_sr'; c_sr];
 x_dot_sr = F_sr*[u_n u_t]';
 
 
-f = Function('f',{sym_x,sym_u},{(u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
+% f = Function('f',{sym_x,sym_u},{(u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
+%     + (u_fract>gamma_l)*x_dot_sl...
+%     + (u_fract<gamma_r)*x_dot_sr} ...
+%     );
+
+% explicit dynamic function
+expr_f_expl = vertcat((u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
     + (u_fract>gamma_l)*x_dot_sl...
-    + (u_fract<gamma_r)*x_dot_sr} ...
-    );
+    + (u_fract<gamma_r)*x_dot_sr);
 
-
-expr_f_expl = vertcat(v, ...
-                      dtheta, ...
-                      (- l*m*sin_theta*dtheta.^2 + F + g*m*cos_theta*sin_theta)/denominator, ...
-                      (- l*m*cos_theta*sin_theta*dtheta.^2 + F*cos_theta + g*m*sin_theta + M*g*sin_theta)/(l*denominator));
+% implicit dynamic function
 expr_f_impl = expr_f_expl - sym_xdot;
 
-%% constraints
-expr_h = sym_u;
 
 %% cost
-W_x = diag([1e3, 1e3, 1e-2, 1e-2]);
-W_u = 1e-2;
+W_x = diag([1, 1, 1, 1, 1]);
+W_u = diag([1 1]);
 expr_ext_cost_e = sym_x'* W_x * sym_x;
 expr_ext_cost = expr_ext_cost_e + sym_u' * W_u * sym_u;
 % nonlinear least sqares
@@ -107,8 +106,8 @@ W = blkdiag(W_x, W_u);
 model.cost_expr_y_e = sym_x;
 model.W_e = W_x;
 
-
-
+%% constraints
+expr_h = vertcat(S_p_y,sym_u);
 %% populate structure
 model.nx = nx;
 model.nu = nu;
@@ -123,5 +122,6 @@ model.expr_ext_cost_e = expr_ext_cost_e;
 
 model.cost_expr_y = cost_expr_y;
 model.W = W;
+model.slider = slider;
 
 end
