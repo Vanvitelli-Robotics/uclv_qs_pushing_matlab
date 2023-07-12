@@ -22,7 +22,7 @@ sample_time = 0.050; %controller sample time [s]
 T = N*sample_time;   % time horizon length [s]
 
 % initial condition
-x0 = [0; 0; deg2rad(0); -model.slider.xwidth/2; 0.02];
+x0 = [0 0 deg2rad(0) -model.slider.xwidth/2 model.slider.ywidth/2*0.5]';
 
 nlp_solver = 'sqp';                      % sqp, sqp_rti
 qp_solver = 'partial_condensing_hpipm';  % full_condensing_hpipm, partial_condensing_hpipm, full_condensing_qpoases, full_condensing_daqp
@@ -104,7 +104,9 @@ u_traj_init = zeros(nu, N);
 ocp.set('constr_x0', x0);
 
 % reference
-ocp.set('cost_y_ref_e', [0.05 0.05 rad2deg(0) -model.slider.xwidth/2 0]);
+y_ref = [0.05 0 deg2rad(0) -model.slider.xwidth/2 0]';
+%ocp.set('cost_y_ref_e', [0.05 0.05 rad2deg(0) -model.slider.xwidth/2 0]);
+ocp.set('cost_y_ref_e', y_ref);
 
 
 % set trajectory initialization
@@ -114,7 +116,7 @@ ocp.set('init_pi', ones(nx, N))
 
 % change values for specific shooting node using:
 %   ocp.set('field', value, optional: stage_index)
-ocp.set('constr_lbx', x0, 0)
+%ocp.set('constr_lbx', x0, 0)
 
 % solve
 tic

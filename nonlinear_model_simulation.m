@@ -12,9 +12,9 @@ slider.ywidth = 0.0625;                               % width of the slider alon
 slider.xwidth = 0.082;                                % width of the slider along y-direction [m]
 slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
 slider.m = 0.2875;                                    % slider mass [kg]
-% slider.f_max = slider.mu_sg*slider.m*g;               % maximum force with ellipsoidal approximation of LS [N]
-% slider.tau_max = helper.tau_max_func(slider.mu_sg, slider.m, g, slider.area, slider.xwidth, slider.ywidth); % maximum torque with ellipsoidal approximation of LS [Nm]
-% slider.c_ellipse = slider.tau_max/slider.f_max;
+slider.f_max = slider.mu_sg*slider.m*g;               % maximum force with ellipsoidal approximation of LS [N]
+slider.tau_max = helper.tau_max_func(slider.mu_sg, slider.m, g, slider.area, slider.xwidth, slider.ywidth); % maximum torque with ellipsoidal approximation of LS [Nm]
+slider.c_ellipse = slider.tau_max/slider.f_max;
 
 % Initial condition
 x0 = [0 0 deg2rad(0) -slider.xwidth/2 -0.02]';

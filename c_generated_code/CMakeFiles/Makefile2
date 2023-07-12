@@ -133,8 +133,8 @@ CMakeFiles/ocp_Plant_real.dir/clean:
 # Target rules for target CMakeFiles/acados_ocp_solver_Plant_real.dir
 
 # All Build rule for target.
-CMakeFiles/acados_ocp_solver_Plant_real.dir/all: CMakeFiles/ocp_Plant_real.dir/all
 CMakeFiles/acados_ocp_solver_Plant_real.dir/all: CMakeFiles/model_Plant_real.dir/all
+CMakeFiles/acados_ocp_solver_Plant_real.dir/all: CMakeFiles/ocp_Plant_real.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\acados_ocp_solver_Plant_real.dir\build.make CMakeFiles/acados_ocp_solver_Plant_real.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\acados_ocp_solver_Plant_real.dir\build.make CMakeFiles/acados_ocp_solver_Plant_real.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\Marco\Documents\GitHub\pusher_slider_matlab\c_generated_code\CMakeFiles --progress-num=1 "Built target acados_ocp_solver_Plant_real"

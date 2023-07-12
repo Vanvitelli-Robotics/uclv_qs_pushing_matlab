@@ -2,7 +2,7 @@ classdef NMPC_controller < casadi.Callback
     
     properties
         % Weights
-        W_x = diag([10, 10, 10, 10, 10]);
+        W_x = diag([1, 1, 1, 1, 1]);
         W_u = diag([1 1]);
 
         % Costraints
@@ -11,10 +11,13 @@ classdef NMPC_controller < casadi.Callback
 
         % Solver parameters
         solver_params = struct;
+        ocp_model;
+        ocp_opts;
         ocp_solver;
        
         % Symbolic plant model
         sym_model = struct;
+        initial_condition;  
     
         % Controller params
         N = 20;                 %prediction horizon
@@ -45,7 +48,7 @@ classdef NMPC_controller < casadi.Callback
     methods
       
         % Constructor
-        function self = NMPC_controller(name,plant)
+        function self = NMPC_controller(name,plant,initial_condition)
             self@casadi.Callback();
             % Acados initialitation
             %self.init();
@@ -58,6 +61,8 @@ classdef NMPC_controller < casadi.Callback
             % Save the plant model
             self.sym_model = plant.sym_model;
             self.sym_model.name = plant.name;
+            self.initial_condition = initial_condition;
+
 
             % Constraints
             self.h_constr_ub = [plant.slider_params.ywidth/2 0.05 0.05];
@@ -112,8 +117,9 @@ classdef NMPC_controller < casadi.Callback
             % ocp_model.set('constr_Jbu',eye(nu));
             % ocp_model.set('constr_lbu',U_min);
             % ocp_model.set('constr_ubu',U_max);
-            
-            %ocp_model.set('constr_x0', x0);
+
+            ocp_model.set('constr_x0', self.initial_condition);
+            self.ocp_model = ocp_model;
             % ... see ocp_model.model_struct to see what other fields can be set
        
         end
@@ -130,6 +136,7 @@ classdef NMPC_controller < casadi.Callback
             %ocp_opts.set('codgen_model','false');
             ocp_opts.set('compile_interface','false');
             ocp_opts.set('output_dir',fullfile(pwd,'build'));
+            self.ocp_opts = ocp_opts;
             % ... see ocp_opts.opts_struct to see what other fields can be set  
         end 
         function create_ocp_solver(self)
@@ -138,6 +145,7 @@ classdef NMPC_controller < casadi.Callback
         end
         function u = solve(self,x0,y_ref)
             % update initial state
+            tic
             self.ocp_solver.set('constr_x0', x0);
             % reference
             self.ocp_solver.set('cost_y_ref_e',y_ref); % desired state at the end of the prediction horizon
@@ -150,7 +158,7 @@ classdef NMPC_controller < casadi.Callback
             end 
             self.ocp_solver.set('init_x', self.xtraj);
             self.ocp_solver.set('init_u', self.utraj);
-            % ocp.set('init_pi', ones(nx, N)) ?
+            self.ocp_solver.set('init_pi', ones(self.sym_model.nx, self.N)); 
 
             %self.ocp_solver.set('constr_lbx', x0, 0) 
 
@@ -163,6 +171,7 @@ classdef NMPC_controller < casadi.Callback
 %             status = ocp.get('status'); % 0 - success
 %             ocp.print('stat')
             u = self.utraj(:,1);
+            toc
         end
              
 

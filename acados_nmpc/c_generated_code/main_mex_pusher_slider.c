@@ -92,27 +92,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     void *nlp_opts = pusher_slider_acados_get_nlp_opts();
 
     // initial condition
-    int idxbx0[5];
+    int idxbx0[0];
     
-    idxbx0[0] = 0;
-    idxbx0[1] = 1;
-    idxbx0[2] = 2;
-    idxbx0[3] = 3;
-    idxbx0[4] = 4;
 
-    double lbx0[5];
-    double ubx0[5];
+    double lbx0[0];
+    double ubx0[0];
     
-    lbx0[0] = 0;
-    ubx0[0] = 0;
-    lbx0[1] = 0;
-    ubx0[1] = 0;
-    lbx0[2] = 0;
-    ubx0[2] = 0;
-    lbx0[3] = -0.041;
-    ubx0[3] = -0.041;
-    lbx0[4] = 0.02;
-    ubx0[4] = 0.02;
 
     ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "idxbx", idxbx0);
     ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", lbx0);

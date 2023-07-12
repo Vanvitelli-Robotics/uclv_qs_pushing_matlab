@@ -20,21 +20,21 @@ ACADOS_INCLUDE_PATH:PATH=C:/Users/Marco/Documents/GitHub/acados/examples/acados_
 //Define the path which contains the lib directory for acados.
 ACADOS_LIB_PATH:PATH=C:/Users/Marco/Documents/GitHub/acados/examples/acados_matlab_octave/../../lib
 
-//Should the OCP solver library acados_ocp_solver_pusher_slider
-// be build?
+//Should the OCP solver library acados_ocp_solver_Plant_real be
+// build?
 BUILD_ACADOS_OCP_SOLVER_LIB:BOOL=ON
 
-//Should the simulation solver library acados_sim_solver_pusher_slider
+//Should the simulation solver library acados_sim_solver_Plant_real
 // be build?
 BUILD_ACADOS_SIM_SOLVER_LIB:BOOL=OFF
 
-//Should the solver library acados_solver_pusher_slider be build?
+//Should the solver library acados_solver_Plant_real be build?
 BUILD_ACADOS_SOLVER_LIB:BOOL=OFF
 
-//Should the example main_pusher_slider be build?
+//Should the example main_Plant_real be build?
 BUILD_EXAMPLE:BOOL=OFF
 
-//Should the simulation example main_sim_pusher_slider be build?
+//Should the simulation example main_sim_Plant_real be build?
 BUILD_SIM_EXAMPLE:BOOL=OFF
 
 //Path to a program.
@@ -177,7 +177,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=pusher_slider
+CMAKE_PROJECT_NAME:STATIC=Plant_real
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=C:/Strawberry/c/bin/ranlib.exe
@@ -261,6 +261,15 @@ CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 // during the make.  This is useful for debugging only. With Visual
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
+
+//Value Computed by CMake
+Plant_real_BINARY_DIR:STATIC=C:/Users/Marco/Documents/GitHub/pusher_slider_matlab/acados_nmpc/c_generated_code
+
+//Value Computed by CMake
+Plant_real_IS_TOP_LEVEL:STATIC=ON
+
+//Value Computed by CMake
+Plant_real_SOURCE_DIR:STATIC=C:/Users/Marco/Documents/GitHub/pusher_slider_matlab/acados_nmpc/c_generated_code
 
 //Value Computed by CMake
 pusher_slider_BINARY_DIR:STATIC=C:/Users/Marco/Documents/GitHub/pusher_slider_matlab/acados_nmpc/c_generated_code

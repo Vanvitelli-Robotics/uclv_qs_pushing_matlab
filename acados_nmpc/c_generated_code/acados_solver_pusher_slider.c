@@ -222,7 +222,7 @@ ocp_nlp_dims* pusher_slider_acados_create_2_create_and_set_dimensions(pusher_sli
     nbx[0]  = NBX0;
     nsbx[0] = 0;
     ns[0] = NS - NSBX;
-    nbxe[0] = 5;
+    nbxe[0] = 0;
     ny[0] = NY0;
 
     // terminal - common
@@ -473,38 +473,6 @@ void pusher_slider_acados_create_5_set_nlp_in(pusher_slider_solver_capsule* caps
     /**** Constraints ****/
 
     // bounds for initial stage
-    // x0
-    int* idxbx0 = malloc(NBX0 * sizeof(int));
-    idxbx0[0] = 0;
-    idxbx0[1] = 1;
-    idxbx0[2] = 2;
-    idxbx0[3] = 3;
-    idxbx0[4] = 4;
-
-    double* lubx0 = calloc(2*NBX0, sizeof(double));
-    double* lbx0 = lubx0;
-    double* ubx0 = lubx0 + NBX0;
-    // change only the non-zero elements:
-    lbx0[3] = -0.041;
-    ubx0[3] = -0.041;
-    lbx0[4] = 0.02;
-    ubx0[4] = 0.02;
-
-    ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "idxbx", idxbx0);
-    ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", lbx0);
-    ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", ubx0);
-    free(idxbx0);
-    free(lubx0);
-    // idxbxe_0
-    int* idxbxe_0 = malloc(5 * sizeof(int));
-    
-    idxbxe_0[0] = 0;
-    idxbxe_0[1] = 1;
-    idxbxe_0[2] = 2;
-    idxbxe_0[3] = 3;
-    idxbxe_0[4] = 4;
-    ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "idxbxe", idxbxe_0);
-    free(idxbxe_0);
 
     /* constraints that are the same for initial and intermediate */
     // u
@@ -693,11 +661,7 @@ void pusher_slider_acados_create_7_set_nlp_out(pusher_slider_solver_capsule* cap
     double* xu0 = calloc(NX+NU, sizeof(double));
     double* x0 = xu0;
 
-    // initialize with x0
-    
-    x0[3] = -0.041;
-    x0[4] = 0.02;
-
+    // initialize with zeros
 
     double* u0 = xu0 + NX;
 

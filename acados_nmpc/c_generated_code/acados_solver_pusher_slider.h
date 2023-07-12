@@ -41,7 +41,7 @@
 #define PUSHER_SLIDER_NU     2
 #define PUSHER_SLIDER_NP     0
 #define PUSHER_SLIDER_NBX    1
-#define PUSHER_SLIDER_NBX0   5
+#define PUSHER_SLIDER_NBX0   0
 #define PUSHER_SLIDER_NBU    2
 #define PUSHER_SLIDER_NSBX   0
 #define PUSHER_SLIDER_NSBU   0

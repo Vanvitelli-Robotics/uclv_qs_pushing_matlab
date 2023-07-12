@@ -1,5 +1,5 @@
 
-function my_animate(x, y, theta, rx, ry)
+function my_animate(x, y, theta, rx, ry,sampling_time)
 % Function to animate the trajectory tracking of the pusher slider system
 % Input: 2D position [x,y,theta]
 
@@ -35,6 +35,6 @@ function my_animate(x, y, theta, rx, ry)
         pusher_position = [x(i) y(i) 0]'+ helper.my_rotz(theta(i))*[rx(i) ry(i) 0]';
         viscircles([pusher_position(1) pusher_position(2)],radius_pusher,"Color",'red',"LineWidth",6);
 
-        pause(0.1)
+        pause(sampling_time)
         drawnow
     end
