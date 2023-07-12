@@ -48,11 +48,13 @@ classdef NMPC_controller < casadi.Callback
     methods
       
         % Constructor
-        function self = NMPC_controller(name,plant,initial_condition)
+        function self = NMPC_controller(name,plant,initial_condition,linux_set)
             self@casadi.Callback();
             % Acados initialitation
             %self.init();
-            env_vars_acados
+            if linux_set == 0
+                env_vars_acados
+            end
             check_acados_requirements()
 
             % Set solver parameters
