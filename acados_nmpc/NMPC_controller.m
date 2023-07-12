@@ -71,6 +71,24 @@ classdef NMPC_controller < casadi.Callback
             construct(self, name);
         end
         
+        function update_cost_function(self,W_x,W_u)
+            % Cost function update
+            self.W_x = W_x;
+            self.W_u = W_u;
+
+            expr_ext_cost_e = self.sym_model.sym_x'* self.W_x * self.sym_model.sym_x;
+            expr_ext_cost = expr_ext_cost_e + self.sym_model.sym_u' * self.W_u * self.sym_model.sym_u;
+
+            self.ocp_model.set('cost_expr_ext_cost', expr_ext_cost);
+            self.ocp_model.set('cost_expr_ext_cost_e', expr_ext_cost_e);
+        end
+        function initial_condition_update(self,new_initial_condition)
+            % Update the initial condition for a new control 
+            self.initial_condition = new_initial_condition;
+            self.ocp_model.set('constr_x0', new_initial_condition);
+            self.utraj = [];
+            self.xtraj = [];
+        end 
         function ocp_model = create_ocp_model(self)        
             % acados ocp model
             ocp_model = acados_ocp_model();
@@ -170,7 +188,7 @@ classdef NMPC_controller < casadi.Callback
 
 %             status = ocp.get('status'); % 0 - success
 %             ocp.print('stat')
-            u = self.utraj(:,1);
+            u = self.ocp_solver.get('u', 0);
             toc
         end
              
