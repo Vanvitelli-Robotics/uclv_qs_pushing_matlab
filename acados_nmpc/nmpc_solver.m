@@ -63,8 +63,8 @@ ocp_model.set('constr_expr_h', model.expr_h);
 % on the variables defined to be constrained
 h_max = [model.slider.ywidth/2 0.05 0.05];
 h_min = [-model.slider.ywidth/2 0 -0.05];
-ocp_model.set('constr_lh', U_min); % lower bound on h
-ocp_model.set('constr_uh', U_max);  % upper bound on h
+ocp_model.set('constr_lh', h_min); % lower bound on h
+ocp_model.set('constr_uh', h_max);  % upper bound on h
 
 % % on the state
 % ocp_model.set('constr_Jbx',eye(nx));
@@ -86,7 +86,7 @@ ocp_opts.set('nlp_solver', nlp_solver);
 ocp_opts.set('sim_method', sim_method);
 ocp_opts.set('qp_solver', qp_solver);
 ocp_opts.set('qp_solver_cond_N', qp_solver_cond_N);
-ocp_opts.set('ext_fun_compile_flags', '-O2'); % '-O2'
+ocp_opts.set('ext_fun_compile_flags', ''); % '-O2'
 ocp_opts.set('compile_model','false');
 %ocp_opts.set('codgen_model','false');
 ocp_opts.set('compile_interface','false');

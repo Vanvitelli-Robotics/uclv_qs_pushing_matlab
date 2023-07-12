@@ -7,7 +7,7 @@
 		"ny_0": 7,
 		"ny": 7,
 		"ny_e": 5,
-		"nbx_0": 5,
+		"nbx_0": 0,
 		"npd": 0,
 		"npd_e": 0,
 		"nh": 0,
@@ -33,7 +33,7 @@
 		"nsphi_e": 0,
 		"nr": 0,
 		"nr_e": 0,
-		"nbxe_0": 5,
+		"nbxe_0": 0,
 		"gnsf_nx1": 0,
 		"gnsf_nz1": 0,
 		"gnsf_nout": 0,
@@ -46,11 +46,11 @@
 		"cost_source_ext_cost": [],
 		"cost_function_ext_cost": [],
 		"W": [
-			[2,0,0,0,0,0,0],
-			[0,2,0,0,0,0,0],
-			[0,0,2,0,0,0,0],
-			[0,0,0,2,0,0,0],
-			[0,0,0,0,2,0,0],
+			[20,0,0,0,0,0,0],
+			[0,20,0,0,0,0,0],
+			[0,0,20,0,0,0,0],
+			[0,0,0,20,0,0,0],
+			[0,0,0,0,20,0,0],
 			[0,0,0,0,0,2,0],
 			[0,0,0,0,0,0,2]
 		],
@@ -103,11 +103,11 @@
 		"cost_source_ext_cost_0": [],
 		"cost_function_ext_cost_0": [],
 		"W_0": [
-			[2,0,0,0,0,0,0],
-			[0,2,0,0,0,0,0],
-			[0,0,2,0,0,0,0],
-			[0,0,0,2,0,0,0],
-			[0,0,0,0,2,0,0],
+			[20,0,0,0,0,0,0],
+			[0,20,0,0,0,0,0],
+			[0,0,20,0,0,0,0],
+			[0,0,0,20,0,0,0],
+			[0,0,0,0,20,0,0],
 			[0,0,0,0,0,2,0],
 			[0,0,0,0,0,0,2]
 		],
@@ -140,11 +140,11 @@
 		"cost_source_ext_cost_e": [],
 		"cost_function_ext_cost_e": [],
 		"W_e": [
-			[2,0,0,0,0],
-			[0,2,0,0,0],
-			[0,0,2,0,0],
-			[0,0,0,2,0],
-			[0,0,0,0,2]
+			[20,0,0,0,0],
+			[0,20,0,0,0],
+			[0,0,20,0,0],
+			[0,0,0,20,0],
+			[0,0,0,0,20]
 		],
 		"Vx_e": [
 			[1,0,0,0,0],
@@ -365,10 +365,26 @@
 			"_ArraySize_": [1,0],
 			"_ArrayData_": []
 		},
-		"lbx_0": [0,0,0,-0.041,0.02],
-		"ubx_0": [0,0,0,-0.041,0.02],
-		"idxbx_0": [0,1,2,3,4],
-		"idxbxe_0": [0,1,2,3,4],
+		"lbx_0": {
+			"_ArrayType_": "double",
+			"_ArraySize_": [1,0],
+			"_ArrayData_": []
+		},
+		"ubx_0": {
+			"_ArrayType_": "double",
+			"_ArraySize_": [1,0],
+			"_ArrayData_": []
+		},
+		"idxbx_0": {
+			"_ArrayType_": "double",
+			"_ArraySize_": [1,0],
+			"_ArrayData_": []
+		},
+		"idxbxe_0": {
+			"_ArrayType_": "double",
+			"_ArraySize_": [1,0],
+			"_ArrayData_": []
+		},
 		"lphi": {
 			"_ArrayType_": "double",
 			"_ArraySize_": [1,0],
@@ -555,7 +571,7 @@
 		"ext_fun_compile_flags": ""
 	},
 	"model": {
-		"name": "pusher_slider",
+		"name": "Plant_real",
 		"dyn_ext_fun_type": "casadi",
 		"dyn_generic_source": [],
 		"dyn_disc_fun_jac_hess": [],
@@ -615,7 +631,7 @@
 		"samplingtime": "t0"
 	},
 	"cython_include_dirs": [],
-	"code_export_directory": "C:\\Users\\Marco\\Documents\\GitHub\\pusher_slider_matlab\\acados_nmpc\\c_generated_code",
+	"code_export_directory": "C:\\Users\\Marco\\Documents\\GitHub\\pusher_slider_matlab\\c_generated_code",
 	"json_file": "acados_ocp_nlp.json",
 	"shared_lib_ext": ".so",
 	"acados_link_libs": {

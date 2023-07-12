@@ -1,4 +1,7 @@
 classdef helper
+    properties(Constant)
+        g = 9.81;
+    end 
    methods(Static)
     function integral = DoubleGaussQuad(fun1,a,b,c,d)
         %Change of Variables
