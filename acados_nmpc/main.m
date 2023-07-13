@@ -21,14 +21,18 @@ slider.xwidth = 0.082;                                % width of the slider alon
 slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
 slider.m = 0.2875;                                    % slider mass [kg]
 
-sample_time = 0.05;
-
 % Create Pusher Slider object
 p = PusherSliderModel('pusher_slider_model',slider);
 p.symbolic_model();
 
+% Controller parameters
+sample_time = 0.05;
+Hp = 20;
+u_n_lb = 0; u_n_ub = 0.05;
+u_t_lb = -0.05; u_t_ub = 0.05;
+
 % Setup Controller and Optimization Object 
-controller = NMPC_controller('NMPC',p,linux_set);
+controller = NMPC_controller('NMPC',p,linux_set,sample_time,Hp,u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 controller.create_ocp_solver();
 
 %% SIMULATION PART 
@@ -37,26 +41,32 @@ simulation_ = true;
 time_sim = 10;
 
 % Set initial condition
-x0 = [0 0 deg2rad(0) -slider.xwidth/2 slider.ywidth/2*0.7]';
+x0 = [0 0 deg2rad(10) -slider.xwidth/2 slider.ywidth/2*0.7]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
 W_x = diag([1 1 1 0 0]);  % State matrix weight
+W_x_e = 10*W_x;
 W_u = diag([1 1]);              % Control matrix weight
-controller.update_cost_function(W_x,W_u);
+controller.update_cost_function(W_x,W_u,W_x_e);
+
+% Set constraints
+u_n_lb = 0; u_n_ub = 0.05;
+u_t_lb = -0.05; u_t_ub = 0.05;
+controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % Create desired trajectory
-xf = [0.2 0.2 0 x0(4) 0]'; t0 = 0; tf = time_sim;
+xf = [0.2 0.01 0 x0(4) 0]'; t0 = 0; tf = time_sim;
 traj_gen = TrajectoryGenerator(sample_time);
 traj_gen.set_target(x0,xf,t0,tf);
 [time, traj] = traj_gen.straight_line;
 
 % Set control reference
-control_ref = [0.05; 0].*zeros(controller.sym_model.nu,length(time));
+u_n_ref = 0; u_t_ref = 0;
+control_ref = [u_n_ref; u_t_ref].*zeros(controller.sym_model.nu,length(time));
 
 % Set overall reference
 controller.set_reference_trajectory([traj; control_ref]);
-
 
 % Simulation 
 if simulation_ == true
@@ -68,7 +78,7 @@ if simulation_ == true
     S_p_y = out.signals.values(:,5);
     u_n = u_control.signals.values(:,1);
     u_t = u_control.signals.values(:,2);
-    my_animate(x_s,y_s,theta_s,S_p_x,S_p_y,controller.T/controller.N)
+    my_animate(x_s,y_s,theta_s,S_p_x,S_p_y,controller.sample_time)
 end
 
 
