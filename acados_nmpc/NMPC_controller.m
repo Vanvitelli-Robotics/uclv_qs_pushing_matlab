@@ -86,9 +86,8 @@ classdef NMPC_controller < casadi.Callback
             self.initial_condition = zeros(plant.sym_model.nx,1);
 
             % Constraints
-            update_constraints(self,u_n_ub, u_t_ub, u_n_lb, u_t_lb);
-            self.h_constr_ub = [plant.slider_params.ywidth/2 self.u_n_ub self.u_t_ub];
-            self.h_constr_lb = [-plant.slider_params.ywidth/2 self.u_n_lb self.u_t_lb];
+            self.h_constr_ub = [plant.slider_params.ywidth/2 u_n_ub u_t_ub];
+            self.h_constr_lb = [-plant.slider_params.ywidth/2 u_n_lb u_t_lb];
 
             % Controller parameters
             self.Hp = Hp;

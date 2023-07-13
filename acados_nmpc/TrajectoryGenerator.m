@@ -14,6 +14,7 @@ classdef TrajectoryGenerator < handle
         tf; % Time to execute the overall trajectory [s]
         t0;
         sample_time;
+        set_plot = false;
     end
 
     methods
@@ -44,14 +45,16 @@ classdef TrajectoryGenerator < handle
                 s = quintic_(self,time(k))*norm(self.xf-self.x0);
                 traj(:,k) = self.x0 + s*(self.xf-self.x0)/norm(self.xf-self.x0);
             end
-            figure, plot(time,traj), grid on
-            legend
-            xlabel("time [s]")
-            ylabel("traj [m]")
-            if length(self.xf) > 1
-                figure, plot(traj(1,:), traj(2,:),'*'), grid on
-                xlabel("x [m]")
-                ylabel("y [m]")
+            if self.set_plot == true
+                figure, plot(time,traj), grid on
+                legend
+                xlabel("time [s]")
+                ylabel("traj [m]")
+                if length(self.xf) > 1
+                    figure, plot(traj(1,:), traj(2,:),'*'), grid on
+                    xlabel("x [m]")
+                    ylabel("y [m]")
+                end
             end
             
         end
