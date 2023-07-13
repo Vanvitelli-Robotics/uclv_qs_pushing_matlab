@@ -42,6 +42,7 @@ classdef NMPC_controller < casadi.Callback
         % Previous solutions
         utraj;
         xtraj;
+        ptraj;
 
         % Reference
         y_ref;             % Trajectory points
@@ -231,9 +232,11 @@ classdef NMPC_controller < casadi.Callback
             if(isempty(self.utraj) || isempty(self.xtraj))
                 self.xtraj = zeros(self.sym_model.nx, self.Hp+1);
                 self.utraj = zeros(self.sym_model.nu, self.Hp);
+                self.ptraj = ones(self.sym_model.nx, self.Hp);
             end
             self.ocp_solver.set('init_x', self.xtraj);
             self.ocp_solver.set('init_u', self.utraj);
+            self.ocp_solver.set('init_pi', self.ptraj);
 
             %self.ocp_solver.set('init_pi', ones(self.sym_model.nx, self.Hp));
             %self.ocp_solver.set('constr_lbx', x0, 0)
@@ -243,10 +246,14 @@ classdef NMPC_controller < casadi.Callback
             % get solution
             self.utraj = self.ocp_solver.get('u');
             self.xtraj = self.ocp_solver.get('x');
+            self.ptraj = self.ocp_solver.get('pi');
+            self.utraj = [self.utraj(:,2:end) self.utraj(:,1)];
+            self.xtraj = [self.xtraj(:,2:end) self.xtraj(:,1)];
 
             % status = ocp.get('status'); % 0 - success
             % ocp.print('stat')
             u = self.ocp_solver.get('u', 0);
+            
             toc
         end
         function set_reference_trajectory(self,y_ref)
