@@ -40,14 +40,29 @@ classdef TrajectoryGenerator < handle
             s = 6*tau.^5-15*tau.^4+10*tau.^3;
         end
 
-
-        function [time, traj] = straight_line(self)
+        function [time, traj] = straight_line(self, auto_angle)
             time = self.t0:self.sample_time:self.tf;
             traj = ones(length(self.x0), length(time));
+
             for k = 1:length(time)
                 s = quintic_(self,time(k))*norm(self.xf-self.x0);
                 traj(:,k) = self.x0 + s*(self.xf-self.x0)/norm(self.xf-self.x0);
             end
+
+            % Trajectory for angle -> it has to be faster than the
+            % trajectory of x and y
+            if auto_angle == true
+                tf_angle = self.tf/2;
+                traj_angle = ones(1, length(time));
+                time_angle = self.t0:self.sample_time:tf_angle;
+                for j = 1:length(time_angle)
+                    s = quintic_(self,time_angle(j))*norm(self.xf(3)-self.x0(3));
+                    traj_angle(j) = self.x0(3) + s*(self.xf(3)-self.x0(3))/norm(self.xf(3)-self.x0(3));
+                end
+                traj_angle(length(time_angle):length(time)) = traj_angle(3,end).*ones(1,length(time)-length(time_angle));
+                traj = [traj(1:2,:); traj_angle; traj(4:5,:)];
+            end
+
             if self.set_plot == true
                 figure, plot(time,traj), grid on
                 legend
@@ -77,9 +92,6 @@ classdef TrajectoryGenerator < handle
             q = quaternion(eulerAngs,"euler","ZYX","frame");
 
             trajectory = waypointTrajectory(self.waypoints_, time_tf, 'SampleRate', Fs);%, 'Orientation',q);
-%             q = trajectory.Orientation;
-
-%             trajectory = waypointTrajectory(self.waypoints_, time_tf, 'SampleRate', Fs, 'Orientation',q);
 
             % lookup pose information for entire trajectory
             [pos, orient] = lookupPose(trajectory, time_tf(1):1/Fs:time_tf(end));
@@ -96,7 +108,7 @@ classdef TrajectoryGenerator < handle
 
             yaw = quat2angle(orient);
 
-            traj = [pos(:,1)'; pos(:,2)'; yaw'];
+            traj = [pos(:,1)'; pos(:,2)'; yaw'; self.x0(4)*ones(1,length(pos(:,1))); zeros(1,length(pos(:,1)))];
             tInfo = waypointInfo(trajectory);
             time = 0:(1/trajectory.SampleRate):tInfo.TimeOfArrival(end);
         end

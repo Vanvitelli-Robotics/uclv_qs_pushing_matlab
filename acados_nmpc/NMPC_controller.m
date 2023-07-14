@@ -53,11 +53,7 @@ classdef NMPC_controller < casadi.Callback
     end
 
     methods(Static)
-        %         function init()
-        %         % Acados initialitation
-        %             env_vars_acados
-        %             check_acados_requirements()
-        %         end
+
         function solver_params = set_solver_params(self)
             % Solver parameters
             solver_params.nlp_solver = 'sqp_rti';                      % sqp, sqp_rti
