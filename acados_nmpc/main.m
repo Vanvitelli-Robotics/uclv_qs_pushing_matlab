@@ -49,8 +49,8 @@ x0 = [0 0 deg2rad(0) -slider.xwidth/2 slider.ywidth/2*0.7]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
-W_x = diag([1 1 .01 0 0]);  % State matrix weight
-W_x_e = 10*W_x;%diag([10 20 .5 0 0]);
+W_x = diag([10 10 .01 0 0]);  % State matrix weight
+W_x_e = W_x;%diag([100 20 .5 0 0]);
 W_u = diag([1 1]);              % Control matrix weight
 controller.update_cost_function(W_x,W_u,W_x_e);
 
@@ -60,9 +60,9 @@ u_t_lb = -0.05; u_t_ub = 0.05;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % Create desired trajectory
-xf = [0.3 0.06 0 x0(4) 0]'; 
+xf = [0.3 0 0 x0(4) 0]'; 
 xf(3) = acos((xf(1)-x0(1))/(norm(xf(1:2)-x0(1:2))));
-t0 = 0; tf = time_sim;
+t0 = 0; tf = time_sim*0.8;
 traj_gen = TrajectoryGenerator(sample_time);
 traj_gen.set_plot = false;
 traj_gen.set_target(x0,xf,t0,tf);

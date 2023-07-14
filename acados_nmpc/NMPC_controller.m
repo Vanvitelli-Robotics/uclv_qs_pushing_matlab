@@ -58,7 +58,7 @@ classdef NMPC_controller < casadi.Callback
         %         end
         function solver_params = set_solver_params(self)
             % Solver parameters
-            solver_params.nlp_solver = 'sqp';                      % sqp, sqp_rti
+            solver_params.nlp_solver = 'sqp_rti';                      % sqp, sqp_rti
             solver_params.qp_solver = 'partial_condensing_hpipm';  % full_condensing_hpipm, partial_condensing_hpipm, full_condensing_qpoases, full_condensing_daqp
             solver_params.qp_solver_cond_N = 5;                    % for partial condensing
             solver_params.sim_method = 'erk';                      % integrator type : erk, irk, irk_gnsf
