@@ -45,21 +45,22 @@ close all
 % type of simulation (simulink or matlab)
 simulation_ = true;
 sym_type = "matlab";
-time_sim = 10;
+time_sim = 20;
 
 % Change delay of the plant and the delay to compensate with the controller
 p.set_delay(0);
 controller.set_delay_comp(0);
 
 % Set initial condition
-x0 = [0 0 deg2rad(30) -slider.xwidth/2 slider.ywidth/2*0]';
+x0 = [0 0 deg2rad(20) -slider.xwidth/2 slider.ywidth/2*0.7]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
-W_x1 = diag([0 0 10 0 0.0]);  % State matrix weight
+% W_x1 = diag([0 0 10 0 0.0]);  % State matrix weight
 W_x2 = diag([10 10 .1 0 0]);
-W_x_e = W_x1;%diag([100 20 .5 0 0]);
-W_u = diag([1 10]);            % Control matrix weight
+W_x1 = diag([10 10 .1 0 0.0]);  % State matrix weight
+W_x_e = 10*W_x1;%diag([100 20 .5 0 0]);
+W_u = diag([1 1]);            % Control matrix weight
 controller.update_cost_function(W_x1,W_u,W_x_e,Hp,Hp);
 controller.update_cost_function(W_x1,W_u,W_x_e,1,Hp-1);
 
@@ -69,20 +70,33 @@ u_t_lb = -0.05; u_t_ub = 0.05;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % Create desired trajectory
-xf = [0.3 0.0 0 x0(4) 0]';
+xf = [0.3 0.03 0 x0(4) 0]';
 xf(3) = acos((xf(1)-x0(1))/(norm(xf(1:2)-x0(1:2))));
-t0 = 0; tf = time_sim*0.5;
-traj_gen = TrajectoryGenerator(sample_time);
+t0 = 0; tf = time_sim*1;
+traj_gen = TrajectoryGenerator(sample_time,u_n_ub/2);
 traj_gen.set_plot = false;
-traj_gen.set_target([x0(1:2);xf(3);x0(4:5)],xf,t0,tf);
+traj_gen.set_target(x0,xf,t0,tf);
 [time, traj] = traj_gen.straight_line;
+
+traj_gen.tf = time_sim*0.5;
+[time_ang, traj_ang] = traj_gen.straight_line;
+traj_ang_ = [traj_ang(3,:) traj_ang(3,end).*ones(1,length(traj(1,:))-length(traj_ang(3,:)))];
+
+% Test waypoints trajectory
+x0_w = [x0(1:2)' 0];
+xf_w = [0.3 0.01 0; 
+        0.3 0.05 0
+       ];
+traj_gen.waypoints_ = [x0_w; xf_w];
+[time, traj] = traj_gen.waypoints_gen;
 
 % Set control reference
 u_n_ref = 0; u_t_ref = 0;
 control_ref = [u_n_ref; u_t_ref].*zeros(controller.sym_model.nu,length(time));
 
 % Set overall reference
-controller.set_reference_trajectory([traj; control_ref]);
+% controller.set_reference_trajectory([[traj(1:2,:);traj_ang_; traj(4:5,:)]; control_ref]);
+controller.set_reference_trajectory([traj; x0(4)*ones(1,length(traj(1,:))); zeros(1,length(traj(1,:))); control_ref]);
 
 % Simulation
 if simulation_ == true
@@ -94,7 +108,9 @@ if simulation_ == true
         disp("Simulation type not valid!")
     end
     helper.my_animate(x_s,y_s,theta_s,S_p_x,S_p_y,controller.sample_time, traj)
-    helper.my_plot(time_plot, traj, x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t)
+%     helper.my_animate(traj(1,:)',traj(2,:)',traj(3,:)',x0(4)*ones(1,length(traj(1,:))),zeros(1,length(traj(1,:))), controller.sample_time, traj)
+%     helper.my_plot(time_plot, [traj(1:2,:);traj_ang_; traj(4:5,:)], x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t)
+    helper.my_plot(time_plot, [traj; x0(4)*ones(1,length(traj(1,:))); zeros(1,length(traj(1,:)))], x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t)
 end
 
 

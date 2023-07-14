@@ -13,16 +13,19 @@ classdef TrajectoryGenerator < handle
         xf; % Final point of the desired trajectory [m]
         tf; % Time to execute the overall trajectory [s]
         t0;
+        waypoints_;
         sample_time;
         set_plot = false;
+        vel;
     end
 
     methods
-        function self = TrajectoryGenerator(T)
+        function self = TrajectoryGenerator(T, vel)
             % Constructor of the TrajectoryGenerator class
             % Input: T sample time [s]
             % Output: object
             self.sample_time = T;
+            self.vel = vel;
         end
 
         function set_target(self,x0,xf,t0,tf)
@@ -56,7 +59,46 @@ classdef TrajectoryGenerator < handle
                     ylabel("y [m]")
                 end
             end
-            
+
+        end
+
+        function [time, traj] = waypoints_gen(self)
+            Fs = 1/self.sample_time;
+
+            delta_p = abs(self.waypoints_(2:end,:)-self.waypoints_(1:end-1,:));
+            times = vecnorm(delta_p')/self.vel;
+            times = [0 times];
+            time_tf = cumsum(times);
+
+            % create trajectory
+            eulerAngs = zeros(size(self.waypoints_,1),3);
+            eulerAngs(1,:) = [self.x0(3) 0 0];
+            eulerAngs(2:end,1) = atan2(self.waypoints_(2:end,2)-self.waypoints_(1:end-1,2),self.waypoints_(2:end,1)-self.waypoints_(1:end-1,1));
+            q = quaternion(eulerAngs,"euler","ZYX","frame");
+
+            trajectory = waypointTrajectory(self.waypoints_, time_tf, 'SampleRate', Fs);%, 'Orientation',q);
+%             q = trajectory.Orientation;
+
+%             trajectory = waypointTrajectory(self.waypoints_, time_tf, 'SampleRate', Fs, 'Orientation',q);
+
+            % lookup pose information for entire trajectory
+            [pos, orient] = lookupPose(trajectory, time_tf(1):1/Fs:time_tf(end));
+
+            % Plot generated positions and specified waypoints.
+            if self.set_plot == true
+                plot(pos(:,1),pos(:,2), self.waypoints_(:,1),self.waypoints_(:,2), '--o')
+                title('Position')
+                xlabel('X (m)')
+                ylabel('Y (m)')
+                zlabel('Z (m)')
+                legend({'Position', 'Waypoints'})
+            end
+
+            yaw = quat2angle(orient);
+
+            traj = [pos(:,1)'; pos(:,2)'; yaw'];
+            tInfo = waypointInfo(trajectory);
+            time = 0:(1/trajectory.SampleRate):tInfo.TimeOfArrival(end);
         end
     end
 end

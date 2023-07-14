@@ -90,11 +90,11 @@ classdef helper
 
             tic;
             for i = 1:time_sim_
-                if i < time_sim_/5
-                    controller.update_cost_function(Wx1,Wu,Wxe,1,controller.Hp-1);
-                else
-                    controller.update_cost_function(Wx2,Wu,Wxe,1,controller.Hp-1);
-                end
+%                 if i < time_sim_/5
+%                     controller.update_cost_function(Wx1,Wu,Wxe,1,controller.Hp-1);
+%                 else
+%                     controller.update_cost_function(Wx2,Wu,Wxe,1,controller.Hp-1);
+%                 end
 
                 xk_sim = x(:,i);
                 for k = 1 : delay_buff_comp
