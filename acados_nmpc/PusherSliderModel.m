@@ -27,12 +27,13 @@ classdef PusherSliderModel < casadi.Callback
         nu = 2;     % number of inputs
 
         sym_model = struct;
+        time_delay;
     end
 
     methods
 
         % Constructor
-        function self = PusherSliderModel(name, slider_parameters)
+        function self = PusherSliderModel(name, slider_parameters, time_delay)
             % Constructor of the pusher_slider model.
             % Input: name = string
             %        slider_parameters = struct
@@ -40,9 +41,38 @@ classdef PusherSliderModel < casadi.Callback
             self@casadi.Callback();
             self.slider_params=slider_parameters;
             self.slider_params.f_max = self.slider_params.mu_sg*self.slider_params.m*helper.g;
-            self.slider_params.tau_max = helper.tau_max_func(self.slider_params.mu_sg, self.slider_params.m, helper.g, self.slider_params.area, self.slider_params.xwidth, self.slider_params.ywidth);
+            self.slider_params.tau_max = self.tau_max_func(self.slider_params.mu_sg, self.slider_params.m, helper.g, self.slider_params.area, self.slider_params.xwidth, self.slider_params.ywidth);
             self.slider_params.c_ellipse = self.slider_params.tau_max/self.slider_params.f_max;
+            self.set_delay(time_delay);
             construct(self, name);
+        end
+
+        function set_delay(self, time_delay)
+            self.time_delay = time_delay;
+        end
+
+        function integral = DoubleGaussQuad(self,fun1,a,b,c,d)
+            %Change of Variables
+            h1 = (b-a)/2;
+            h2 = (b+a)/2;
+            h3 = (d-c)/2;
+            h4 = (d+c)/2;
+
+            %Define Weights (for 3 points)
+            w1 = 1;
+            w2 = 1;
+
+            %Define Points
+            x1 = sqrt(1/3);
+            x2 = -sqrt(1/3);
+
+            integral = h1 * h3 * (w1*w1*fun1(h1*x1+h2, h1*x1+h2) + w1*w2*fun1(h1*x1+h2, h1*x2+h2) +...
+                w2*w1*fun1(h1*x2+h2, h1*x1+h2) + w2*w2*fun1(h1*x2+h2, h1*x2+h2) );
+        end
+
+        function tau_max = tau_max_func(self, mu_sg, m, g, area, xwidth, ywidth)
+            n_f_integrand = @(p1, p2) (mu_sg * m * g / area) * sqrt([p1; p2; 0]' * [p1; p2; 0]);
+            tau_max = self.DoubleGaussQuad(n_f_integrand, -xwidth / 2, xwidth / 2, -ywidth / 2, ywidth / 2);
         end
 
         % Contact surface
@@ -132,7 +162,7 @@ classdef PusherSliderModel < casadi.Callback
         function model = symbolic_model(self)
             % This method returns the symbolic expression of the nonlinear pusher-slider model x_dot = f(x,u)
             % Output: x_dot
-            
+
             import casadi.*
 
             % named symbolic variables

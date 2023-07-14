@@ -48,6 +48,8 @@ classdef NMPC_controller < casadi.Callback
         y_ref;             % Trajectory points
         index_ref = 0;     % utility variable for the trajectory tracking
 
+        delay_compensation; % Delay to compensate with the controller [s]
+
     end
 
     methods(Static)
@@ -87,8 +89,8 @@ classdef NMPC_controller < casadi.Callback
             self.initial_condition = zeros(plant.sym_model.nx,1);
 
             % Constraints
-            self.h_constr_ub = [plant.slider_params.ywidth/2 u_n_ub u_t_ub];
-            self.h_constr_lb = [-plant.slider_params.ywidth/2 u_n_lb u_t_lb];
+            self.h_constr_ub = [0.9*plant.slider_params.ywidth/2 u_n_ub u_t_ub];
+            self.h_constr_lb = [-0.9*plant.slider_params.ywidth/2 u_n_lb u_t_lb];
 
             % Controller parameters
             self.Hp = Hp;
@@ -97,6 +99,11 @@ classdef NMPC_controller < casadi.Callback
 
             construct(self, name);
         end
+
+        function set_delay_comp(self,delay)
+            self.delay_compensation = delay;
+        end
+
 
         function update_constraints(self, u_n_ub, u_t_ub, u_n_lb, u_t_lb)
             self.u_n_lb = u_n_lb;
@@ -120,15 +127,16 @@ classdef NMPC_controller < casadi.Callback
             self.y_ref = [];
         end
 
-        function update_cost_function(self,W_x,W_u,W_x_e)
+        function update_cost_function(self,W_x,W_u,W_x_e,initial_step, final_step)
 
-            for i = 1 : self.Hp-1
-                self.ocp_solver.set('cost_W', blkdiag(W_x,W_u),i);
+            if(initial_step == self.Hp)
+                % Last step of the prediction horizon, means W_e
+                self.ocp_solver.set('cost_W', W_x_e,self.Hp);
+            else
+                for i = initial_step : final_step
+                    self.ocp_solver.set('cost_W', blkdiag(W_x,W_u),i);
+                end
             end
-
-            % Last step of the prediction horizon, means W_e
-            self.ocp_solver.set('cost_W', W_x_e,self.Hp);
-
         end
 
 
@@ -247,13 +255,13 @@ classdef NMPC_controller < casadi.Callback
             self.utraj = self.ocp_solver.get('u');
             self.xtraj = self.ocp_solver.get('x');
             self.ptraj = self.ocp_solver.get('pi');
-            self.utraj = [self.utraj(:,2:end) self.utraj(:,1)];
-            self.xtraj = [self.xtraj(:,2:end) self.xtraj(:,1)];
+            %             self.utraj = [self.utraj(:,2:end) self.utraj(:,1)];
+            %             self.xtraj = [self.xtraj(:,2:end) self.xtraj(:,1)];
 
             % status = ocp.get('status'); % 0 - success
             % ocp.print('stat')
             u = self.ocp_solver.get('u', 0);
-            
+
             toc
         end
         function set_reference_trajectory(self,y_ref)
