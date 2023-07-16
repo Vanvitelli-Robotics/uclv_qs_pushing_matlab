@@ -133,8 +133,8 @@ CMakeFiles/ocp_pusher_slider_model.dir/clean:
 # Target rules for target CMakeFiles/acados_ocp_solver_pusher_slider_model.dir
 
 # All Build rule for target.
-CMakeFiles/acados_ocp_solver_pusher_slider_model.dir/all: CMakeFiles/ocp_pusher_slider_model.dir/all
 CMakeFiles/acados_ocp_solver_pusher_slider_model.dir/all: CMakeFiles/model_pusher_slider_model.dir/all
+CMakeFiles/acados_ocp_solver_pusher_slider_model.dir/all: CMakeFiles/ocp_pusher_slider_model.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\acados_ocp_solver_pusher_slider_model.dir\build.make CMakeFiles/acados_ocp_solver_pusher_slider_model.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\acados_ocp_solver_pusher_slider_model.dir\build.make CMakeFiles/acados_ocp_solver_pusher_slider_model.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=C:\Users\saraf\pusher_slider_matlab\acados_nmpc\c_generated_code\CMakeFiles --progress-num=1 "Built target acados_ocp_solver_pusher_slider_model"

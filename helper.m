@@ -9,6 +9,11 @@ classdef helper
             R = [cos(theta) -sin(theta) 0; sin(theta) cos(theta) 0; 0 0 1];
         end
 
+        function R = my_rotz_2d(theta)
+            R_ = helper.my_rotz(theta);
+            R = R_(1:2,1:2);
+        end
+
         function my_plot(time, traj, x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t)
             if length(traj(1,:)) < length(time)
                 traj = [traj traj(:,end).*ones(length(traj(:,end)),length(time)-length(traj(1,:)))];
@@ -35,6 +40,7 @@ classdef helper
             %     theta = -theta;
             p0_s = [x(1) y(1) 0];
             quat0_s = quaternion(helper.my_rotz(theta(1)),'rotmat','frame');
+            figure
             slider_p = poseplot(quat0_s,p0_s, MeshFileName="cad_models/cuboide_santal.stl", ScaleFactor=0.001);%,PatchFaceColor="yellow");
             hold on
 
@@ -49,8 +55,8 @@ classdef helper
             hold off
 
             ax1 = gca; ax1.View = [-0.1303  -90];
-            xlim(ax1,[-0.1 0.5])
-            ylim(ax1,[-0.3 0.3])
+%             xlim(ax1,[-0.1 0.5])
+%             ylim(ax1,[-0.3 0.3])
             xlabel("x [m]")
             ylabel("y [m]")
             zlabel("z [m]")
@@ -68,7 +74,7 @@ classdef helper
             end
         end
 
-        function [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_sim_vec] = closed_loop_matlab(plant, controller,x0, time_sim, print_, Wx1, Wx2,Wxe,Wu)
+        function [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_sim_vec] = closed_loop_matlab(plant, controller,x0, time_sim, print_)
             % CLOSED LOOP SIMULATION
 
             % Time of overall simulation
@@ -85,27 +91,24 @@ classdef helper
             u_buff_plant = zeros(plant.nu,delay_buff_plant);
 
             % Delay buffer to compensate the delay with the controller
-            delay_buff_comp = ceil(controller.delay_compensation/controller.sample_time);
-            u_buff_contr = zeros(plant.nu, delay_buff_comp);
+%             delay_buff_comp = ceil(controller.delay_compensation/controller.sample_time);
+%             u_buff_contr = zeros(plant.nu, delay_buff_comp);
 
             tic;
             for i = 1:time_sim_
-%                 if i < time_sim_/5
-%                     controller.update_cost_function(Wx1,Wu,Wxe,1,controller.Hp-1);
-%                 else
-%                     controller.update_cost_function(Wx2,Wu,Wxe,1,controller.Hp-1);
+%                 xk_sim = x(:,i);
+%                 for k = 1 : delay_buff_comp
+%                     x_dot_sim = plant.eval_model(xk_sim,u_buff_contr(:,end-k+1));
+%                     x_sim = xk_sim + controller.sample_time*x_dot_sim;
+%                     xk_sim = x_sim;
 %                 end
 
-                xk_sim = x(:,i);
-                for k = 1 : delay_buff_comp
-                    x_dot_sim = plant.eval_model(xk_sim,u_buff_contr(:,end-k+1));
-                    x_sim = xk_sim + controller.sample_time*x_dot_sim;
-                    xk_sim = x_sim;
-                end
+                xk_sim = controller.delay_buffer_sim(plant, x(:,i));
 
                 % solve OCP
                 u(:,i) = controller.solve(xk_sim);
-                u_buff_contr = [u(:,i) u_buff_contr(:,1:end-1)];
+%                 u_buff_contr = [u(:,i) u_buff_contr(:,1:end-1)];
+                controller.u_buff_contr = [u(:,i) controller.u_buff_contr(:,1:end-1)];
 
                 if print_ == true
                     status = controller.ocp_solver.get('status');
@@ -153,6 +156,19 @@ classdef helper
             time_sim_vec = out.time;
         end
 
+        function params = save_parameters(name_exp, x, u, t)
+            params = struct;
+            params.t = t;
+            params.x_S = x(1,:);
+            params.y_S = x(2,:);
+            params.theta_S = x(3,:);
+            params.S_p_x = x(4,:);
+            params.S_p_y = x(5,:);
+            params.u_n = u(1,:);
+            params.u_t = u(2,:);
+            name_exp_ext = strcat(name_exp,'.mat');
+            save(name_exp_ext,'params');
+        end
     end
 
 

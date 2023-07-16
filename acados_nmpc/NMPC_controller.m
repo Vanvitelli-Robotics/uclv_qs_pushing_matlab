@@ -19,10 +19,10 @@ classdef NMPC_controller < casadi.Callback
         % Costraints
         h_constr_lb = [];  % lower bound constraint on the constrained variables h
         h_constr_ub = [];  % upper bound constraint on the constrained variables h
-        u_n_ub;
-        u_t_ub;
-        u_n_lb;
-        u_t_lb;
+        u_n_ub = 0.05;
+        u_t_ub = 0.05;
+        u_n_lb = 0;
+        u_t_lb = -0.05;
 
         % Solver parameters
         solver_params = struct;
@@ -48,7 +48,10 @@ classdef NMPC_controller < casadi.Callback
         y_ref;             % Trajectory points
         index_ref = 0;     % utility variable for the trajectory tracking
 
+        % Delay compensation parameters
         delay_compensation; % Delay to compensate with the controller [s]
+        delay_buff_comp;
+        u_buff_contr;
 
     end
 
@@ -66,14 +69,11 @@ classdef NMPC_controller < casadi.Callback
     methods
 
         % Constructor
-        function self = NMPC_controller(name,plant,linux_set, sample_time, Hp, u_n_ub, u_t_ub, u_n_lb, u_t_lb)
+        function self = NMPC_controller(name,plant, sample_time, Hp)
             self@casadi.Callback();
 
             % Acados initialitation
             %self.init();
-            if linux_set == 0
-                env_vars_acados
-            end
             check_acados_requirements()
 
             % Set solver parameters
@@ -85,8 +85,8 @@ classdef NMPC_controller < casadi.Callback
             self.initial_condition = zeros(plant.sym_model.nx,1);
 
             % Constraints
-            self.h_constr_ub = [0.9*plant.slider_params.ywidth/2 u_n_ub u_t_ub];
-            self.h_constr_lb = [-0.9*plant.slider_params.ywidth/2 u_n_lb u_t_lb];
+            self.h_constr_ub = [0.9*plant.slider_params.ywidth/2 self.u_n_ub self.u_t_ub];
+            self.h_constr_lb = [-0.9*plant.slider_params.ywidth/2 self.u_n_lb self.u_t_lb];
 
             % Controller parameters
             self.Hp = Hp;
@@ -98,8 +98,18 @@ classdef NMPC_controller < casadi.Callback
 
         function set_delay_comp(self,delay)
             self.delay_compensation = delay;
+            self.delay_buff_comp = ceil(self.delay_compensation/self.sample_time);
+            self.u_buff_contr = zeros(self.sym_model.nu, self.delay_buff_comp);
         end
 
+        function xk_sim = delay_buffer_sim(self, plant, x)
+            xk_sim = x;
+            for k = 1 : self.delay_buff_comp
+                x_dot_sim = plant.eval_model(xk_sim,self.u_buff_contr(:,end-k+1));
+                x_sim = xk_sim + self.sample_time*x_dot_sim;
+                xk_sim = x_sim;
+            end
+        end
 
         function update_constraints(self, u_n_ub, u_t_ub, u_n_lb, u_t_lb)
             self.u_n_lb = u_n_lb;
@@ -134,7 +144,6 @@ classdef NMPC_controller < casadi.Callback
                 end
             end
         end
-
 
         function initial_condition_update(self,new_initial_condition)
             % Update the initial condition for a new control
@@ -217,6 +226,7 @@ classdef NMPC_controller < casadi.Callback
             %create the ocp solver
             self.ocp_solver = acados_ocp(self.create_ocp_model(), self.create_ocp_opts());
         end
+        
         function u = solve(self,x0)
             % update initial state
             tic
@@ -260,6 +270,7 @@ classdef NMPC_controller < casadi.Callback
 
             toc
         end
+        
         function set_reference_trajectory(self,y_ref)
             % Update reference trajectory
             self.y_ref = y_ref;
