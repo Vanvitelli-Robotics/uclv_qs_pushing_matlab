@@ -11,7 +11,7 @@ model_path = fullfile(pwd,'../cad_models');
 addpath(model_path);
 
 % Specify if linux or windows (true = linux, false = windows)
-linux_set = true;
+linux_set = false;
 
 % Pusher_Slider struct parameters
 slider.mu_sg = 0.32;                                  % friction coefficient between slider and ground
@@ -48,17 +48,17 @@ sym_type = "matlab";
 time_sim = 20;
 
 % Change delay of the plant and the delay to compensate with the controller
-p.set_delay(0.2);
-controller.set_delay_comp(0.2);
+p.set_delay(0);
+controller.set_delay_comp(0);
 
 % Set initial condition
-x0 = [0 0 deg2rad(20) -slider.xwidth/2 slider.ywidth/2*0.7]';
+x0 = [0 0 deg2rad(0) -slider.xwidth/2 slider.ywidth/2*0.7]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
 W_x = diag([10 10 .1 0 0.0]);  % State matrix weight
 W_x_e = 10*W_x;                %diag([100 20 .5 0 0]);
-W_u = diag([1 1]);            % Control matrix weight
+W_u = diag([1 10]);            % Control matrix weight
 controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
@@ -82,7 +82,7 @@ traj_gen.set_target(x0,xf,t0,tf);
 % Test waypoints trajectory
 x0_w = [x0(1:2)' 0];
 xf_w = [0.3 0.01 0; 
-        0.3 0.05 0
+%         0.3 0.05 0
        ];
 traj_gen.waypoints_ = [x0_w; xf_w];
 [time, traj] = traj_gen.waypoints_gen;
@@ -107,7 +107,7 @@ if simulation_ == true
     helper.my_animate(x_s,y_s,theta_s,S_p_x,S_p_y,controller.sample_time, traj)
 %     helper.my_animate(traj(1,:)',traj(2,:)',traj(3,:)',x0(4)*ones(1,length(traj(1,:))),zeros(1,length(traj(1,:))), controller.sample_time, traj)
 %     helper.my_plot(time_plot, [traj(1:2,:);traj_ang_; traj(4:5,:)], x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t)
-%     helper.my_plot(time_plot, [traj; x0(4)*ones(1,length(traj(1,:))); zeros(1,length(traj(1,:)))], x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t)
+    helper.my_plot(time_plot, traj, x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t)
 end
 
 

@@ -32,14 +32,14 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-project(Plant_real)
+project(pusher_slider_model)
 
 # build options.
-option(BUILD_ACADOS_SOLVER_LIB "Should the solver library acados_solver_Plant_real be build?" OFF)
-option(BUILD_ACADOS_OCP_SOLVER_LIB "Should the OCP solver library acados_ocp_solver_Plant_real be build?" OFF)
-option(BUILD_EXAMPLE "Should the example main_Plant_real be build?" OFF)
-option(BUILD_SIM_EXAMPLE "Should the simulation example main_sim_Plant_real be build?" OFF)
-option(BUILD_ACADOS_SIM_SOLVER_LIB "Should the simulation solver library acados_sim_solver_Plant_real be build?" OFF)
+option(BUILD_ACADOS_SOLVER_LIB "Should the solver library acados_solver_pusher_slider_model be build?" OFF)
+option(BUILD_ACADOS_OCP_SOLVER_LIB "Should the OCP solver library acados_ocp_solver_pusher_slider_model be build?" OFF)
+option(BUILD_EXAMPLE "Should the example main_pusher_slider_model be build?" OFF)
+option(BUILD_SIM_EXAMPLE "Should the simulation example main_sim_pusher_slider_model be build?" OFF)
+option(BUILD_ACADOS_SIM_SOLVER_LIB "Should the simulation solver library acados_sim_solver_pusher_slider_model be build?" OFF)
 
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_SYSTEM_NAME MATCHES "Windows")
@@ -50,40 +50,40 @@ endif()
 
 
 # object target names
-set(MODEL_OBJ model_Plant_real)
-set(OCP_OBJ ocp_Plant_real)
-set(SIM_OBJ sim_Plant_real)
+set(MODEL_OBJ model_pusher_slider_model)
+set(OCP_OBJ ocp_pusher_slider_model)
+set(SIM_OBJ sim_pusher_slider_model)
 
 # model
 set(MODEL_SRC
-    Plant_real_model/Plant_real_expl_ode_fun.c
-    Plant_real_model/Plant_real_expl_vde_forw.c
-    Plant_real_model/Plant_real_expl_vde_adj.c
+    pusher_slider_model_model/pusher_slider_model_expl_ode_fun.c
+    pusher_slider_model_model/pusher_slider_model_expl_vde_forw.c
+    pusher_slider_model_model/pusher_slider_model_expl_vde_adj.c
 )
 add_library(${MODEL_OBJ} OBJECT ${MODEL_SRC} )
 
 # optimal control problem - mostly CasADi exports
 if(${BUILD_ACADOS_SOLVER_LIB} OR ${BUILD_ACADOS_OCP_SOLVER_LIB} OR ${BUILD_EXAMPLE})
     set(OCP_SRC
-        acados_solver_Plant_real.c)
+        acados_solver_pusher_slider_model.c)
     add_library(${OCP_OBJ} OBJECT ${OCP_SRC})
 endif()
 # for sim solver
 if(${BUILD_ACADOS_SOLVER_LIB} OR ${BUILD_EXAMPLE}
     OR ${BUILD_SIM_EXAMPLE} OR ${BUILD_ACADOS_SIM_SOLVER_LIB})
-    set(SIM_SRC acados_sim_solver_Plant_real.c)
+    set(SIM_SRC acados_sim_solver_pusher_slider_model.c)
     add_library(${SIM_OBJ} OBJECT ${SIM_SRC})
 endif()
 
 # for target example
-set(EX_SRC main_Plant_real.c)
-set(EX_EXE main_Plant_real)
+set(EX_SRC main_pusher_slider_model.c)
+set(EX_EXE main_pusher_slider_model)
 set(EXTERNAL_DIR)
 set(EXTERNAL_LIB)
 
 # set some search paths for preprocessor and linker
-set(ACADOS_INCLUDE_PATH C:/Users/Marco/Documents/GitHub/acados/examples/acados_matlab_octave/../../include CACHE PATH "Define the path which contains the include directory for acados.")
-set(ACADOS_LIB_PATH C:/Users/Marco/Documents/GitHub/acados/examples/acados_matlab_octave/../../lib CACHE PATH "Define the path which contains the lib directory for acados.")
+set(ACADOS_INCLUDE_PATH C:/Users/saraf/acados/examples/acados_matlab_octave/../../include CACHE PATH "Define the path which contains the include directory for acados.")
+set(ACADOS_LIB_PATH C:/Users/saraf/acados/examples/acados_matlab_octave/../../lib CACHE PATH "Define the path which contains the lib directory for acados.")
 
 # c-compiler flags for debugging
 set(CMAKE_C_FLAGS_DEBUG "-O0 -ggdb")
@@ -112,7 +112,7 @@ endif()
 
 # bundled_shared_lib
 if(${BUILD_ACADOS_SOLVER_LIB})
-    set(LIB_ACADOS_SOLVER acados_solver_Plant_real)
+    set(LIB_ACADOS_SOLVER acados_solver_pusher_slider_model)
     add_library(${LIB_ACADOS_SOLVER} SHARED $<TARGET_OBJECTS:${MODEL_OBJ}> $<TARGET_OBJECTS:${OCP_OBJ}>
         $<TARGET_OBJECTS:${SIM_OBJ}>)
     install(TARGETS ${LIB_ACADOS_SOLVER} DESTINATION ${CMAKE_INSTALL_PREFIX})
@@ -120,7 +120,7 @@ endif(${BUILD_ACADOS_SOLVER_LIB})
 
 # ocp_shared_lib
 if(${BUILD_ACADOS_OCP_SOLVER_LIB})
-    set(LIB_ACADOS_OCP_SOLVER acados_ocp_solver_Plant_real)
+    set(LIB_ACADOS_OCP_SOLVER acados_ocp_solver_pusher_slider_model)
     add_library(${LIB_ACADOS_OCP_SOLVER} SHARED $<TARGET_OBJECTS:${MODEL_OBJ}> $<TARGET_OBJECTS:${OCP_OBJ}>)
     # Specify libraries or flags to use when linking a given target and/or its dependents.
     target_link_libraries(${LIB_ACADOS_OCP_SOLVER} PRIVATE ${EXTERNAL_LIB})
@@ -137,15 +137,15 @@ endif(${BUILD_EXAMPLE})
 
 # example_sim
 if(${BUILD_SIM_EXAMPLE})
-    set(EX_SIM_SRC main_sim_Plant_real.c)
-    set(EX_SIM_EXE main_sim_Plant_real)
+    set(EX_SIM_SRC main_sim_pusher_slider_model.c)
+    set(EX_SIM_EXE main_sim_pusher_slider_model)
     add_executable(${EX_SIM_EXE} ${EX_SIM_SRC} $<TARGET_OBJECTS:${MODEL_OBJ}> $<TARGET_OBJECTS:${SIM_OBJ}>)
     install(TARGETS ${EX_SIM_EXE} DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif(${BUILD_SIM_EXAMPLE})
 
 # sim_shared_lib
 if(${BUILD_ACADOS_SIM_SOLVER_LIB})
-    set(LIB_ACADOS_SIM_SOLVER acados_sim_solver_Plant_real)
+    set(LIB_ACADOS_SIM_SOLVER acados_sim_solver_pusher_slider_model)
     add_library(${LIB_ACADOS_SIM_SOLVER} SHARED $<TARGET_OBJECTS:${MODEL_OBJ}> $<TARGET_OBJECTS:${SIM_OBJ}>)
     install(TARGETS ${LIB_ACADOS_SIM_SOLVER} DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif(${BUILD_ACADOS_SIM_SOLVER_LIB})

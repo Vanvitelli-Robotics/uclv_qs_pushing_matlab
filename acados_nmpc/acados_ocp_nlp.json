@@ -46,11 +46,11 @@
 		"cost_source_ext_cost": [],
 		"cost_function_ext_cost": [],
 		"W": [
-			[2,0,0,0,0,0,0],
+			[200,0,0,0,0,0,0],
 			[0,2,0,0,0,0,0],
 			[0,0,2,0,0,0,0],
-			[0,0,0,2,0,0,0],
-			[0,0,0,0,2,0,0],
+			[0,0,0,0.002,0,0,0],
+			[0,0,0,0,0.002,0,0],
 			[0,0,0,0,0,2,0],
 			[0,0,0,0,0,0,2]
 		],
@@ -103,11 +103,11 @@
 		"cost_source_ext_cost_0": [],
 		"cost_function_ext_cost_0": [],
 		"W_0": [
-			[2,0,0,0,0,0,0],
+			[200,0,0,0,0,0,0],
 			[0,2,0,0,0,0,0],
 			[0,0,2,0,0,0,0],
-			[0,0,0,2,0,0,0],
-			[0,0,0,0,2,0,0],
+			[0,0,0,0.002,0,0,0],
+			[0,0,0,0,0.002,0,0],
 			[0,0,0,0,0,2,0],
 			[0,0,0,0,0,0,2]
 		],
@@ -140,11 +140,11 @@
 		"cost_source_ext_cost_e": [],
 		"cost_function_ext_cost_e": [],
 		"W_e": [
-			[2,0,0,0,0],
+			[200,0,0,0,0],
 			[0,2,0,0,0],
 			[0,0,2,0,0],
-			[0,0,0,2,0],
-			[0,0,0,0,2]
+			[0,0,0,0.002,0],
+			[0,0,0,0,0.002]
 		],
 		"Vx_e": [
 			[1,0,0,0,0],
@@ -179,16 +179,16 @@
 		"constr_type": "BGH",
 		"constr_type_e": "BGH",
 		"lbx": [
-			-0.03125
+			-0.028125
 		],
-		"lbu": [0,-0.05],
+		"lbu": [0,-0.5],
 		"idxbx": [
 			4
 		],
 		"ubx": [
-			0.03125
+			0.028125
 		],
-		"ubu": [0.05,0.05],
+		"ubu": [0.5,0.5],
 		"idxbu": [0,1],
 		"lbx_e": {
 			"_ArrayType_": "double",
@@ -365,8 +365,8 @@
 			"_ArraySize_": [1,0],
 			"_ArrayData_": []
 		},
-		"lbx_0": [0,0,0.1745329252,-0.041,0.015625],
-		"ubx_0": [0,0,0.1745329252,-0.041,0.015625],
+		"lbx_0": [0,0,0,0,0],
+		"ubx_0": [0,0,0,0,0],
 		"idxbx_0": [0,1,2,3,4],
 		"idxbxe_0": [0,1,2,3,4],
 		"lphi": {
@@ -448,7 +448,7 @@
 			0.05,
 			0.05
 		],
-		"nlp_solver_type": "SQP",
+		"nlp_solver_type": "SQP_RTI",
 		"sim_method_num_steps": [
 			1,
 			1,
@@ -555,7 +555,7 @@
 		"ext_fun_compile_flags": ""
 	},
 	"model": {
-		"name": "Plant_real",
+		"name": "pusher_slider_model",
 		"dyn_ext_fun_type": "casadi",
 		"dyn_generic_source": [],
 		"dyn_disc_fun_jac_hess": [],
@@ -567,8 +567,8 @@
 		}
 	},
 	"parameter_values": [],
-	"acados_include_path": "C:\\Users\\Marco\\Documents\\GitHub\\acados\\examples\\acados_matlab_octave\\..\\..\/include",
-	"acados_lib_path": "C:\\Users\\Marco\\Documents\\GitHub\\acados\\examples\\acados_matlab_octave\\..\\..\/lib",
+	"acados_include_path": "C:\\Users\\saraf\\acados\\examples\\acados_matlab_octave\\..\\..\/include",
+	"acados_lib_path": "C:\\Users\\saraf\\acados\\examples\\acados_matlab_octave\\..\\..\/lib",
 	"problem_class": "OCP",
 	"simulink_opts": {
 		"outputs": {
@@ -615,7 +615,7 @@
 		"samplingtime": "t0"
 	},
 	"cython_include_dirs": [],
-	"code_export_directory": "C:\\Users\\Marco\\Documents\\GitHub\\pusher_slider_matlab\\acados_nmpc\\c_generated_code",
+	"code_export_directory": "C:\\Users\\saraf\\pusher_slider_matlab\\acados_nmpc\\c_generated_code",
 	"json_file": "acados_ocp_nlp.json",
 	"shared_lib_ext": ".so",
 	"acados_link_libs": {

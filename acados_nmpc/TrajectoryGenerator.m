@@ -86,10 +86,10 @@ classdef TrajectoryGenerator < handle
             time_tf = cumsum(times);
 
             % create trajectory
-            eulerAngs = zeros(size(self.waypoints_,1),3);
-            eulerAngs(1,:) = [self.x0(3) 0 0];
-            eulerAngs(2:end,1) = atan2(self.waypoints_(2:end,2)-self.waypoints_(1:end-1,2),self.waypoints_(2:end,1)-self.waypoints_(1:end-1,1));
-            q = quaternion(eulerAngs,"euler","ZYX","frame");
+%             eulerAngs = zeros(size(self.waypoints_,1),3);
+%             eulerAngs(1,:) = [self.x0(3) 0 0];
+%             eulerAngs(2:end,1) = atan2(self.waypoints_(2:end,2)-self.waypoints_(1:end-1,2),self.waypoints_(2:end,1)-self.waypoints_(1:end-1,1));
+%             q = quaternion(eulerAngs,"euler","ZYX","frame");
 
             trajectory = waypointTrajectory(self.waypoints_, time_tf, 'SampleRate', Fs);%, 'Orientation',q);
 
@@ -106,7 +106,9 @@ classdef TrajectoryGenerator < handle
                 legend({'Position', 'Waypoints'})
             end
 
-            yaw = quat2angle(orient);
+%             yaw = quat2angle(orient);
+            eulerAngles = quat2eul(orient);
+            yaw = eulerAngles(:,1);
 
             traj = [pos(:,1)'; pos(:,2)'; yaw'; self.x0(4)*ones(1,length(pos(:,1))); zeros(1,length(pos(:,1)))];
             tInfo = waypointInfo(trajectory);

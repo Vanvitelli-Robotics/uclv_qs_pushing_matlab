@@ -1,8 +1,8 @@
-# Install script for directory: C:/Users/Marco/Documents/GitHub/pusher_slider_matlab/acados_nmpc/c_generated_code
+# Install script for directory: C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/pusher_slider")
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/pusher_slider_model")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -39,30 +39,30 @@ endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-   "C:/Program Files (x86)/pusher_slider/libacados_ocp_solver_Plant_real.dll.a")
+   "C:/Program Files (x86)/pusher_slider_model/libacados_ocp_solver_pusher_slider_model.dll.a")
   if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-  file(INSTALL DESTINATION "C:/Program Files (x86)/pusher_slider" TYPE STATIC_LIBRARY OPTIONAL FILES "C:/Users/Marco/Documents/GitHub/pusher_slider_matlab/acados_nmpc/c_generated_code/libacados_ocp_solver_Plant_real.dll.a")
+  file(INSTALL DESTINATION "C:/Program Files (x86)/pusher_slider_model" TYPE STATIC_LIBRARY OPTIONAL FILES "C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code/libacados_ocp_solver_pusher_slider_model.dll.a")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-   "C:/Program Files (x86)/pusher_slider/acados_ocp_solver_Plant_real.lib")
+   "C:/Program Files (x86)/pusher_slider_model/acados_ocp_solver_pusher_slider_model.lib")
   if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-  file(INSTALL DESTINATION "C:/Program Files (x86)/pusher_slider" TYPE SHARED_LIBRARY FILES "C:/Users/Marco/Documents/GitHub/pusher_slider_matlab/acados_nmpc/c_generated_code/acados_ocp_solver_Plant_real.lib")
-  if(EXISTS "$ENV{DESTDIR}/C:/Program Files (x86)/pusher_slider/acados_ocp_solver_Plant_real.lib" AND
-     NOT IS_SYMLINK "$ENV{DESTDIR}/C:/Program Files (x86)/pusher_slider/acados_ocp_solver_Plant_real.lib")
+  file(INSTALL DESTINATION "C:/Program Files (x86)/pusher_slider_model" TYPE SHARED_LIBRARY FILES "C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code/acados_ocp_solver_pusher_slider_model.lib")
+  if(EXISTS "$ENV{DESTDIR}/C:/Program Files (x86)/pusher_slider_model/acados_ocp_solver_pusher_slider_model.lib" AND
+     NOT IS_SYMLINK "$ENV{DESTDIR}/C:/Program Files (x86)/pusher_slider_model/acados_ocp_solver_pusher_slider_model.lib")
     if(CMAKE_INSTALL_DO_STRIP)
-      execute_process(COMMAND "C:/Strawberry/c/bin/strip.exe" "$ENV{DESTDIR}/C:/Program Files (x86)/pusher_slider/acados_ocp_solver_Plant_real.lib")
+      execute_process(COMMAND "C:/Strawberry/c/bin/strip.exe" "$ENV{DESTDIR}/C:/Program Files (x86)/pusher_slider_model/acados_ocp_solver_pusher_slider_model.lib")
     endif()
   endif()
 endif()
@@ -75,5 +75,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "C:/Users/Marco/Documents/GitHub/pusher_slider_matlab/acados_nmpc/c_generated_code/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
