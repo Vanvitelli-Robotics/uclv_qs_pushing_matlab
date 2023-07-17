@@ -23,8 +23,8 @@ start_time = rostime('now');
 
 % State and control variables
 global x u time_vec
-x = x0;
-u = [0;0];
+x = [];
+u = [];
 time_vec = [];
 params = struct;
 mpc_state_sub = rossubscriber("/mpc_pose","geometry_msgs/Pose2D", {@get_mpc_state,tftree,T_BS0, p, controller, start_time, command_pub, command_msg, time_exp, params}, "BufferSize",1);
@@ -43,11 +43,11 @@ function get_mpc_state(mpc_state_sub, mpc_pose, tftree, T_BS0, p, controller, st
         command_msg.Linear.X = 0;
         command_msg.Linear.Y = 0;
         send(command_pub,command_msg)
-%         pause(2);
+        %         pause(2);
 
         rosshutdown;
         disp("Saving parameters")
-        helper.save_parameters("exp_robot",x,u,time_vec-time_vec(1), params);
+        helper.save_parameters("exp_robot3",x,u,time_vec-time_vec(1), params);
 
         disp("END-2")
         return
@@ -73,6 +73,13 @@ function get_mpc_state(mpc_state_sub, mpc_pose, tftree, T_BS0, p, controller, st
     % Delay Buffer Simulation
     xk = controller.delay_buffer_sim(p, x(:,end));
     u = [u controller.solve(xk)];
+%     if t.seconds > time_exp/4
+%         u_ = [0.01; 0];
+% 
+%     else 
+%         u_ = [0 0]';
+%     end
+%     u = [u u_];
 
     controller.u_buff_contr = [u(:,end) controller.u_buff_contr(:,1:end-1)];
 
@@ -83,9 +90,9 @@ function get_mpc_state(mpc_state_sub, mpc_pose, tftree, T_BS0, p, controller, st
     command_msg.Linear.X = u_robot(1);
     command_msg.Linear.Y = u_robot(2);
     send(command_pub,command_msg)
-    
-%     helper.save_parameters("exp_robot",x,u,time_vec, params);
-    toc
+
+    %     helper.save_parameters("exp_robot",x,u,time_vec, params);
+%     toc
 end
 
 function T = transformToMatrix(transf)

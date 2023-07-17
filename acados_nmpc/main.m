@@ -47,23 +47,23 @@ controller.create_ocp_solver();
 %% SETTING PARAMETERS FOR CONTROLLER AND PLANT
 
 % Change delay of the plant and the delay to compensate with the controller
-p.set_delay(0.15);
-controller.set_delay_comp(0.15);
+p.set_delay(0.3);
+controller.set_delay_comp(0.3);
 
 % Set initial condition
-x0 = [0 0 deg2rad(0) -slider.xwidth/2 slider.ywidth/2*0.3]';
+x0 = [0 0 deg2rad(20) -slider.xwidth/2 slider.ywidth/2*0.3]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
 W_x = diag([10 10 .1 0 0.0]);  % State matrix weight
 W_x_e = 10*W_x;                %diag([100 20 .5 0 0]);
-W_u = diag([1 10]);            % Control matrix weight
+W_u = diag([1 3]);            % Control matrix weight
 controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
 % Set constraints
-u_n_lb = 0; u_n_ub = 0.02;
-u_t_lb = -0.04; u_t_ub = 0.04;
+u_n_lb = 0; u_n_ub = 0.03;
+u_t_lb = -0.03; u_t_ub = 0.03;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % Create desired trajectory
@@ -73,14 +73,14 @@ xf(3) = acos((xf(1)-x0(1))/(norm(xf(1:2)-x0(1:2))));
 traj_gen = TrajectoryGenerator(sample_time,u_n_ub/2);
 traj_gen.set_plot = false;
 
-time_sim = 80;
+time_sim = 20;
 t0 = 0; tf = time_sim*1;
 traj_gen.set_target(x0,xf,t0,tf);
 % [time, traj] = traj_gen.straight_line(true);
 
 x0_w = [x0(1:2)' 0];
-xf_w = [0.3 0.0 0;
-    0.3 0.02 0
+xf_w = [0.2 0.0 0;
+%     0.3 0.3 0
     ];
 traj_gen.waypoints_ = [x0_w; xf_w];
 [time, traj] = traj_gen.waypoints_gen;
@@ -99,7 +99,7 @@ controller.set_reference_trajectory([traj; control_ref]);
 % If you want to simulate on simulink set simulation_ true and then set the
 % type of simulation (simulink, matlab or real robot)
 simulation_ = true;
-sym_type = "matlab";
+sym_type = "robot";
 
 
 % Simulation
@@ -111,7 +111,7 @@ if simulation_ == true
 
     elseif(strcmp(sym_type,"matlab"))
         disp("MATLAB SIMULATION")
-        [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.closed_loop_matlab(p,controller,x0,time_sim,false,true);
+        [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.closed_loop_matlab(p,controller,x0,time_sim,true,true);
         params = helper.save_parameters("exp1",[x_s; y_s; theta_s; S_p_x; S_p_y],[u_n; u_t],time_plot);
 
     elseif(strcmp(sym_type,"robot"))
@@ -125,8 +125,10 @@ if simulation_ == true
 end
 
 %% PLOT
-helper.my_plot(params.t, traj, params.x_S, params.y_S, params.theta_S, params.S_p_x, params.S_p_y, params.u_n, params.u_t)
-%helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y,controller.sample_time, traj)
+helper.my_plot(params.t(1:end-1), traj, params.x_S, params.y_S, params.theta_S, params.S_p_x, params.S_p_y, params.u_n, params.u_t)
+
+%% ANIMATE
+helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y,controller.sample_time, traj)
 
 
 
