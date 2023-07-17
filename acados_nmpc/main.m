@@ -12,7 +12,7 @@ model_path = fullfile(pwd,'../cad_models');
 addpath(model_path);
 
 % Specify if linux or windows (true = linux, false = windows)
-linux_set = false;
+linux_set = true;
 
 if linux_set == false
     env_vars_acados;
@@ -24,8 +24,8 @@ end
 % Pusher_Slider struct parameters
 slider.mu_sg = 0.32;                                  % friction coefficient between slider and ground
 slider.mu_sp = 0.19;                                  % friction coefficient between slider and pusher
-slider.ywidth = 0.0625;                               % width of the slider along x-direction [m]
-slider.xwidth = 0.082;                                % width of the slider along y-direction [m]
+slider.xwidth = 0.0625;                               % width of the slider along x-direction [m]
+slider.ywidth = 0.082;                                % width of the slider along y-direction [m]
 slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
 slider.m = 0.2875;                                    % slider mass [kg]
 plant_time_delay = 0.1;                               % delay of the plant [s]
@@ -47,11 +47,11 @@ controller.create_ocp_solver();
 %% SETTING PARAMETERS FOR CONTROLLER AND PLANT
 
 % Change delay of the plant and the delay to compensate with the controller
-p.set_delay(0.1);
-controller.set_delay_comp(0.1);
+p.set_delay(0.15);
+controller.set_delay_comp(0.15);
 
 % Set initial condition
-x0 = [0 0 deg2rad(0) -slider.xwidth/2 slider.ywidth/2*0.7]';
+x0 = [0 0 deg2rad(0) -slider.xwidth/2 slider.ywidth/2*0.3]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
@@ -62,8 +62,8 @@ controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
 % Set constraints
-u_n_lb = 0; u_n_ub = 0.05;
-u_t_lb = -0.05; u_t_ub = 0.05;
+u_n_lb = 0; u_n_ub = 0.02;
+u_t_lb = -0.04; u_t_ub = 0.04;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % Create desired trajectory
@@ -73,17 +73,18 @@ xf(3) = acos((xf(1)-x0(1))/(norm(xf(1:2)-x0(1:2))));
 traj_gen = TrajectoryGenerator(sample_time,u_n_ub/2);
 traj_gen.set_plot = false;
 
-time_sim = 20;
+time_sim = 80;
 t0 = 0; tf = time_sim*1;
 traj_gen.set_target(x0,xf,t0,tf);
 % [time, traj] = traj_gen.straight_line(true);
 
 x0_w = [x0(1:2)' 0];
-xf_w = [0.3 0.01 0;
+xf_w = [0.3 0.0 0;
     0.3 0.02 0
     ];
 traj_gen.waypoints_ = [x0_w; xf_w];
 [time, traj] = traj_gen.waypoints_gen;
+time_sim = time(end) + 2;
 
 % Set control reference
 u_n_ref = 0; u_t_ref = 0;
@@ -104,25 +105,28 @@ sym_type = "matlab";
 % Simulation
 if simulation_ == true
     if(strcmp(sym_type,"simulink"))
+        disp("SIMULINK SIMULATION")
         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.closed_loop_simulink(time_sim);
         params = helper.save_parameters("exp1",[x_s; y_s; theta_s; S_p_x; S_p_y],[u_n; u_t],time_plot);
 
     elseif(strcmp(sym_type,"matlab"))
-        [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.closed_loop_matlab(p,controller,x0,time_sim,true);
+        disp("MATLAB SIMULATION")
+        [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.closed_loop_matlab(p,controller,x0,time_sim,false,true);
         params = helper.save_parameters("exp1",[x_s; y_s; theta_s; S_p_x; S_p_y],[u_n; u_t],time_plot);
 
     elseif(strcmp(sym_type,"robot"))
+        disp("ROBOT EXPERIMENT")
         robot_main;
     else
         disp("Simulation type not valid!")
     end
-    helper.my_plot(params.t, traj, params.x_S, params.y_S, params.theta_S, params.S_p_x, params.S_p_y, params.u_n, params.u_t)
-    helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y,controller.sample_time, traj)
 
-    %     helper.my_plot(time_plot, traj, x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t)
-    %     helper.my_animate(x_s,y_s,theta_s,S_p_x,S_p_y,controller.sample_time, traj)
 
 end
+
+%% PLOT
+helper.my_plot(params.t, traj, params.x_S, params.y_S, params.theta_S, params.S_p_x, params.S_p_y, params.u_n, params.u_t)
+%helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y,controller.sample_time, traj)
 
 
 

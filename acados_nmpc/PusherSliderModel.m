@@ -81,7 +81,7 @@ classdef PusherSliderModel < casadi.Callback
             % Input: S_p_x  x-coordinate of the pusher position w.r.t slider frame
             %        S_p_y  y-coordinate of the pusher position w.r.t slider frame
             % Ouptut: contact   boolean value (true if there is contact)
-            if abs(S_p_y) > self.slider_params.ywidth/2 || (S_p_x ~= -self.slider_params.xwidth/2)
+            if abs(S_p_y) > self.slider_params.ywidth/2 %|| (S_p_x ~= -self.slider_params.xwidth/2)
                 contact = false;
             else
                 contact = true;

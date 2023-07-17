@@ -74,7 +74,7 @@ classdef helper
             end
         end
 
-        function [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_sim_vec] = closed_loop_matlab(plant, controller,x0, time_sim, print_)
+        function [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_sim_vec] = closed_loop_matlab(plant, controller,x0, time_sim, print_, sim_noise)
             % CLOSED LOOP SIMULATION
 
             % Time of overall simulation
@@ -102,6 +102,11 @@ classdef helper
 %                     x_sim = xk_sim + controller.sample_time*x_dot_sim;
 %                     xk_sim = x_sim;
 %                 end
+
+                % noise simulation
+                if(sim_noise == true)
+                    x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 0 randn()*1e-4]';
+                end
 
                 xk_sim = controller.delay_buffer_sim(plant, x(:,i));
 
@@ -156,8 +161,8 @@ classdef helper
             time_sim_vec = out.time;
         end
 
-        function params = save_parameters(name_exp, x, u, t)
-            params = struct;
+        function params = save_parameters(name_exp, x, u, t, params)
+%             params = struct;
             params.t = t;
             params.x_S = x(1,:);
             params.y_S = x(2,:);

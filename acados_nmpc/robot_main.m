@@ -1,6 +1,8 @@
 
 time_exp = time_sim; % Time of the experiment [s]
 
+% rosshutdown;
+
 rosinit('192.168.2.94',11310)
 
 has_robot = false;
@@ -20,26 +22,34 @@ command_msg = rosmessage(command_pub);
 start_time = rostime('now');
 
 % State and control variables
+global x u time_vec
 x = x0;
-u = [];
+u = [0;0];
 time_vec = [];
-mpc_state_sub = rossubscriber("/mpc_pose","geometry_msgs/Pose2D", {@get_mpc_state,tftree,T_BS0, p, controller, x, u start_time, command_pub, command_msg, time_vec}, "BufferSize",1);
+params = struct;
+mpc_state_sub = rossubscriber("/mpc_pose","geometry_msgs/Pose2D", {@get_mpc_state,tftree,T_BS0, p, controller, start_time, command_pub, command_msg, time_exp, params}, "BufferSize",1);
 
 
-function get_mpc_state(mpc_state_sub, mpc_pose, tftree, T_BS0, p, controller, x, u, start_time, command_pub, command_msg, time_vec)
+function get_mpc_state(mpc_state_sub, mpc_pose, tftree, T_BS0, p, controller, start_time, command_pub, command_msg, time_exp, params)
+    global x u time_vec
     %     tic
+
     t = rostime('now')-start_time;
-    time_vec = [time_vec; t];
+    time_vec = [time_vec; t.Sec + 10^-9*t.Nsec];
 
     if t.seconds > time_exp
+
+        disp("END")
         command_msg.Linear.X = 0;
         command_msg.Linear.Y = 0;
         send(command_pub,command_msg)
-        pause(2);
-        rosshutdown
+%         pause(2);
 
-        % Save experiment parameters
-        params = helper.save_parameters("exp1",x,u,time_vec);
+        rosshutdown;
+        disp("Saving parameters")
+        helper.save_parameters("exp_robot",x,u,time_vec-time_vec(1), params);
+
+        disp("END-2")
         return
     end
 
@@ -49,15 +59,15 @@ function get_mpc_state(mpc_state_sub, mpc_pose, tftree, T_BS0, p, controller, x,
 
     % Get homogeneous transform from push_frame to slider0
     T_PS0 = T_BS0 * T_PB;
-    
+
     % Get the pusher position in the slider frame
     S0_p = [T_PS0(1,end);T_PS0(2,end)]; % position of the pusher w.r.t. the slider0 frame
     S0_s = [mpc_pose.X;mpc_pose.Y]; % position of the slider w.r.t. the slider0 frame
     S0_ps = S0_p-S0_s; % relative position between slider and pusher w.r.t. the slider0 frame
     S_p = helper.my_rotz_2d(mpc_pose.Theta)* S0_ps;
 
-    % Get state [x y theta rx ry]
-    x_ = [mpc_pose.X mpc_pose.Y mpc_pose.Theta S_p]';
+    %     Get state [x y theta rx ry]
+    x_ = [mpc_pose.X mpc_pose.Y mpc_pose.Theta S_p']';
     x = [x x_];
 
     % Delay Buffer Simulation
@@ -68,12 +78,14 @@ function get_mpc_state(mpc_state_sub, mpc_pose, tftree, T_BS0, p, controller, x,
 
     % Send command to robot
     T_S0B = inv(T_BS0);
-    u_robot = T_S0B(1:3,1:3)*[vipi;0];
+    u_robot = T_S0B(1:3,1:3)*[u(:,end);0];
 
     command_msg.Linear.X = u_robot(1);
     command_msg.Linear.Y = u_robot(2);
     send(command_pub,command_msg)
-    %     toc
+    
+%     helper.save_parameters("exp_robot",x,u,time_vec, params);
+    toc
 end
 
 function T = transformToMatrix(transf)
