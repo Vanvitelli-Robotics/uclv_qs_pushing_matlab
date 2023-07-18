@@ -56,8 +56,8 @@ controller.initial_condition_update(x0);
 
 % Set matrix weights
 W_x = diag([10 10 .1 0 0.0]);  % State matrix weight
-W_x_e = 10*W_x;                %diag([100 20 .5 0 0]);
-W_u = diag([1 1]);            % Control matrix weight
+W_x_e = 2*W_x;                %diag([100 20 .5 0 0]);
+W_u = diag([.1 1]);            % Control matrix weight
 controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
@@ -133,13 +133,15 @@ end
 helper.my_plot(params.t, controller.y_ref, params.x_S, params.y_S, params.theta_S, params.S_p_x, params.S_p_y, params.u_n, params.u_t)
 
 %% ANIMATE
-step_animate = 3;
+step_animate = 5;
 params_animate.x_S = params.x_S(1:step_animate:end);
 params_animate.y_S = params.y_S(1:step_animate:end);
 params_animate.theta_S = params.theta_S(1:step_animate:end);
 params_animate.S_p_x = params.S_p_x(1:step_animate:end);
 params_animate.S_p_y = params.S_p_y(1:step_animate:end);
-helper.my_animate(params_animate.x_S,params_animate.y_S,params_animate.theta_S,params_animate.S_p_x,params_animate.S_p_y,controller.sample_time, traj)
+
+
+helper.my_animate(params_animate.x_S,params_animate.y_S,params_animate.theta_S,params_animate.S_p_x,params_animate.S_p_y,controller.sample_time, traj(:,1:step_animate:end))
 
 
 

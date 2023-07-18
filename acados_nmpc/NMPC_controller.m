@@ -262,9 +262,9 @@ classdef NMPC_controller < casadi.Callback
             self.utraj = self.ocp_solver.get('u');
             self.xtraj = self.ocp_solver.get('x');
             self.ptraj = self.ocp_solver.get('pi');
-%             self.utraj = [self.utraj(:,2:end) self.utraj(:,1)];
-%             self.xtraj = [self.xtraj(:,2:end) self.xtraj(:,1)];
-%             self.ptraj = [self.ptraj(:,2:end) self.ptraj(:,1)];
+            self.utraj = [self.utraj(:,2:end) self.utraj(:,end)];
+            self.xtraj = [self.xtraj(:,2:end) self.xtraj(:,end)];
+            self.ptraj = [self.ptraj(:,2:end) self.ptraj(:,end)];
 
             % status = ocp.get('status'); % 0 - success
             % ocp.print('stat')

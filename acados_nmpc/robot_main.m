@@ -59,6 +59,7 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, p, controller, start_tim
     S0_p = [mpc_state.Data(4);mpc_state.Data(5)]; % position of the slider w.r.t. the slider0 frame
     S0_ps = S0_p-S0_s; % relative position between slider and pusher w.r.t. the slider0 frame
     S_p = helper.my_rotz_2d(-mpc_pose.Theta)* S0_ps;
+    S_p(1) = -p.slider_params.xwidth/2;
 
     %     Get state [x y theta rx ry]
     x_ = [mpc_pose.X mpc_pose.Y mpc_pose.Theta S_p']';

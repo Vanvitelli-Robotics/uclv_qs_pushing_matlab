@@ -43,6 +43,11 @@ classdef helper
             figure
             slider_p = poseplot(quat0_s,p0_s, MeshFileName="cad_models/cuboide_santal.stl", ScaleFactor=0.001);%,PatchFaceColor="yellow");
             hold on
+            
+            p0_ref = [traj(1:2,1)' 0];
+            quat0_ref = quaternion(helper.my_rotz(traj(3,1)),'rotmat','frame');
+            slider_ref = poseplot(quat0_ref,p0_ref, MeshFileName="cad_models/cuboide_santal.stl", ScaleFactor=0.001);%,PatchFaceColor="yellow");
+           
 
             % Pusher frame
             %     p0_p = helper.my_rotz(theta(1))*[rx(1) ry(1) 0]';
@@ -50,7 +55,8 @@ classdef helper
             %     pusher_p = poseplot(quat0_p,p0_p, MeshFileName="cad model pusher\cad_model_pusher_1.stl",ScaleFactor=0.001);
             radius_pusher = 0.001;
             pusher_position = [x(1) y(1) 0]' + helper.my_rotz(theta(1))*[rx(1) ry(1) 0]';
-            viscircles([pusher_position(1) pusher_position(2)],radius_pusher,"Color",'red',"LineWidth",6);
+            h = viscircles([pusher_position(1) pusher_position(2)],radius_pusher,"Color",'black',"LineWidth",6);
+            viscircles([x(1) y(1)],radius_pusher,"Color",'red',"LineWidth",6);
 
             hold off
 
@@ -62,12 +68,19 @@ classdef helper
             zlabel("z [m]")
 
             for i = 2:1:length(x)
+                h.Visible = false;
                 position_s = [x(i) y(i) 0]';
                 quat_s = quaternion([0 0 theta(i)],'rotvec');
                 set(slider_p,Orientation=quat_s,Position=position_s);
+
+                position_ref = [traj(1:2,i)' 0]';
+                quat_ref = quaternion([0 0 traj(3,i)],'rotvec');
+                set(slider_ref,Orientation=quat_ref,Position=position_ref);
+
                 hold on
                 pusher_position = [x(i) y(i) 0]'+ helper.my_rotz(theta(i))*[rx(i) ry(i) 0]';
-                viscircles([pusher_position(1) pusher_position(2)],radius_pusher,"Color",'red',"LineWidth",6);
+                viscircles(ax1,[x(i) y(i)],radius_pusher,"Color",'red',"LineWidth",6);
+                h = viscircles(ax1,[pusher_position(1) pusher_position(2)],radius_pusher,"Color",'black',"LineWidth",6);
                 plot(traj(1,:), traj(2,:), '-.','LineWidth',3,'Color','b');
                 pause(sampling_time)
                 drawnow
