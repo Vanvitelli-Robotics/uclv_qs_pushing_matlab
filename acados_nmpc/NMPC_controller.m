@@ -129,6 +129,7 @@ classdef NMPC_controller < casadi.Callback
             % Usefull method to clean some variables for the new experiment
             self.utraj = [];
             self.xtraj = [];
+            self.ptraj = [];
             self.index_ref = 0;
             self.y_ref = [];
         end
@@ -229,7 +230,7 @@ classdef NMPC_controller < casadi.Callback
         
         function u = solve(self,x0)
             % update initial state
-            tic
+%             tic
             self.ocp_solver.set('constr_x0', x0);
 
             if (self.Hp + self.index_ref) ~= length(self.y_ref)
@@ -261,19 +262,22 @@ classdef NMPC_controller < casadi.Callback
             self.utraj = self.ocp_solver.get('u');
             self.xtraj = self.ocp_solver.get('x');
             self.ptraj = self.ocp_solver.get('pi');
-            %             self.utraj = [self.utraj(:,2:end) self.utraj(:,1)];
-            %             self.xtraj = [self.xtraj(:,2:end) self.xtraj(:,1)];
+%             self.utraj = [self.utraj(:,2:end) self.utraj(:,1)];
+%             self.xtraj = [self.xtraj(:,2:end) self.xtraj(:,1)];
+%             self.ptraj = [self.ptraj(:,2:end) self.ptraj(:,1)];
 
             % status = ocp.get('status'); % 0 - success
             % ocp.print('stat')
             u = self.ocp_solver.get('u', 0);
 
-            toc
+%             toc
         end
         
         function set_reference_trajectory(self,y_ref)
             % Update reference trajectory
-            self.y_ref = y_ref;
+            self.y_ref = [zeros(size(y_ref,1),self.delay_buff_comp) y_ref];
+            self.y_ref(4,1:self.delay_buff_comp) = self.y_ref(4,self.delay_buff_comp+1);
+%             self.y_ref = y_ref(:,self.delay_buff_comp:end);
         end
 
 

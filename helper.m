@@ -105,7 +105,7 @@ classdef helper
 
                 % noise simulation
                 if(sim_noise == true)
-                    x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 0 randn()*1e-4]';
+                    x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 randn()*1e-4 randn()*1e-4]';
                 end
 
                 xk_sim = controller.delay_buffer_sim(plant, x(:,i));
