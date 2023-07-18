@@ -38,7 +38,7 @@ p.symbolic_model();
 
 % Controller parameters
 sample_time = 0.03;
-Hp = 20;
+Hp = 50;
 
 % Setup Controller and Optimization Object
 controller = NMPC_controller('NMPC',p,sample_time,Hp);
@@ -80,12 +80,14 @@ traj_gen.set_target(x0,xf,t0,tf);
 
 x0_w = [x0(1:2)' 0];
 xf_w = [0.1 0.0 0;
-    0.15 0.1 0;
-    0.25 0.2 0;
+    0.15 -0.1 0;
+    0.25 -0.2 0;
     ];
 traj_gen.waypoints_ = [x0_w; xf_w];
 [time, traj] = traj_gen.waypoints_gen;
-time_sim = time(end) + 2;
+% traj = [traj repmat(traj(:,end),1,500)];
+% time = [time(1:end-1) time(end):sample_time:(time(end)+sample_time*500)];
+time_sim = time(end) + 1;
 
 % Set control reference
 u_n_ref = 0; u_t_ref = 0;
@@ -100,7 +102,7 @@ controller.set_reference_trajectory([traj; control_ref]);
 % If you want to simulate set simulation_ true and then set the
 % type of simulation (simulink, matlab or real robot)
 simulation_ = true;
-sym_type = "robot";
+sym_type = "matlab";
 print_robot = true;
 
 
@@ -132,16 +134,9 @@ if sym_type == "robot"
 end
 helper.my_plot(params.t, controller.y_ref, params.x_S, params.y_S, params.theta_S, params.S_p_x, params.S_p_y, params.u_n, params.u_t)
 
+
 %% ANIMATE
-step_animate = 5;
-params_animate.x_S = params.x_S(1:step_animate:end);
-params_animate.y_S = params.y_S(1:step_animate:end);
-params_animate.theta_S = params.theta_S(1:step_animate:end);
-params_animate.S_p_x = params.S_p_x(1:step_animate:end);
-params_animate.S_p_y = params.S_p_y(1:step_animate:end);
-
-
-helper.my_animate(params_animate.x_S,params_animate.y_S,params_animate.theta_S,params_animate.S_p_x,params_animate.S_p_y,controller.sample_time, traj(:,1:step_animate:end))
+helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.3,controller.sample_time, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))]);
 
 
 

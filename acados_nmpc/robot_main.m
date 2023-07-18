@@ -49,7 +49,7 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, p, controller, start_tim
 
         rosshutdown;
         disp("Saving parameters")
-        helper.save_parameters("exp_robot3",x,u,time_vec-time_vec(1), params);
+        helper.save_parameters("exp_robot_traj",x,u,time_vec-time_vec(1), params);
         return
     end
 
@@ -95,7 +95,7 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, p, controller, start_tim
 
     % Send command to robot
     T_S0B = inv(T_BS0);
-    u_robot = T_S0B(1:3,1:3)*[u(:,end);0];
+    u_robot = T_S0B(1:3,1:3)*helper.my_rotz(xk(3))*[u(:,end);0];
 
     command_msg.Linear.X = u_robot(1);
     command_msg.Linear.Y = u_robot(2);

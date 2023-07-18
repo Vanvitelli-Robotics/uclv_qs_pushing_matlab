@@ -233,15 +233,21 @@ classdef NMPC_controller < casadi.Callback
 %             tic
             self.ocp_solver.set('constr_x0', x0);
 
-            if (self.Hp + self.index_ref) ~= length(self.y_ref)
+            %if (self.Hp + self.index_ref) ~= length(self.y_ref)
                 % reference
                 for k=0:self.Hp-1
-                    self.ocp_solver.set('cost_y_ref', self.y_ref(:,self.index_ref+k+1), k);  %reference for middle samples of the prediction horizon
+                    if(self.index_ref+k+1>length(self.y_ref))
+                        y_ref_k = self.y_ref(:,end);
+                    else
+                        y_ref_k = self.y_ref(:,self.index_ref+k+1);
+                    end
+                    self.ocp_solver.set('cost_y_ref', y_ref_k, k);  %reference for middle samples of the prediction horizon
                 end
                 self.index_ref = self.index_ref + 1;
-                self.ocp_solver.set('cost_y_ref_e', self.y_ref(1:self.sym_model.nx,self.index_ref+k+1), self.Hp); % desired state at the end of the prediction horizon
-            end
-            self.ocp_solver.set('cost_y_ref_e', self.y_ref(1:self.sym_model.nx,self.index_ref+self.Hp), self.Hp);
+%                 self.ocp_solver.set('cost_y_ref_e', self.y_ref(1:self.sym_model.nx,self.index_ref+k+1), self.Hp); % desired state at the end of the prediction horizon
+    
+            %end
+            self.ocp_solver.set('cost_y_ref_e', y_ref_k(1:self.sym_model.nx), self.Hp);
 
             % set initial guess
             if(isempty(self.utraj) || isempty(self.xtraj))

@@ -19,7 +19,7 @@ classdef helper
                 traj = [traj traj(:,end).*ones(length(traj(:,end)),length(time)-length(traj(1,:)))];
             end
             set(0,'DefaultLineLineWidth',1.5);
-            figure
+            figure, 
             ax1 = subplot(3,2,1); plot(time,x_s), hold on, plot(time,traj(1,:)), xlabel('t [s]'), ylabel('x_S'),legend('x_S','xref_S'), subtitle('x_S tracking'), grid on
             ax2 = subplot(3,2,3); plot(time,y_s), hold on, plot(time,traj(2,:)), xlabel('t [s]'), ylabel('y_S'),legend('y_S','yref_S'), subtitle('y_S tracking'), grid on
             ax3 = subplot(3,2,5); plot(time,theta_s), hold on, plot(time,traj(3,:)),xlabel('t [s]'), ylabel('\theta_S'), legend('\theta_S','\thetaref_S'), subtitle('\theta_S tracking'), grid on
@@ -30,9 +30,10 @@ classdef helper
             ax6 = subplot(2,1,1); plot(time,u_n), xlabel('t [s]'), ylabel('u_n'), subtitle("normal control"), grid on
             ax7 = subplot(2,1,2); plot(time,u_t), xlabel('t [s]'), ylabel('u_t'), subtitle("tangential control"), grid on
             linkaxes([ax1,ax2,ax3,ax4,ax5,ax6,ax7],'x');
+            xlim([ax1,ax2,ax3,ax4,ax5,ax6,ax7],[0 time(end)])
         end
 
-        function my_animate(x, y, theta, rx, ry,sampling_time, traj)
+        function my_animate(x, y, theta, rx, ry, t, step_time, sampling_time, traj)
             % Function to animate the trajectory tracking of the pusher slider system
             % Input: 2D position [x,y,theta]
 
@@ -66,8 +67,11 @@ classdef helper
             xlabel("x [m]")
             ylabel("y [m]")
             zlabel("z [m]")
-
-            for i = 2:1:length(x)
+            for t_k = 0:step_time:t(end)
+                index_ = find(t>t_k);
+                i = index_(1);
+%             end
+%             for i = 2:1:length(x)
                 h.Visible = false;
                 position_s = [x(i) y(i) 0]';
                 quat_s = quaternion([0 0 theta(i)],'rotvec');
@@ -82,7 +86,7 @@ classdef helper
                 viscircles(ax1,[x(i) y(i)],radius_pusher,"Color",'red',"LineWidth",6);
                 h = viscircles(ax1,[pusher_position(1) pusher_position(2)],radius_pusher,"Color",'black',"LineWidth",6);
                 plot(traj(1,:), traj(2,:), '-.','LineWidth',3,'Color','b');
-                pause(sampling_time)
+%                 pause(sampling_time)
                 drawnow
             end
         end
@@ -118,7 +122,7 @@ classdef helper
 
                 % noise simulation
                 if(sim_noise == true)
-                    x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 randn()*1e-4 randn()*1e-4]';
+                    x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 0 randn()*1e-4]';
                 end
 
                 xk_sim = controller.delay_buffer_sim(plant, x(:,i));
