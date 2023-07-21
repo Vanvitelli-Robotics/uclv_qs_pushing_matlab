@@ -28,6 +28,7 @@ classdef PusherSliderModel < casadi.Callback
 
         sym_model = struct;
         time_delay;
+
     end
 
     methods
@@ -89,7 +90,7 @@ classdef PusherSliderModel < casadi.Callback
         end
 
         % Evaluate model (numerical)
-        function x_dot = eval_model(self,x,u)
+        function [x_dot, mode] = eval_model(self,x,u)
             % This method can be used to evaluate the pusher-Slider non linear model x_dot = f(x,u)
             % Input: x = [x_s, y_s, theta_s (rad), r_y],
             %        u = [u_n, u_t],
@@ -111,6 +112,7 @@ classdef PusherSliderModel < casadi.Callback
             v_l = [1 gamma_l]'; % left edge of the motion cone
             v_r = [1 gamma_r]'; % right edge of the motion cone
 
+
             % Evaluating u_t/u_n
             u_fract = u_t/u_n;
 
@@ -120,16 +122,17 @@ classdef PusherSliderModel < casadi.Callback
                 disp("Not in contact!");
             else
                 if (u_fract <= gamma_l) && (u_fract >= gamma_r)
-                    mode = 'ST';
-                    disp("Motion Cone CHECK: Sticking Mode")
+                    mode = "ST";
+%                     disp("Motion Cone CHECK: Sticking Mode")
                 elseif u_fract > gamma_l
-                    mode = 'SL';
-                    disp("Motion Cone CHECK: Sliding Left Mode")
+                    mode = "SL";
+%                     disp("Motion Cone CHECK: Sliding Left Mode")
                 else
-                    mode = 'SR';
-                    disp("Motion Cone CHECK: Sliding Right Mode")
+                    mode = "SR";
+%                     disp("Motion Cone CHECK: Sliding Right Mode")
                 end
             end
+           
 
             % Model matrices
             factor_matrix = 1/(self.slider_params.c_ellipse^2+S_p_x^2+S_p_y^2);
@@ -139,15 +142,15 @@ classdef PusherSliderModel < casadi.Callback
                 case 'ST'
                     P = eye(2);
                     b = [-S_p_y S_p_x]';
-                    %disp('sticking mode')
+%                     disp('sticking mode')
                 case 'SL'                   % the pusher slides on the object surface
                     P = [v_l zeros(2,1)];
                     b = [-S_p_y+gamma_l*S_p_x 0]';
-                    %disp('sliding left mode')
+%                     disp('sliding left mode')
                 case 'SR'                   % the pusher slides on the object surface
                     P = [v_r zeros(2,1)];
                     b = [-S_p_y+gamma_r*S_p_x 0]';
-                    %disp('sliding right mode')
+%                     disp('sliding right mode')
                 otherwise                   % the pusher is not in contact with the slider
                     %disp('no contact')
                     x_dot = [0 0 0 u_n u_t]';
@@ -221,10 +224,44 @@ classdef PusherSliderModel < casadi.Callback
             %     + (u_fract<gamma_r)*x_dot_sr} ...
             %     );
 
+            % symbolic quintic function
+            s0 = SX.sym('s0');
+            sf = SX.sym('sf');
+            tau = SX.sym('tau');
+            s_tilde = Function('s_tilde',{tau},{6*tau^5-15*tau^4+10*tau^3});
+            s_t = Function('s_t',{s0,sf,tau},{s0 + (sf-s0)*s_tilde(tau)});
+
+            % epsilon switching values
+            eps_sl = abs(0.5*gamma_l);
+            eps_sr = abs(0.5*gamma_r);
+
+            % Symbolic function sticking decision
+            S_st = Function('S_st_fun',{sym_x,sym_u},{(u_fract>=gamma_r+eps_sr)*(u_fract<=gamma_l-eps_sl) ...
+                + (u_fract<gamma_r+eps_sr)*(u_fract>gamma_r-eps_sr)*s_t(0,1,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))...
+                + (u_fract<gamma_l+eps_sl)*(u_fract>gamma_l-eps_sl)*s_t(1,0,(u_fract-(gamma_l-eps_sl))/(2*eps_sl))...
+                } ...
+                );
+
+            S_sl = Function('S_sl_fun',{sym_x,sym_u},{(u_fract<gamma_l+eps_sl)*(u_fract>gamma_l-eps_sl)*s_t(0,1,(u_fract-(gamma_l-eps_sl))/(2*eps_sl))...
+                + (u_fract>gamma_l+eps_sl)} ...
+                );
+
+            S_sr = Function('S_sr_fun',{sym_x,sym_u},{(u_fract<gamma_r+eps_sr)*(u_fract>gamma_r-eps_sr)*s_t(1,0,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))...
+                + (u_fract<gamma_r-eps_sr)} ...
+                );
+
             % explicit dynamic function
+%             eps_mc = 1*(u_n<0.02);
             expr_f_expl = vertcat((u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
                 + (u_fract>gamma_l)*x_dot_sl...
                 + (u_fract<gamma_r)*x_dot_sr);
+%             expr_f_expl = vertcat((S_st(sym_x,sym_u)*x_dot_st ...
+%                 + S_sl(sym_x,sym_u)*x_dot_sl...
+%                 + S_sr(sym_x,sym_u)*x_dot_sr));
+% 
+%             expr_f_expl = vertcat((1*x_dot_st ...
+%                 + 0*x_dot_sl...
+%                 + 0*x_dot_sr));
 
             % implicit dynamic function
             expr_f_impl = expr_f_expl - sym_xdot;

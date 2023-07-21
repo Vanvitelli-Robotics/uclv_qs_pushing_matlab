@@ -3,6 +3,15 @@ clear all
 close all
 clc
 
+% %%%%%%%%%%%%%%%%%%%%%% SETUP ACADOS %%%%%%%%%%%%%%%%%%%%%%
+% Setting path variables
+model_path = fullfile(pwd,'.');
+addpath(model_path);
+model_path = fullfile(pwd,'..');
+addpath(model_path);
+model_path = fullfile(pwd,'../cad_models');
+addpath(model_path);
+
 % acados initialitation
 env_vars_acados
 check_acados_requirements()
@@ -62,7 +71,7 @@ ocp_model.set('constr_expr_h', model.expr_h);
 
 % on the variables defined to be constrained
 h_max = [model.slider.ywidth/2 0.05 0.05];
-h_min = [-model.slider.ywidth/2 0 -0.05];
+h_min = [-model.slider.ywidth/2 0.0001 -0.05];
 ocp_model.set('constr_lh', h_min); % lower bound on h
 ocp_model.set('constr_uh', h_max);  % upper bound on h
 
@@ -97,7 +106,7 @@ ocp_opts.set('output_dir',fullfile(pwd,'build'));
 ocp = acados_ocp(ocp_model, ocp_opts);
 
 x_traj_init = zeros(nx, N+1);
-u_traj_init = zeros(nu, N);
+u_traj_init = 0.0001*ones(nu, N);
 
 %% call ocp solver
 % update initial state

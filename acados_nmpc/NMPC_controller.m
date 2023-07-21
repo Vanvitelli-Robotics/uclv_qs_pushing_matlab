@@ -29,6 +29,7 @@ classdef NMPC_controller < casadi.Callback
         ocp_model;
         ocp_opts;
         ocp_solver;
+        cost_function_vect;
 
         % Symbolic plant model
         sym_model = struct;
@@ -59,10 +60,20 @@ classdef NMPC_controller < casadi.Callback
 
         function solver_params = set_solver_params(self)
             % Solver parameters
-            solver_params.nlp_solver = 'sqp_rti';                      % sqp, sqp_rti
+            solver_params.nlp_solver = 'sqp';                      % sqp, sqp_rti
             solver_params.qp_solver = 'partial_condensing_hpipm';  % full_condensing_hpipm, partial_condensing_hpipm, full_condensing_qpoases, full_condensing_daqp
             solver_params.qp_solver_cond_N = 5;                    % for partial condensing
             solver_params.sim_method = 'erk';                      % integrator type : erk, irk, irk_gnsf
+%             solver_params.sim_method_num_stages = 1;
+            solver_params.num_iterations = 100;
+%             solver_params.qp_solver_warm_start = 0;
+%             solver_params.globalization = "merit_backtracking";
+%             solver_params.nlp_solver_step_length = 1;
+%             solver_params.alpha_reduction = 0.001;
+%             solver_params.levenberg_marquardt = 0.0001;
+%             solver_params.regularize_method = "project";
+%             solver_params.line_search_use_sufficient_descent = 1;
+
             self.solver_params = solver_params;
         end
     end
@@ -99,7 +110,7 @@ classdef NMPC_controller < casadi.Callback
         function set_delay_comp(self,delay)
             self.delay_compensation = delay;
             self.delay_buff_comp = ceil(self.delay_compensation/self.sample_time);
-            self.u_buff_contr = zeros(self.sym_model.nu, self.delay_buff_comp);
+            self.u_buff_contr = 1e-4*ones(self.sym_model.nu, self.delay_buff_comp);
         end
 
         function xk_sim = delay_buffer_sim(self, plant, x)
@@ -132,6 +143,7 @@ classdef NMPC_controller < casadi.Callback
             self.ptraj = [];
             self.index_ref = 0;
             self.y_ref = [];
+            self.cost_function_vect = [];
         end
 
         function update_cost_function(self,W_x,W_u,W_x_e,initial_step, final_step)
@@ -216,6 +228,15 @@ classdef NMPC_controller < casadi.Callback
             ocp_opts.set('qp_solver_cond_N', self.solver_params.qp_solver_cond_N);
             ocp_opts.set('ext_fun_compile_flags', ''); % '-O2'
             ocp_opts.set('compile_model','false');
+            ocp_opts.set('nlp_solver_max_iter',self.solver_params.num_iterations);
+%             ocp_opts.set('qp_solver_warm_start',self.solver_params.qp_solver_warm_start);
+%             ocp_opts.set('sim_method_num_stages',self.solver_params.sim_method_num_stages);
+%             ocp_opts.set('nlp_solver_step_length',self.solver_params.nlp_solver_step_length);
+%             ocp_opts.set('alpha_reduction',self.solver_params.alpha_reduction);
+%             ocp_opts.set('globalization', self.solver_params.globalization);
+%             ocp_opts.set('line_search_use_sufficient_descent', self.solver_params.line_search_use_sufficient_descent);
+%             ocp_opts.set('levenberg_marquardt',self.solver_params.levenberg_marquardt);
+%             ocp_opts.set('regularize_method',self.solver_params.regularize_method);
             %ocp_opts.set('codgen_model','false');
             ocp_opts.set('compile_interface','false');
             ocp_opts.set('output_dir',fullfile(pwd,'build'));
@@ -252,7 +273,7 @@ classdef NMPC_controller < casadi.Callback
             % set initial guess
             if(isempty(self.utraj) || isempty(self.xtraj))
                 self.xtraj = zeros(self.sym_model.nx, self.Hp+1);
-                self.utraj = zeros(self.sym_model.nu, self.Hp);
+                self.utraj = 1e-4*ones(self.sym_model.nu, self.Hp);
                 self.ptraj = ones(self.sym_model.nx, self.Hp);
             end
             self.ocp_solver.set('init_x', self.xtraj);
@@ -268,6 +289,7 @@ classdef NMPC_controller < casadi.Callback
             self.utraj = self.ocp_solver.get('u');
             self.xtraj = self.ocp_solver.get('x');
             self.ptraj = self.ocp_solver.get('pi');
+ 
             self.utraj = [self.utraj(:,2:end) self.utraj(:,end)];
             self.xtraj = [self.xtraj(:,2:end) self.xtraj(:,end)];
             self.ptraj = [self.ptraj(:,2:end) self.ptraj(:,end)];
@@ -275,6 +297,7 @@ classdef NMPC_controller < casadi.Callback
             % status = ocp.get('status'); % 0 - success
             % ocp.print('stat')
             u = self.ocp_solver.get('u', 0);
+            self.cost_function_vect = [self.cost_function_vect; self.ocp_solver.get_cost];
 
 %             toc
         end

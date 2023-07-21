@@ -16,7 +16,7 @@ function my_animate(x, y, theta, rx, ry,sampling_time, traj)
     %     pusher_p = poseplot(quat0_p,p0_p, MeshFileName="cad model pusher\cad_model_pusher_1.stl",ScaleFactor=0.001);
     radius_pusher = 0.003;
     pusher_position = [x(1) y(1) 0]' + helper.my_rotz(theta(1))*[rx(1) ry(1) 0]';
-    viscircles([pusher_position(1) pusher_position(2)],radius_pusher,"Color",'red',"LineWidth",6);
+    viscircles([pusher_position(1) pusher_position(2)],radius_pusher,"Color",'blue',"LineWidth",6);
     
     hold off
     
@@ -33,8 +33,8 @@ function my_animate(x, y, theta, rx, ry,sampling_time, traj)
         set(slider_p,Orientation=quat_s,Position=position_s);
         hold on
         pusher_position = [x(i) y(i) 0]'+ helper.my_rotz(theta(i))*[rx(i) ry(i) 0]';
-        viscircles([pusher_position(1) pusher_position(2)],radius_pusher,"Color",'red',"LineWidth",6);
-        plot(traj(1,:), traj(2,:), '-.','LineWidth',3,'Color','b');
+        viscircles([pusher_position(1) pusher_position(2)],radius_pusher,"Color",'blue',"LineWidth",6);
+        plot(traj(1,:), traj(2,:), '-.','LineWidth',3,'Color','red');
         pause(sampling_time)
         drawnow
     end

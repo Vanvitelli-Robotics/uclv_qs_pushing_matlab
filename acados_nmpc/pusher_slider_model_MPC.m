@@ -25,7 +25,7 @@ slider.xwidth = 0.082;                                % width of the slider alon
 slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
 slider.m = 0.2875;                                    % slider mass [kg]
 slider.f_max = slider.mu_sg*slider.m*g;               % maximum force with ellipsoidal approximation of LS [N]
-slider.tau_max = helper.tau_max_func(slider.mu_sg, slider.m, g, slider.area, slider.xwidth, slider.ywidth); % maximum torque with ellipsoidal approximation of LS [Nm]
+slider.tau_max = 0.1;%helper.tau_max_func(slider.mu_sg, slider.m, g, slider.area, slider.xwidth, slider.ywidth); % maximum torque with ellipsoidal approximation of LS [Nm]
 slider.c_ellipse = slider.tau_max/slider.f_max;
 
 %% named symbolic variables
@@ -80,16 +80,72 @@ c_sr = eye(2)-factor_matrix*(Q*P_sr+[-S_p_y; S_p_x]*b_sr');
 F_sr = [R_z*factor_matrix*Q*P_sr; factor_matrix*b_sr'; c_sr];
 x_dot_sr = F_sr*[u_n u_t]';
 
-
+% 
 % f = Function('f',{sym_x,sym_u},{(u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
 %     + (u_fract>gamma_l)*x_dot_sl...
 %     + (u_fract<gamma_r)*x_dot_sr} ...
 %     );
 
-% explicit dynamic function
-expr_f_expl = vertcat((u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
+% symbolic quintic function
+s0 = SX.sym('s0'); 
+sf = SX.sym('sf');   
+tau = SX.sym('tau');
+s_tilde = Function('s_tilde',{tau},{6*tau^5-15*tau^4+10*tau^3});
+s_t = Function('s_t',{s0,sf,tau},{s0 + (sf-s0)*s_tilde(tau)});
+
+% epsilon switching values
+eps_sl = abs(1*gamma_l);
+eps_sr = abs(1*gamma_r);
+
+% Symbolic function sticking decision
+S_st = Function('S_st_fun',{sym_x,sym_u},{(u_fract>=gamma_r+eps_sr)*(u_fract<=gamma_l-eps_sl) ...
+    + (u_fract<gamma_r+eps_sr)*(u_fract>gamma_r-eps_sr)*s_t(0,1,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))...
+    + (u_fract<gamma_l+eps_sl)*(u_fract>gamma_l-eps_sl)*s_t(1,0,(u_fract-(gamma_l-eps_sl))/(2*eps_sl))...
+    } ...
+    );
+
+S_sl = Function('S_sl_fun',{sym_x,sym_u},{(u_fract<gamma_l+eps_sl)*(u_fract>gamma_l-eps_sl)*s_t(0,1,(u_fract-(gamma_l-eps_sl))/(2*eps_sl))...
+    + (u_fract>gamma_l+eps_sl)} ...
+    );
+
+S_sr = Function('S_sr_fun',{sym_x,sym_u},{(u_fract<gamma_r+eps_sr)*(u_fract>gamma_r-eps_sr)*s_t(1,0,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))...
+    + (u_fract<gamma_r-eps_sr)} ...
+    );
+
+test_fun = Function('test_fun',{sym_x,sym_u},{s_t(0,1,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))} ...
+    );
+test_gamma_r = Function('test_gamma_r',{sym_x,sym_u},{gamma_r});
+gamma_r_val = full(test_gamma_r([0.5 0 0 -0.03 0.01],[0.01 0.0]));
+eps_sr = abs(0.5*gamma_r_val);
+t0 =  gamma_r_val - eps_sr;
+tf = gamma_r_val + eps_sr;
+
+test_f_smooth = Function('test_f',{sym_x,sym_u},{(S_st(sym_x,sym_u)*x_dot_st ...
+    + S_sl(sym_x,sym_u)*x_dot_sl...
+    + S_sr(sym_x,sym_u)*x_dot_sr)});
+
+
+test_f = Function('test_f',{sym_x,sym_u},{(u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
     + (u_fract>gamma_l)*x_dot_sl...
-    + (u_fract<gamma_r)*x_dot_sr);
+    + (u_fract<gamma_r)*x_dot_sr});
+figure
+for i=t0-1:0.01:t0+1
+    val = full(S_st([0.5 0 0 -0.03 0.01],[0.01 0.01*i]));
+%     val = full(s_t(0,1,((inf-t0)/(tf-t0))));
+    plot(i,val,'*')
+    hold on
+end
+
+
+
+% explicit dynamic function
+% expr_f_expl = vertcat((u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
+%     + (u_fract>gamma_l)*x_dot_sl...
+%     + (u_fract<gamma_r)*x_dot_sr);
+
+expr_f_expl = vertcat((S_st(sym_x,sym_u)*x_dot_st ...
+    + S_sl(sym_x,sym_u)*x_dot_sl...
+    + S_sr(sym_x,sym_u)*x_dot_sr));
 
 % implicit dynamic function
 expr_f_impl = expr_f_expl - sym_xdot;
