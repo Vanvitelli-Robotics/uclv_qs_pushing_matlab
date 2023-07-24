@@ -264,16 +264,16 @@ classdef PusherSliderModel < casadi.Callback
 %                 + 0*x_dot_sr));
 
             % implicit dynamic function
-            expr_f_impl = expr_f_expl - sym_xdot;
+%             expr_f_impl = expr_f_expl - sym_xdot;
 
             % Populate structure
             model.nx = self.nx;
             model.nu = self.nu;
             model.sym_x = sym_x;
-            model.sym_xdot = sym_xdot;
+%             model.sym_xdot = sym_xdot;
             model.sym_u = sym_u;
             model.expr_f_expl = expr_f_expl;
-            model.expr_f_impl = expr_f_impl;
+%             model.expr_f_impl = expr_f_impl;
 
             self.sym_model = model;
         end

@@ -55,7 +55,7 @@ x0 = [0 0 deg2rad(0) -slider.xwidth/2 slider.ywidth/2*0]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
-W_x = diag([10 10 .1 0 0.0]);  % State matrix weight
+W_x = diag([10 100 .1 1e-4 1e-4]);  % State matrix weight
 W_x_e = 2*W_x; %diag([100 100 0 0 0]);
 W_u = diag([.1 1]);            % Control matrix weight
 controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
@@ -80,7 +80,7 @@ traj_gen.set_target(x0,xf,t0,tf);
 
 x0_w = [x0(1:2)' 0];
 xf_w = [ 
-      0.3 0.0 0;
+      0.03 0.0 0;
 %        0.15 0.1 0;
 %     0.25 0.2 0;
     ];
@@ -97,7 +97,7 @@ control_ref = [u_n_ref; u_t_ref].*zeros(controller.sym_model.nu,length(time));
 % Set overall reference
 controller.set_reference_trajectory([traj; control_ref]);
 
-
+controller.create_ocp_solver();
 % SIMULATION START
 
 % If you want to simulate set simulation_ true and then set the
@@ -117,9 +117,11 @@ if simulation_ == true
     elseif(strcmp(sym_type,"matlab"))
         disp("MATLAB SIMULATION")
         noise_ = false;
-        debug_ = false;
-        print_ = false;
-        [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_);
+        debug_ = true;
+        print_ = true;
+        disturbance_ = true;
+         
+        [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
         params = helper.save_parameters("exp1_smooth_traj_10000",[x_s; y_s; theta_s; S_p_x; S_p_y],[u_n; u_t],time_plot, mode_vect);
 
     elseif(strcmp(sym_type,"robot"))
