@@ -28,7 +28,7 @@ slider.xwidth = 0.068;                               % width of the slider along
 slider.ywidth = 0.082;                                % width of the slider along y-direction [m]
 slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
 slider.m = 0.2875;                                    % slider mass [kg]
-plant_time_delay = 0.1;                               % delay of the plant [s]
+plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
 p = PusherSliderModel('pusher_slider_model',slider, plant_time_delay);
@@ -44,6 +44,7 @@ Hp = 50;
 controller = NMPC_controller('NMPC',p,sample_time,Hp);
 controller.create_ocp_solver();
 
+
 %% SETTING PARAMETERS FOR CONTROLLER AND PLANT
 
 % Change delay of the plant and the delay to compensate with the controller
@@ -51,14 +52,14 @@ p.set_delay(0);
 controller.set_delay_comp(0);
 
 % Set initial condition
-x0 = [0 0 deg2rad(0) -slider.xwidth/2 slider.ywidth/2*0]';
+x0 = [0 0 deg2rad(90) slider.ywidth/2*0]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
-W_x = diag([10 100 .1 1e-4 1e-4]);  % State matrix weight
-W_x_e = 2*W_x; %diag([100 100 0 0 0]);
+W_x = diag([10 10 .1 0]);  % State matrix weight
+W_x_e = 0*W_x; %diag([100 100 0 0 0]);
 W_u = diag([.1 1]);            % Control matrix weight
-controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
+% controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
 % Set constraints
@@ -80,24 +81,25 @@ traj_gen.set_target(x0,xf,t0,tf);
 
 x0_w = [x0(1:2)' 0];
 xf_w = [ 
-      0.03 0.0 0;
+      0.0 0.3 0;
 %        0.15 0.1 0;
 %     0.25 0.2 0;
     ];
 traj_gen.waypoints_ = [x0_w; xf_w];
 [time, traj] = traj_gen.waypoints_gen;
+traj = [traj(1:3,:); traj(end,:)];
 % traj = [traj repmat(traj(:,end),1,500)];
 % time = [time(1:end-1) time(end):sample_time:(time(end)+sample_time*500)];
-time_sim = time(end) + 1;
+time_sim = time(end) + 0;
 
 % Set control reference
-u_n_ref = 0; u_t_ref = 0;
-control_ref = [u_n_ref; u_t_ref].*zeros(controller.sym_model.nu,length(time));
+u_n_ref = 0.015; u_t_ref = 0;
+control_ref = repmat([u_n_ref; u_t_ref],1,length(time));
 
 % Set overall reference
 controller.set_reference_trajectory([traj; control_ref]);
 
-controller.create_ocp_solver();
+% controller.create_ocp_solver();
 % SIMULATION START
 
 % If you want to simulate set simulation_ true and then set the
@@ -138,7 +140,7 @@ end
 if sym_type == "robot"
     params.t = params.t(1:end-1);
 end
-helper.my_plot(params.t, controller.y_ref, params.x_S, params.y_S, params.theta_S, params.S_p_x, params.S_p_y, params.u_n, params.u_t, controller.cost_function_vect, helper.convert_str2num(params.mode_vect));
+helper.my_plot(params.t, [controller.y_ref(1:3,:); controller.y_ref(4,:)], params.x_S, params.y_S, params.theta_S, params.S_p_y, params.u_n, params.u_t, controller.cost_function_vect, helper.convert_str2num(params.mode_vect));
 
 
 %% ANIMATE

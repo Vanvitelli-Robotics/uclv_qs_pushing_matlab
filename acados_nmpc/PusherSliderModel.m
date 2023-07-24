@@ -23,7 +23,7 @@ classdef PusherSliderModel < casadi.Callback
     properties
         slider_params = struct;
 
-        nx = 5;     % number of state variables
+        nx = 4;     % number of state variables
         nu = 2;     % number of inputs
 
         sym_model = struct;
@@ -98,8 +98,8 @@ classdef PusherSliderModel < casadi.Callback
 
             % State variables
             theta_s = x(3);    % rotation angle of the slider frame w.r.t. the world frame
-            S_p_x = x(4);      % x-coordinate of the pusher position w.r.t. the slider frame S
-            S_p_y = x(5);      % y-coordinate of the pusher position w.r.t. the slider frame S
+            S_p_x = -0.034;% x(4);      % x-coordinate of the pusher position w.r.t. the slider frame S
+            S_p_y = x(4);      % y-coordinate of the pusher position w.r.t. the slider frame S
             u_n = u(1);        % normal pusher velocity w.r.t. the slider frame S
             u_t = u(2);        % tangential pusher velocity w.r.t. the slider frame S
 
@@ -153,11 +153,11 @@ classdef PusherSliderModel < casadi.Callback
 %                     disp('sliding right mode')
                 otherwise                   % the pusher is not in contact with the slider
                     %disp('no contact')
-                    x_dot = [0 0 0 u_n u_t]';
+                    x_dot = [0 0  u_n u_t]';
                     return;
             end
             c = eye(2)-factor_matrix*(Q*P+[-S_p_y; S_p_x]*b');
-            F = [R_z*factor_matrix*Q*P; factor_matrix*b'; c];
+            F = [R_z*factor_matrix*Q*P; factor_matrix*b'; c(end,:)];
             x_dot = F*[u_n u_t]';
         end
 
@@ -172,15 +172,15 @@ classdef PusherSliderModel < casadi.Callback
             x = SX.sym('x');         % x-coordinate slider w.r.t. world frame [m]
             y = SX.sym('y');         % y-coordinate slider w.r.t. world frame [m]
             theta = SX.sym('theta'); % rotation angle of the slider frame w.r.t. the world frame [rad]
-            S_p_x = SX.sym('S_p_x'); % x-coordinate of the pusher position w.r.t. the slider frame S [m]
+            S_p_x = -0.034;% SX.sym('S_p_x'); % x-coordinate of the pusher position w.r.t. the slider frame S [m]
             S_p_y = SX.sym('S_p_y'); % y-coordinate of the pusher position w.r.t. the slider frame S [m]
 
             u_n = SX.sym('u_n');         % normal pusher velocity w.r.t. slider frame S [m/s]
             u_t = SX.sym('u_t');         % tangential pusher velocity w.r.t. slider frame S [m/s]
 
             % (unnamed) symbolic variables
-            sym_x = vertcat(x,y,theta,S_p_x,S_p_y);     % x state vector
-            sym_xdot = SX.sym('xdot', self.nx, 1);      % xdot state vector
+%             sym_x = vertcat(x,y,theta,S_p_x,S_p_y);     % x state vector
+            sym_x = vertcat(x,y,theta,S_p_y);
             sym_u = vertcat(u_n,u_t);                   % u control vector
 
             % Model matrices
@@ -204,19 +204,19 @@ classdef PusherSliderModel < casadi.Callback
             P_st = eye(2);
             b_st = [-S_p_y S_p_x]';
             c_st = eye(2)-factor_matrix*(Q*P_st+[-S_p_y; S_p_x]*b_st');
-            F_st = [R_z*factor_matrix*Q*P_st; factor_matrix*b_st'; c_st];
+            F_st = [R_z*factor_matrix*Q*P_st; factor_matrix*b_st'; c_st(end,:)];
             x_dot_st = F_st*[u_n u_t]';
             % Sliding left
             P_sl = [v_l zeros(2,1)];
             b_sl = [-S_p_y+gamma_l*S_p_x 0]';
             c_sl = eye(2)-factor_matrix*(Q*P_sl+[-S_p_y; S_p_x]*b_sl');
-            F_sl = [R_z*factor_matrix*Q*P_sl; factor_matrix*b_sl'; c_sl];
+            F_sl = [R_z*factor_matrix*Q*P_sl; factor_matrix*b_sl'; c_sl(end,:)];
             x_dot_sl = F_sl*[u_n u_t]';
             % Sliding right
             P_sr = [v_r zeros(2,1)];
             b_sr = [-S_p_y+gamma_r*S_p_x 0]';
             c_sr = eye(2)-factor_matrix*(Q*P_sr+[-S_p_y; S_p_x]*b_sr');
-            F_sr = [R_z*factor_matrix*Q*P_sr; factor_matrix*b_sr'; c_sr];
+            F_sr = [R_z*factor_matrix*Q*P_sr; factor_matrix*b_sr'; c_sr(end,:)];
             x_dot_sr = F_sr*[u_n u_t]';
 
             % f = Function('f',{sym_x,sym_u},{(u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
@@ -225,30 +225,30 @@ classdef PusherSliderModel < casadi.Callback
             %     );
 
             % symbolic quintic function
-            s0 = SX.sym('s0');
-            sf = SX.sym('sf');
-            tau = SX.sym('tau');
-            s_tilde = Function('s_tilde',{tau},{6*tau^5-15*tau^4+10*tau^3});
-            s_t = Function('s_t',{s0,sf,tau},{s0 + (sf-s0)*s_tilde(tau)});
+% %             s0 = SX.sym('s0');
+% %             sf = SX.sym('sf');
+% %             tau = SX.sym('tau');
+% %             s_tilde = Function('s_tilde',{tau},{6*tau^5-15*tau^4+10*tau^3});
+% %             s_t = Function('s_t',{s0,sf,tau},{s0 + (sf-s0)*s_tilde(tau)});
 
             % epsilon switching values
-            eps_sl = abs(0.5*gamma_l);
-            eps_sr = abs(0.5*gamma_r);
+% %             eps_sl = abs(0.5*gamma_l);
+% %             eps_sr = abs(0.5*gamma_r);
 
             % Symbolic function sticking decision
-            S_st = Function('S_st_fun',{sym_x,sym_u},{(u_fract>=gamma_r+eps_sr)*(u_fract<=gamma_l-eps_sl) ...
-                + (u_fract<gamma_r+eps_sr)*(u_fract>gamma_r-eps_sr)*s_t(0,1,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))...
-                + (u_fract<gamma_l+eps_sl)*(u_fract>gamma_l-eps_sl)*s_t(1,0,(u_fract-(gamma_l-eps_sl))/(2*eps_sl))...
-                } ...
-                );
-
-            S_sl = Function('S_sl_fun',{sym_x,sym_u},{(u_fract<gamma_l+eps_sl)*(u_fract>gamma_l-eps_sl)*s_t(0,1,(u_fract-(gamma_l-eps_sl))/(2*eps_sl))...
-                + (u_fract>gamma_l+eps_sl)} ...
-                );
-
-            S_sr = Function('S_sr_fun',{sym_x,sym_u},{(u_fract<gamma_r+eps_sr)*(u_fract>gamma_r-eps_sr)*s_t(1,0,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))...
-                + (u_fract<gamma_r-eps_sr)} ...
-                );
+% %             S_st = Function('S_st_fun',{sym_x,sym_u},{(u_fract>=gamma_r+eps_sr)*(u_fract<=gamma_l-eps_sl) ...
+% %                 + (u_fract<gamma_r+eps_sr)*(u_fract>gamma_r-eps_sr)*s_t(0,1,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))...
+% %                 + (u_fract<gamma_l+eps_sl)*(u_fract>gamma_l-eps_sl)*s_t(1,0,(u_fract-(gamma_l-eps_sl))/(2*eps_sl))...
+% %                 } ...
+% %                 );
+% % 
+% %             S_sl = Function('S_sl_fun',{sym_x,sym_u},{(u_fract<gamma_l+eps_sl)*(u_fract>gamma_l-eps_sl)*s_t(0,1,(u_fract-(gamma_l-eps_sl))/(2*eps_sl))...
+% %                 + (u_fract>gamma_l+eps_sl)} ...
+% %                 );
+% % 
+% %             S_sr = Function('S_sr_fun',{sym_x,sym_u},{(u_fract<gamma_r+eps_sr)*(u_fract>gamma_r-eps_sr)*s_t(1,0,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))...
+% %                 + (u_fract<gamma_r-eps_sr)} ...
+% %                 );
 
             % explicit dynamic function
 %             eps_mc = 1*(u_n<0.02);

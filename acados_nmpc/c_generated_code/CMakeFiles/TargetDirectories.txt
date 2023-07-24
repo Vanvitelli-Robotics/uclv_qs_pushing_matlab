@@ -1,9 +1,0 @@
-C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code/CMakeFiles/model_pusher_slider_model.dir
-C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code/CMakeFiles/ocp_pusher_slider_model.dir
-C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code/CMakeFiles/acados_ocp_solver_pusher_slider_model.dir
-C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code/CMakeFiles/edit_cache.dir
-C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code/CMakeFiles/rebuild_cache.dir
-C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code/CMakeFiles/list_install_components.dir
-C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code/CMakeFiles/install.dir
-C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code/CMakeFiles/install/local.dir
-C:/Users/saraf/pusher_slider_matlab/acados_nmpc/c_generated_code/CMakeFiles/install/strip.dir
