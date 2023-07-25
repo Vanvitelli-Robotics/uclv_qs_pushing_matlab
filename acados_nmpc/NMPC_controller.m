@@ -15,7 +15,7 @@ classdef NMPC_controller < casadi.Callback
         % Weight matrices for objective function
         W_x = diag([100, 1, 1,  1e-3]);
         W_x_e = 2*diag([100, 1, 1, 1e-3]);
-        W_u = diag([1 1]);
+        W_u = [];%diag([1 1]);
 
         % Costraints
         h_constr_lb = [];  % lower bound constraint on the constrained variables h
@@ -27,8 +27,8 @@ classdef NMPC_controller < casadi.Callback
 
         % Solver parameters
         solver_params = struct;
-%         ocp_model;
-%         ocp_opts;
+        %         ocp_model;
+        %         ocp_opts;
         ocp_solver;
         cost_function_vect;
 
@@ -149,14 +149,14 @@ classdef NMPC_controller < casadi.Callback
 
         function update_cost_function(self,W_x,W_u,W_x_e,initial_step, final_step)
             self.ocp_solver.set('cost_W', W_x_e,self.Hp);
-            
-                for i = initial_step : final_step
-                    self.ocp_solver.set('cost_W', blkdiag(W_x,W_u),i);
-                end
-                self.W_x = W_x;
-                self.W_u = W_u;
-                self.W_x_e=W_x_e;
-            
+
+            for i = initial_step : final_step
+                self.ocp_solver.set('cost_W', blkdiag(W_x,W_u),i);
+            end
+            self.W_x = W_x;
+            self.W_u = W_u;
+            self.W_x_e=W_x_e;
+
 
         end
 
@@ -178,22 +178,38 @@ classdef NMPC_controller < casadi.Callback
             ocp_model.set('sym_x', self.sym_model.sym_x);
             ocp_model.set('sym_u', self.sym_model.sym_u);
 
-     
-
             ocp_model.set('cost_type', 'linear_ls');
             ocp_model.set('cost_type_e', 'linear_ls');
 
-            ocp_model.set('cost_Vx',[eye(self.sym_model.nx); zeros(self.sym_model.nu,self.sym_model.nx)]);
-            ocp_model.set('cost_Vu',[zeros(self.sym_model.nx,self.sym_model.nu); eye(self.sym_model.nu)]);
-            ocp_model.set('cost_Vz',zeros(self.sym_model.nx+self.sym_model.nu,0));
+            Vx = zeros(self.sym_model.nx, self.sym_model.nx);
+            Vx_e = zeros(self.sym_model.nx, self.sym_model.nx);
+            Vu = zeros(self.sym_model.nx, self.sym_model.nu);
+            for ii=1:self.sym_model.nx
+                Vx(ii,ii)=1.0;
+            end
+%             for ii=1:self.sym_model.nu
+%                 Vu(self.sym_model.nx+ii,ii)=1.0;
+%             end                        
+            for ii=1:self.sym_model.nx
+                Vx_e(ii,ii)=1.0;
+            end
+
+            %             ocp_model.set('cost_Vx',[eye(self.sym_model.nx); zeros(self.sym_model.nu,self.sym_model.nx)]);
+            %             ocp_model.set('cost_Vu',[zeros(self.sym_model.nx,self.sym_model.nu); eye(self.sym_model.nu)]);
+            ocp_model.set('cost_Vx',Vx);
+            ocp_model.set('cost_Vu',Vu);
+            ocp_model.set('cost_Vz',zeros(self.sym_model.nx,0));
 
             % var
             ocp_model.set('cost_W',blkdiag(self.W_x,self.W_u));
-            ocp_model.set('cost_y_ref',zeros(self.sym_model.nx+self.sym_model.nu,1));
+%             ocp_model.set('cost_y_ref',zeros(self.sym_model.nx+self.sym_model.nu,1));
+            ocp_model.set('cost_y_ref',zeros(self.sym_model.nx,1));
 
-            ocp_model.set('cost_Vx_e',eye(self.sym_model.nx));
+%             ocp_model.set('cost_Vx_e',eye(self.sym_model.nx));
+            ocp_model.set('cost_Vx_e',Vx_e);
 
             % var
+            %%%%%% CAMBIO PER W_E
             ocp_model.set('cost_W_e',(self.W_x_e));
             ocp_model.set('cost_y_ref_e',zeros(self.sym_model.nx,1));
 
@@ -224,7 +240,7 @@ classdef NMPC_controller < casadi.Callback
             % ocp_model.set('constr_ubu',U_max);
 
             ocp_model.set('constr_x0', self.initial_condition);
-%             self.ocp_model = ocp_model;
+            %             self.ocp_model = ocp_model;
             % ... see ocp_model.model_struct to see what other fields can be set
         end
 
@@ -236,7 +252,7 @@ classdef NMPC_controller < casadi.Callback
             ocp_opts.set('sim_method', self.solver_params.sim_method);
             ocp_opts.set('qp_solver', self.solver_params.qp_solver);
             ocp_opts.set('qp_solver_cond_N', self.solver_params.qp_solver_cond_N);
-% %             ocp_opts.set('ext_fun_compile_flags', ''); % '-O2'
+            % %             ocp_opts.set('ext_fun_compile_flags', ''); % '-O2'
             ocp_opts.set('compile_model','true');
             ocp_opts.set('nlp_solver_max_iter',self.solver_params.num_iterations);
             %             ocp_opts.set('nlp_solver_exact_hessian',self.solver_params.nlp_solver_exact_hessian);
@@ -255,7 +271,7 @@ classdef NMPC_controller < casadi.Callback
             %ocp_opts.set('codgen_model','false');
             ocp_opts.set('compile_interface','auto');
             ocp_opts.set('output_dir',fullfile(pwd,'build'));
-%             self.ocp_opts = ocp_opts;
+            %             self.ocp_opts = ocp_opts;
             % ... see ocp_opts.opts_struct to see what other fields can be set
         end
 
@@ -272,7 +288,7 @@ classdef NMPC_controller < casadi.Callback
             end
         end
 
-        function u = solve(self,x0, index_time)
+        function u = solve(self,x0, index_time, plant)
             % update initial state
             %             tic
             self.ocp_solver.set('constr_x0', x0);
@@ -291,6 +307,12 @@ classdef NMPC_controller < casadi.Callback
                 self.utraj = 1e-4*ones(self.sym_model.nu, self.Hp);
                 self.ptraj = zeros(self.sym_model.nx, self.Hp);
             end
+
+            self.xtraj(:,1) = x0;
+            for i_x = 2 : size(self.xtraj,2)
+                self.xtraj(:,i_x) = plant.eval_model(self.xtraj(:,i_x-1),self.utraj(:,i_x-1));
+            end
+
             self.ocp_solver.set('init_x', self.xtraj);
             self.ocp_solver.set('init_u', self.utraj);
             self.ocp_solver.set('init_pi', self.ptraj);

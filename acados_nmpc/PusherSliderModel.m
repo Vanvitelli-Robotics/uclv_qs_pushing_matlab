@@ -137,7 +137,7 @@ classdef PusherSliderModel < casadi.Callback
             % Model matrices
             factor_matrix = 1/(self.slider_params.c_ellipse^2+S_p_x^2+S_p_y^2);
             Q = [self.slider_params.c_ellipse^2+S_p_x^2 S_p_x*S_p_y; S_p_x*S_p_y self.slider_params.c_ellipse^2+S_p_y^2];
-
+%             mode = 'ST';
             switch mode
                 case 'ST'
                     P = eye(2);
@@ -251,10 +251,11 @@ classdef PusherSliderModel < casadi.Callback
 % %                 );
 
             % explicit dynamic function
-%             eps_mc = 1*(u_n<0.02);
+
             expr_f_expl = vertcat((u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
                 + (u_fract>gamma_l)*x_dot_sl...
                 + (u_fract<gamma_r)*x_dot_sr);
+
 %             expr_f_expl = vertcat((S_st(sym_x,sym_u)*x_dot_st ...
 %                 + S_sl(sym_x,sym_u)*x_dot_sl...
 %                 + S_sr(sym_x,sym_u)*x_dot_sr));

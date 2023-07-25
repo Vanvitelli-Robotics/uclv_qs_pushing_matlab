@@ -1,5 +1,5 @@
 clear all
-% close all
+close all
 clc
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP ACADOS %%%%%%%%%%%%%%%%%%%%%%
@@ -23,7 +23,7 @@ end
 
 % Pusher_Slider struct parameters
 slider.mu_sg = 0.32;                                  % friction coefficient between slider and ground
-slider.mu_sp = 0.19;                                  % friction coefficient between slider and pusher
+slider.mu_sp = 0.19;                                 % friction coefficient between slider and pusher
 slider.xwidth = 0.068;                               % width of the slider along x-direction [m]
 slider.ywidth = 0.082;                                % width of the slider along y-direction [m]
 slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
@@ -52,13 +52,13 @@ p.set_delay(0);
 controller.set_delay_comp(0);
 
 % Set initial condition
-x0 = [0 0 deg2rad(90) slider.ywidth/2*0]';
+x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
-W_x = diag([10 10 .1 0]);  % State matrix weight
-W_x_e = 0*W_x; %diag([100 100 0 0 0]);
-W_u = diag([.1 1]);            % Control matrix weight
+W_x = diag([10.0 10.0 .1 0.0]);  % State matrix weight
+W_x_e = 2*W_x; %diag([100 100 0 0 0]);
+W_u = [];%diag([.1 1.0]);            % Control matrix weight
 % controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
@@ -80,8 +80,9 @@ traj_gen.set_target(x0,xf,t0,tf);
 % [time, traj] = traj_gen.straight_line(true);
 
 x0_w = [x0(1:2)' 0];
+% x0_w = [0 0 0];
 xf_w = [ 
-      0.0 0.3 0;
+      0.05 0.0 0;
 %        0.15 0.1 0;
 %     0.25 0.2 0;
     ];
@@ -97,7 +98,8 @@ u_n_ref = 0.015; u_t_ref = 0;
 control_ref = repmat([u_n_ref; u_t_ref],1,length(time));
 
 % Set overall reference
-controller.set_reference_trajectory([traj; control_ref]);
+% controller.set_reference_trajectory([traj; control_ref]);
+controller.set_reference_trajectory(traj);
 
 % controller.create_ocp_solver();
 % SIMULATION START
@@ -119,7 +121,7 @@ if simulation_ == true
     elseif(strcmp(sym_type,"matlab"))
         disp("MATLAB SIMULATION")
         noise_ = false;
-        debug_ = true;
+        debug_ = false;
         print_ = true;
         disturbance_ = true;
          
@@ -144,13 +146,13 @@ helper.my_plot(params.t, [controller.y_ref(1:3,:); controller.y_ref(4,:)], param
 
 
 %% ANIMATE
-helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1,controller.sample_time, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))]);
+helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))]);
 
 
 
 
 
-
+% 
 
 
 

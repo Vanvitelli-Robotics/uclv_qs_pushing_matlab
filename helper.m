@@ -31,7 +31,7 @@ classdef helper
             ax1 = subplot(3,2,1); plot(time,x_s), hold on, plot(time,traj(1,:)), xlabel('t [s]'), ylabel('x_S'),legend('x_S','xref_S'), subtitle('x_S tracking'), grid on
             ax2 = subplot(3,2,3); plot(time,y_s), hold on, plot(time,traj(2,:)), xlabel('t [s]'), ylabel('y_S'),legend('y_S','yref_S'), subtitle('y_S tracking'), grid on
             ax3 = subplot(3,2,5); plot(time,theta_s), hold on, plot(time,traj(3,:)),xlabel('t [s]'), ylabel('\theta_S'), legend('\theta_S','\thetaref_S'), subtitle('\theta_S tracking'), grid on
-%             ax4 = subplot(3,2,2); plot(time,S_p_x),hold on, plot(time,traj(4,:)),xlabel('t [s]'), ylabel('S_ p_x'), legend('S_ p_x','ref'), subtitle('S_ p_x tracking'), grid on
+            %             ax4 = subplot(3,2,2); plot(time,S_p_x),hold on, plot(time,traj(4,:)),xlabel('t [s]'), ylabel('S_ p_x'), legend('S_ p_x','ref'), subtitle('S_ p_x tracking'), grid on
             ax5 = subplot(3,2,2); plot(time,S_p_y),hold on, plot(time,traj(4,:)),xlabel('t [s]'), ylabel('S_ p_y'), legend('S_ p_y','ref'), subtitle('S_ p_y tracking'), grid on
 
             figure
@@ -50,7 +50,7 @@ classdef helper
             xlim([ax1,ax2,ax3,ax5,ax6,ax7,ax8,ax9],[0 time(end)])
         end
 
-        function my_animate(x, y, theta, rx, ry, t, step_time, sampling_time, traj)
+        function my_animate(x, y, theta, rx, ry, t, step_time, traj)
             % Function to animate the trajectory tracking of the pusher slider system
             % Input: 2D position [x,y,theta]
 
@@ -133,7 +133,7 @@ classdef helper
                 if disturbance_ == true
                     if i == 33
                         disp("Disturbance")
-                        x(1,i) = x(1,i) + 0.02;
+                        x(2,i) = x(2,i) + 0.02;
                     end
                 end
 
@@ -146,7 +146,30 @@ classdef helper
                 xk_sim = controller.delay_buffer_sim(plant, x(:,i));
 
                 % solve OCP
-                u(:,i) = controller.solve(xk_sim,i);
+                %%%%%% CHANGE INITIAL GUESS %%%%%%
+%                 u_vect = controller.ocp_solver.get('u');
+%                 UN_LIM = [0; 0.03; u_vect(1,1)];
+%                 UT_LIM = [-0.03; 0.03; u_vect(2,1)];
+%                 [X,Y] = meshgrid(UN_LIM,UT_LIM);
+%                 cost_values_ = zeros(length(X));
+% 
+%                 
+% 
+%                 for i_u = 1:numel(X)
+%                     u_vect(:,1) = [X(i_u);Y(i_u)];
+%                     cost_values_(i_u) = helper.evaluate_cost_function(xk_sim, controller, plant,i*controller.sample_time, u_vect);
+%                 end
+%                 [min_cost_fcn,index_min] = min(cost_values_(:));
+%                 u_min_guess = [X(index_min); Y(index_min)];
+%                 disp()
+%                 disp()
+%                 controller.utraj(:,1) = u_min_guess;
+
+                
+
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+                u(:,i) = controller.solve(xk_sim,i,plant);
                 %                 u_buff_contr = [u(:,i) u_buff_contr(:,1:end-1)];
                 controller.u_buff_contr = [u(:,i) controller.u_buff_contr(:,1:end-1)];
 
@@ -236,10 +259,26 @@ classdef helper
             save(name_exp_ext,'params');
         end
 
+
+        function cost_fcn_ = evaluate_cost_function(xn, controller, plant,t, u_vect)
+            cost_fcn_ = 0;
+            time_index = round(t/controller.sample_time);
+            for n = 1:controller.Hp
+                y_ref = controller.get_y_ref(time_index+n);
+                cost_fcn_ = cost_fcn_ + (xn-y_ref(1:4))'*controller.W_x*(xn-y_ref(1:4))+(u_vect(:,n)-y_ref(5:end))'*controller.W_u*(u_vect(:,n)-y_ref(5:end));            %f_cost_k(-xn_ref+xn,u_vect(:,n));
+                x_dot = plant.eval_model(xn,u_vect(:,n));
+                xn = xn + controller.sample_time*x_dot;
+            end
+            yn_ref = controller.get_y_ref(time_index+controller.Hp);
+            cost_fcn_ = cost_fcn_ + (xn-yn_ref(1:4))'*controller.W_x_e*(xn-yn_ref(1:4));
+        end
+
+
+
         function u_min = debug_cost_function(x0, u_n_lb, u_t_lb, u_n_ub, u_t_ub, controller, plant, index, t)
             import casadi.*
-%             f_cost_k = Function('f_k',{controller.sym_model.sym_x, controller.sym_model.sym_u},{controller.ocp_solver.model_struct.cost_expr_ext_cost});
-%             f_cost_ke = Function('f_ke',{controller.sym_model.sym_x},{controller.ocp_solver.model_struct.cost_expr_ext_cost_e});
+            %             f_cost_k = Function('f_k',{controller.sym_model.sym_x, controller.sym_model.sym_u},{controller.ocp_solver.model_struct.cost_expr_ext_cost});
+            %             f_cost_ke = Function('f_ke',{controller.sym_model.sym_x},{controller.ocp_solver.model_struct.cost_expr_ext_cost_e});
             %     controller.clear_variables();
             %     u_opt = controller.solve(x0);
             %     u_vect = controller.ocp_solver.get('u');
