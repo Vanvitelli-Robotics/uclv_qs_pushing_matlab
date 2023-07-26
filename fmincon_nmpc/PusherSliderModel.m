@@ -87,7 +87,6 @@ classdef PusherSliderModel < casadi.Callback
             else
                 contact = true;
             end
-            contact = true;
         end
 
         % Evaluate model (numerical)
@@ -154,7 +153,7 @@ classdef PusherSliderModel < casadi.Callback
 %                     disp('sliding right mode')
                 otherwise                   % the pusher is not in contact with the slider
                     %disp('no contact')
-                    x_dot = [0 0 0 u_t]';
+                    x_dot = [0 0  u_n u_t]';
                     return;
             end
             c = eye(2)-factor_matrix*(Q*P+[-S_p_y; S_p_x]*b');

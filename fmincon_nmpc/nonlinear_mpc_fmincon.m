@@ -1,6 +1,15 @@
 clear all
 close all
 clc
+
+% Setting path variables
+model_path = fullfile(pwd,'.');
+addpath(model_path);
+model_path = fullfile(pwd,'..');
+addpath(model_path);
+model_path = fullfile(pwd,'../cad_models');
+addpath(model_path);
+
 % %%%%%%%%%%%%%%%%%%%%%% SETUP MODEL %%%%%%%%%%%%%%%%%%%%%%
 g = 9.81;
 % Pusher_Slider struct parameters
@@ -33,7 +42,7 @@ nlobj.Ts = Ts;
 nlobj.PredictionHorizon = Hp;
 nlobj.ControlHorizon = Hu;
 
-nlobj.Model.StateFcn = @eval_model; %"eval_model";
+nlobj.Model.StateFcn = @eval_model_continuous; %"eval_model_continuous";
 nlobj.Model.IsContinuousTime = true;
 nlobj.Model.NumberOfParameters = 1;
 
@@ -54,8 +63,8 @@ nlobj.States(4).Max = 0.9*p.slider_params.ywidth/2;
 
 
 % Control setting
-u_n_lb = 0.0001; u_n_ub = 0.03;
-u_t_lb = -0.03; u_t_ub = 0.03;
+u_n_lb = 0.0; u_n_ub = 0.03;
+u_t_lb = -0.05; u_t_ub = 0.05;
 
 nlobj.ManipulatedVariables(1).Name = "u_n";
 nlobj.ManipulatedVariables(1).Units = "m/s";
@@ -68,18 +77,27 @@ nlobj.ManipulatedVariables(2).Name = "u_t";
 nlobj.ManipulatedVariables(2).Units = "m/s";
 nlobj.ManipulatedVariables(2).Max = u_t_ub;
 nlobj.ManipulatedVariables(2).Min = u_t_lb;
-% nlobj.ManipulatedVariables(2).RateMax = 0.01;
-% nlobj.ManipulatedVariables(2).RateMin = -0.01;
+% nlobj.ManipulatedVariables(2).RateMax = 0.02;
+% nlobj.ManipulatedVariables(2).RateMin = -0.02;
 
 
 % Cost function
-W_x = diag([10.0 10.0 .1 0.0]);
-W_u = diag([.1 1.0]);
+W_x = diag([1000 1000 .001 0]);
+W_u = diag([0 0]);
+W_deltau = [0.0001 0.0001];
 nlobj.Weights.OutputVariables = W_x;
 nlobj.Weights.ManipulatedVariables = W_u;
+nlobj.Weights.ManipulatedVariablesRate = W_deltau;
 
+% Solver Options
 nlobj.Optimization.SolverOptions.ConstraintTolerance = 1e-10;
 nlobj.Optimization.SolverOptions.StepTolerance = 1e-10;
+% nlobj.Optimization.SolverOptions.Algorithm = "interior-point";
+% nlobj.Optimization.SolverOptions.HonorBounds = true;
+% nlobj.Optimization.SolverOptions.Display = "iter";
+nlobj.Optimization.SolverOptions.EnableFeasibilityMode = true;
+% nlobj.Optimization.SolverOptions.PlotFcn = {@optimplotx,@optimplotconstrviolation,@optimplotfval,@optimplotfirstorderopt};
+nlobj.Optimization.SolverOptions.UseParallel = true;
 
 %% TRAJECTORY
 % Create desired trajectory
@@ -95,18 +113,19 @@ traj_gen.x0 = x0;
 x0_w = [x0(1:2)' 0];
 % x0_w = [0 0 0];
 xf_w = [
-    0.05 0.0 0;
-    %        0.15 0.1 0;
-    %     0.25 0.2 0;
+    0.1 0.0 0;
+%         0.15 0.1 0;
+%         0.25 0.2 0;
     ];
 traj_gen.waypoints_ = [x0_w; xf_w];
 [time, traj] = traj_gen.waypoints_gen;
 traj = [traj(1:3,:); traj(end,:)];
 
-time_sim = time(end) + 0;
+time_sim = time(end);
 
 
 %% SIMULATION
+use_mex_ = false;
 
 % Time of overall simulation
 time_sim_vec = 0:Ts:time_sim;
@@ -132,13 +151,20 @@ u0 = [0 0]';
 u_last = u0;
 MVopt = zeros(nlobj.PredictionHorizon,nu);
 
+
+if use_mex_ == true
+    [coreData,onlineData] = getCodeGenerationData(nlobj,x0,u_last,nloptions.Parameters);
+    mexFcn = buildMEX(nlobj,"myController",coreData,onlineData);
+end
+
 %             tic;
 for i = 1:time_sim_
     disp("Time: " + i*Ts);
     if disturbance_ == true
         if i == 33
             disp("Disturbance")
-            x(2,i) = x(2,i) + 0.02;
+            x(2,i) = x(2,i) + 0.01;
+            x(4,i) = x(4,i) - 0.01;
         end
     end
 
@@ -150,17 +176,33 @@ for i = 1:time_sim_
 
     % solve NMPC
     nloptions = nlmpc_updateX0(nlobj,nloptions,x(:,i), MVopt);
-    [u(:,i),nloptions,info] = nlmpcmove(nlobj,x(:,i),u_last,traj(:,i)',[],nloptions);
+    if i+nlobj.PredictionHorizon > size(traj,2)
+        traj_ = [traj(:,i:end) repmat(traj(:,end),1,i+nlobj.PredictionHorizon-1 - size(traj,2))]';
+    else
+        traj_ = traj(:,i:i+nlobj.PredictionHorizon-1)';
+    end
+    if use_mex_ == true
+        onlineData.X0 = nloptions.X0;
+        onlineData.ref = traj_;
+        tic;
+        [u(:,i),onlineData, info] = myController(x(:,i),u_last,onlineData);
+        toc;
+    else
+        tic;
+        [u(:,i),nloptions,info] = nlmpcmove(nlobj,x(:,i),u_last,traj_,[],nloptions);
+        toc;
+    end
+
 
     cost_dbg(i) = evalFcst_nlmpc(nlobj,x(:,i), info.MVopt, u_last, traj(:,i)',[],nloptions);
 
     if false && (  i <= 3 || (i>=30 && i<=inf*35) )
         disp(['contour ' num2str(i)])
-        un = u_n_lb:0.0001:u_n_ub;
-        ut = u_t_lb:0.0001:u_t_ub;
+        un = u_n_lb:0.0005:u_n_ub;
+        ut = u_t_lb:0.0005:u_t_ub;
 
-%         un = [u_n_lb:0.001:0.02 0.02:0.0005:u_n_ub];
-%         ut = [u_t_lb:0.0005:-0.01 -0.01:0.001:u_t_ub];
+        %         un = [u_n_lb:0.001:0.02 0.02:0.0005:u_n_ub];
+        %         ut = [u_t_lb:0.0005:-0.01 -0.01:0.001:u_t_ub];
 
         [UN,UT] = meshgrid(un,ut);
         FF = zeros(size(UN));
@@ -178,7 +220,7 @@ for i = 1:time_sim_
         contour(UN,UT,FF)
         hold on
         plot(u(1,i),u(2,i),'o')
-        disp(['DONE'])
+        disp('DONE')
         pause
     end
 
@@ -189,11 +231,13 @@ for i = 1:time_sim_
     cost(i) = info.Cost;
     %%%%%%%%%%%%%%%% PLANT SIM
 
-    x_dot_ = eval_model(x(:,i),u(:,i),slider);
+    x_dot_ = eval_model_continuous(x(:,i),u(:,i),slider);
 
     % Euler integration
     x(:,i+1) = x(:,i) + Ts*x_dot_;
     %                 toc;
+    disp("NEXT ITERATION")
+%     pause
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

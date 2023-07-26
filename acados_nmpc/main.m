@@ -37,8 +37,8 @@ p.symbolic_model();
 % %%%%%%%%%%%%%%%%%%%%%% SETUP CONTROLLER %%%%%%%%%%%%%%%%%%%%%%
 
 % Controller parameters
-sample_time = 0.03;
-Hp = 50;
+sample_time = 0.05;
+Hp = 20;
 
 % Setup Controller and Optimization Object
 controller = NMPC_controller('NMPC',p,sample_time,Hp);
@@ -56,15 +56,15 @@ x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
-W_x = diag([10.0 10.0 .1 0.0]);  % State matrix weight
-W_x_e = 2*W_x; %diag([100 100 0 0 0]);
-W_u = [];%diag([.1 1.0]);            % Control matrix weight
+W_x = 10*diag([10 10 .001 0]);  % State matrix weight
+W_x_e = 100*W_x; %diag([100 100 0 0 0]);
+W_u = diag([.1 1]);            % Control matrix weight
 % controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
 % Set constraints
-u_n_lb = 0.0001; u_n_ub = 0.03;
-u_t_lb = -0.03; u_t_ub = 0.03;
+u_n_lb = 0.0; u_n_ub = 0.05;
+u_t_lb = -0.05; u_t_ub = 0.05;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % Create desired trajectory
@@ -82,24 +82,24 @@ traj_gen.set_target(x0,xf,t0,tf);
 x0_w = [x0(1:2)' 0];
 % x0_w = [0 0 0];
 xf_w = [ 
-      0.05 0.0 0;
-%        0.15 0.1 0;
-%     0.25 0.2 0;
+      0.1 0.0 0;
+       0.15 0.1 0;
+    0.25 0.2 0;
     ];
 traj_gen.waypoints_ = [x0_w; xf_w];
 [time, traj] = traj_gen.waypoints_gen;
 traj = [traj(1:3,:); traj(end,:)];
 % traj = [traj repmat(traj(:,end),1,500)];
 % time = [time(1:end-1) time(end):sample_time:(time(end)+sample_time*500)];
-time_sim = time(end) + 0;
+time_sim = time(end) + 2;
 
 % Set control reference
-u_n_ref = 0.015; u_t_ref = 0;
+u_n_ref = 0; u_t_ref = 0;
 control_ref = repmat([u_n_ref; u_t_ref],1,length(time));
 
 % Set overall reference
-% controller.set_reference_trajectory([traj; control_ref]);
-controller.set_reference_trajectory(traj);
+controller.set_reference_trajectory([traj; control_ref]);
+% controller.set_reference_trajectory(traj);
 
 % controller.create_ocp_solver();
 % SIMULATION START
@@ -120,10 +120,10 @@ if simulation_ == true
 
     elseif(strcmp(sym_type,"matlab"))
         disp("MATLAB SIMULATION")
-        noise_ = false;
+        noise_ = true;
         debug_ = false;
-        print_ = true;
-        disturbance_ = true;
+        print_ = false;
+        disturbance_ = false;
          
         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
         params = helper.save_parameters("exp1_smooth_traj_10000",[x_s; y_s; theta_s; S_p_x; S_p_y],[u_n; u_t],time_plot, mode_vect);

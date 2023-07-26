@@ -134,43 +134,23 @@ classdef helper
                     if i == 33
                         disp("Disturbance")
                         x(2,i) = x(2,i) + 0.02;
+                        x(4,i) = x(4,i) - 0.02;
                     end
                 end
 
 
                 % noise simulation
                 if(sim_noise == true)
-                    x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 0 randn()*1e-4]';
+                    x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 randn()*1e-4]';
                 end
 
                 xk_sim = controller.delay_buffer_sim(plant, x(:,i));
 
                 % solve OCP
-                %%%%%% CHANGE INITIAL GUESS %%%%%%
-%                 u_vect = controller.ocp_solver.get('u');
-%                 UN_LIM = [0; 0.03; u_vect(1,1)];
-%                 UT_LIM = [-0.03; 0.03; u_vect(2,1)];
-%                 [X,Y] = meshgrid(UN_LIM,UT_LIM);
-%                 cost_values_ = zeros(length(X));
-% 
-%                 
-% 
-%                 for i_u = 1:numel(X)
-%                     u_vect(:,1) = [X(i_u);Y(i_u)];
-%                     cost_values_(i_u) = helper.evaluate_cost_function(xk_sim, controller, plant,i*controller.sample_time, u_vect);
-%                 end
-%                 [min_cost_fcn,index_min] = min(cost_values_(:));
-%                 u_min_guess = [X(index_min); Y(index_min)];
-%                 disp()
-%                 disp()
-%                 controller.utraj(:,1) = u_min_guess;
-
-                
-
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+                tic;
                 u(:,i) = controller.solve(xk_sim,i,plant);
-                %                 u_buff_contr = [u(:,i) u_buff_contr(:,1:end-1)];
+                toc;
+
                 controller.u_buff_contr = [u(:,i) controller.u_buff_contr(:,1:end-1)];
 
                 if print_ == true
@@ -324,12 +304,12 @@ classdef helper
                     % Evaluate cost function
                     for n = 1:controller.Hp
                         y_ref = controller.get_y_ref(time_index+n);
-                        cost_fcn_ = cost_fcn_ + (xn-y_ref(1:4))'*controller.W_x*(xn-y_ref(1:4))+(u_vect(:,n)-y_ref(5:end))'*controller.W_u*(u_vect(:,n)-y_ref(5:end));            %f_cost_k(-xn_ref+xn,u_vect(:,n));
+                        cost_fcn_ = cost_fcn_ + 0.5*((xn-y_ref(1:4))'*controller.W_x*(xn-y_ref(1:4))+(u_vect(:,n)-y_ref(5:end))'*controller.W_u*(u_vect(:,n)-y_ref(5:end)));            %f_cost_k(-xn_ref+xn,u_vect(:,n));
                         x_dot = plant.eval_model(xn,u_vect(:,n));
                         xn = xn + controller.sample_time*x_dot;
                     end
                     yn_ref = controller.get_y_ref(time_index+controller.Hp);
-                    cost_fcn_ = cost_fcn_ + (xn-yn_ref(1:4))'*controller.W_x_e*(xn-yn_ref(1:4));
+                    cost_fcn_ = cost_fcn_ + 0.5*((xn-yn_ref(1:4))'*controller.W_x_e*(xn-yn_ref(1:4)));
                     % %             cost_values = [cost_values; full(cost_fcn_)];
                     cost_values(i) = (cost_fcn_);
                     cost_fcn_ = 0;
@@ -353,6 +333,7 @@ classdef helper
                 %                             plot(u_vect(1,2), u_vect(2,2),'*')
                 %                             plot(u_vect(1,3), u_vect(2,3),'*')
                 hold off
+                pause
             end
 
 

@@ -1,4 +1,4 @@
-function x_dot = eval_model(x,u,params)
+function x_dot = eval_model_continuous(x,u,params)
     % This method can be used to evaluate the pusher-Slider non linear model x_dot = f(x,u)
     % Input: x = [x_s, y_s, theta_s (rad), r_y],
     %        u = [u_n, u_t],

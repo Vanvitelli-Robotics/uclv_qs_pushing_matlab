@@ -15,7 +15,7 @@ classdef NMPC_controller < casadi.Callback
         % Weight matrices for objective function
         W_x = diag([100, 1, 1,  1e-3]);
         W_x_e = 2*diag([100, 1, 1, 1e-3]);
-        W_u = [];%diag([1 1]);
+        W_u = diag([1 1]);
 
         % Costraints
         h_constr_lb = [];  % lower bound constraint on the constrained variables h
@@ -56,31 +56,6 @@ classdef NMPC_controller < casadi.Callback
 
     end
 
-    methods(Static)
-
-        function solver_params = get_solver_params()
-            % Solver parameters
-            solver_params.nlp_solver = 'sqp';                      % sqp, sqp_rti
-            solver_params.qp_solver = 'partial_condensing_hpipm';  % full_condensing_hpipm, partial_condensing_hpipm, full_condensing_qpoases, full_condensing_daqp
-            solver_params.qp_solver_cond_N = 5;                    % for partial condensing
-            solver_params.sim_method = 'erk';                      % integrator type : erk, irk, irk_gnsf
-            %             solver_params.sim_method_num_stages = 1;
-            solver_params.num_iterations = 100;
-            %             solver_params.qp_solver_warm_start = 0;
-            %             solver_params.globalization = "merit_backtracking";
-            %             solver_params.nlp_solver_step_length = 1;
-            %             solver_params.alpha_reduction = 0.001;
-            %             solver_params.levenberg_marquardt = 0.0001;
-            %             solver_params.regularize_method = 'project_reduc_hess';
-            %             solver_params.line_search_use_sufficient_descent = 1;
-            %             solver_params.nlp_solver_exact_hessian = 'false';
-            %             solver_params.nlp_solver_ext_qp_res = 1;
-            %             solver_params.qp_solver_warm_start = 0;
-            %             solver_params.qp_solver_cond_ric_alg = 0;
-            %             solver_params.qp_solver_ric_alg = 0;
-
-        end
-    end
     methods
 
         % Constructor
@@ -90,9 +65,6 @@ classdef NMPC_controller < casadi.Callback
             % Acados initialitation
             %self.init();
             check_acados_requirements()
-
-            % Set solver parameters
-            self.solver_params = NMPC_controller.get_solver_params();
 
             % Save the plant model
             self.sym_model = plant.sym_model;
@@ -114,7 +86,7 @@ classdef NMPC_controller < casadi.Callback
         function set_delay_comp(self,delay)
             self.delay_compensation = delay;
             self.delay_buff_comp = ceil(self.delay_compensation/self.sample_time);
-            self.u_buff_contr = 1e-4*ones(self.sym_model.nu, self.delay_buff_comp);
+            self.u_buff_contr = zeros*ones(self.sym_model.nu, self.delay_buff_comp);
         end
 
         function xk_sim = delay_buffer_sim(self, plant, x)
@@ -181,15 +153,15 @@ classdef NMPC_controller < casadi.Callback
             ocp_model.set('cost_type', 'linear_ls');
             ocp_model.set('cost_type_e', 'linear_ls');
 
-            Vx = zeros(self.sym_model.nx, self.sym_model.nx);
+            Vx = zeros(self.sym_model.nx+self.sym_model.nu, self.sym_model.nx);
             Vx_e = zeros(self.sym_model.nx, self.sym_model.nx);
-            Vu = zeros(self.sym_model.nx, self.sym_model.nu);
+            Vu = zeros(self.sym_model.nx+self.sym_model.nu, self.sym_model.nu);
             for ii=1:self.sym_model.nx
                 Vx(ii,ii)=1.0;
             end
-%             for ii=1:self.sym_model.nu
-%                 Vu(self.sym_model.nx+ii,ii)=1.0;
-%             end                        
+            for ii=1:self.sym_model.nu
+                Vu(self.sym_model.nx+ii,ii)=1.0;
+            end
             for ii=1:self.sym_model.nx
                 Vx_e(ii,ii)=1.0;
             end
@@ -198,14 +170,14 @@ classdef NMPC_controller < casadi.Callback
             %             ocp_model.set('cost_Vu',[zeros(self.sym_model.nx,self.sym_model.nu); eye(self.sym_model.nu)]);
             ocp_model.set('cost_Vx',Vx);
             ocp_model.set('cost_Vu',Vu);
-            ocp_model.set('cost_Vz',zeros(self.sym_model.nx,0));
+            ocp_model.set('cost_Vz',zeros(self.sym_model.nx+self.sym_model.nu,0));
 
             % var
             ocp_model.set('cost_W',blkdiag(self.W_x,self.W_u));
-%             ocp_model.set('cost_y_ref',zeros(self.sym_model.nx+self.sym_model.nu,1));
-            ocp_model.set('cost_y_ref',zeros(self.sym_model.nx,1));
+            ocp_model.set('cost_y_ref',zeros(self.sym_model.nx+self.sym_model.nu,1));
+            %             ocp_model.set('cost_y_ref',zeros(self.sym_model.nx,1));
 
-%             ocp_model.set('cost_Vx_e',eye(self.sym_model.nx));
+            %             ocp_model.set('cost_Vx_e',eye(self.sym_model.nx));
             ocp_model.set('cost_Vx_e',Vx_e);
 
             % var
@@ -245,29 +217,31 @@ classdef NMPC_controller < casadi.Callback
         end
 
         function ocp_opts = create_ocp_opts(self)
+            field_s = ["nlp_solver", "qp_solver", "sim_method",  "globalization"];
+            values_s = ["sqp", "partial_condensing_hpipm", "erk", "merit_backtracking"];
+            solver_params_s = dictionary(field_s,values_s);
+
+            field_d = ["qp_solver_cond_N", "nlp_solver_max_iter","line_search_use_sufficient_descent","nlp_solver_tol_stat","nlp_solver_tol_eq","nlp_solver_tol_ineq","nlp_solver_tol_comp"];
+            values_d = [5, 30, 1,1e-6,1e-6,1e-6,1e-6];
+            solver_params_d = dictionary(field_d,values_d);
+
             % acados ocp set opts
             ocp_opts = acados_ocp_opts();
             ocp_opts.set('param_scheme_N', self.Hp);
-            ocp_opts.set('nlp_solver', self.solver_params.nlp_solver);
-            ocp_opts.set('sim_method', self.solver_params.sim_method);
-            ocp_opts.set('qp_solver', self.solver_params.qp_solver);
-            ocp_opts.set('qp_solver_cond_N', self.solver_params.qp_solver_cond_N);
-            % %             ocp_opts.set('ext_fun_compile_flags', ''); % '-O2'
-            ocp_opts.set('compile_model','true');
-            ocp_opts.set('nlp_solver_max_iter',self.solver_params.num_iterations);
-            %             ocp_opts.set('nlp_solver_exact_hessian',self.solver_params.nlp_solver_exact_hessian);
-            %             ocp_opts.set('qp_solver_warm_start',self.solver_params.qp_solver_warm_start);
-            %             ocp_opts.set('sim_method_num_stages',self.solver_params.sim_method_num_stages);
-            %             ocp_opts.set('nlp_solver_step_length',self.solver_params.nlp_solver_step_length);
-            %             ocp_opts.set('alpha_reduction',self.solver_params.alpha_reduction);
-            %             ocp_opts.set('globalization', self.solver_params.globalization);
-            %             ocp_opts.set('line_search_use_sufficient_descent', self.solver_params.line_search_use_sufficient_descent);
-            %             ocp_opts.set('levenberg_marquardt',self.solver_params.levenberg_marquardt);
-            %             ocp_opts.set('regularize_method',self.solver_params.regularize_method);
-            %             ocp_opts.set('nlp_solver_ext_qp_res',self.solver_params.nlp_solver_ext_qp_res);
-            %             ocp_opts.set('qp_solver_warm_start',self.solver_params.qp_solver_warm_start);
-            %             ocp_opts.set('qp_solver_cond_ric_alg',self.solver_params.qp_solver_cond_ric_alg);
-            %             ocp_opts.set('qp_solver_ric_alg',self.solver_params.qp_solver_ric_alg);
+            ent = solver_params_s.keys;
+            val = solver_params_s.values;
+            for ent_ind = 1:length(solver_params_s.keys)
+                ocp_opts.set(ent(ent_ind),val(ent_ind));
+            end
+ 
+            ent = solver_params_d.keys;
+            val = solver_params_d.values;
+            for ent_ind = 1:length(solver_params_d.keys)
+                ocp_opts.set(ent(ent_ind),val(ent_ind));
+            end
+
+
+
             %ocp_opts.set('codgen_model','false');
             ocp_opts.set('compile_interface','auto');
             ocp_opts.set('output_dir',fullfile(pwd,'build'));
@@ -304,7 +278,7 @@ classdef NMPC_controller < casadi.Callback
             % set initial guess
             if(isempty(self.utraj) || isempty(self.xtraj))
                 self.xtraj = zeros(self.sym_model.nx, self.Hp+1);
-                self.utraj = 1e-4*ones(self.sym_model.nu, self.Hp);
+                self.utraj = repmat([0;0],1,self.Hp);
                 self.ptraj = zeros(self.sym_model.nx, self.Hp);
             end
 
@@ -342,7 +316,7 @@ classdef NMPC_controller < casadi.Callback
         function set_reference_trajectory(self,y_ref)
             % Update reference trajectory
             self.y_ref = [zeros(size(y_ref,1),self.delay_buff_comp) y_ref];
-            self.y_ref(4,1:self.delay_buff_comp) = self.y_ref(4,self.delay_buff_comp+1);
+            self.y_ref(self.sym_model.nx+self.sym_model.nu,1:self.delay_buff_comp) = self.y_ref(self.sym_model.nx+self.sym_model.nu,self.delay_buff_comp+1);
             %             self.y_ref = y_ref(:,self.delay_buff_comp:end);
         end
 
