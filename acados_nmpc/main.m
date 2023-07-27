@@ -19,7 +19,7 @@ if linux_set == false
 end
 
 
-% %%%%%%%%%%%%%%%%%%%%%% SETUP MODEL %%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%% SETUP REAL MODEL %%%%%%%%%%%%%%%%%%%%%%
 
 % Pusher_Slider struct parameters
 slider.mu_sg = 0.32;                                  % friction coefficient between slider and ground
@@ -31,14 +31,30 @@ slider.m = 0.2875;                                    % slider mass [kg]
 plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
-p = PusherSliderModel('pusher_slider_model',slider, plant_time_delay);
+p = PusherSliderModel('real_plant',slider, plant_time_delay);
 p.symbolic_model();
+
+
+% %%%%%%%%%%%%%%%%%%%%%% SETUP NOMINAL PLANT %%%%%%%%%%%%%%%%%%%%%%
+
+% Pusher_Slider struct parameters
+slider_nominal.mu_sg = 0.32 - 0.1;                                  % friction coefficient between slider and ground
+slider_nominal.mu_sp = 0.19 - 0.1;                                 % friction coefficient between slider and pusher
+slider_nominal.xwidth = 0.068;                               % width of the slider along x-direction [m]
+slider_nominal.ywidth = 0.082;                                % width of the slider along y-direction [m]
+slider_nominal.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
+slider_nominal.m = 0.2875;                                    % slider mass [kg]
+plant_time_delay_inc = 0.3;                               % delay of the plant [s]
+
+% Create Pusher Slider object
+p_inc = PusherSliderModel('nominal_plant',slider_nominal, plant_time_delay_inc);
+p_inc.symbolic_model();
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP CONTROLLER %%%%%%%%%%%%%%%%%%%%%%
 
 % Controller parameters
 sample_time = 0.05;
-Hp = 20;
+Hp = 25;
 
 % Setup Controller and Optimization Object
 controller = NMPC_controller('NMPC',p,sample_time,Hp);
@@ -48,23 +64,29 @@ controller.create_ocp_solver();
 %% SETTING PARAMETERS FOR CONTROLLER AND PLANT
 
 % Change delay of the plant and the delay to compensate with the controller
-p.set_delay(0);
-controller.set_delay_comp(0);
+p.set_delay(0.35);
+controller.set_delay_comp(0.35);
 
 % Set initial condition
 x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
-W_x = 10*diag([10 10 .001 0]);  % State matrix weight
-W_x_e = 100*W_x; %diag([100 100 0 0 0]);
-W_u = diag([.1 1]);            % Control matrix weight
+% W_x = 10*diag([10 10 .001 0]);  % State matrix weight
+% W_x_e = 100*diag([10 10 .001 0]); %diag([100 100 0 0 0]);
+% W_u = diag([.1 1]);            % Control matrix weight
+% 
+W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
+W_x_e = 200*diag([.05 .05 200 0]); %diag([100 100 0 0 0]);
+W_u = diag([.1 0.8]);            % Control matrix weight
+
+
 % controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
 % Set constraints
-u_n_lb = 0.0; u_n_ub = 0.05;
-u_t_lb = -0.05; u_t_ub = 0.05;
+u_n_lb = 0.0; u_n_ub = 0.03;
+u_t_lb = -0.03; u_t_ub = 0.03;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % Create desired trajectory
@@ -83,8 +105,8 @@ x0_w = [x0(1:2)' 0];
 % x0_w = [0 0 0];
 xf_w = [ 
       0.1 0.0 0;
-       0.15 0.1 0;
-    0.25 0.2 0;
+        0.15 -0.1 0;
+    0.25 -0.2 0;
     ];
 traj_gen.waypoints_ = [x0_w; xf_w];
 [time, traj] = traj_gen.waypoints_gen;
@@ -94,7 +116,7 @@ traj = [traj(1:3,:); traj(end,:)];
 time_sim = time(end) + 2;
 
 % Set control reference
-u_n_ref = 0; u_t_ref = 0;
+u_n_ref = u_n_ub/2; u_t_ref = 0;
 control_ref = repmat([u_n_ref; u_t_ref],1,length(time));
 
 % Set overall reference
@@ -107,8 +129,8 @@ controller.set_reference_trajectory([traj; control_ref]);
 % If you want to simulate set simulation_ true and then set the
 % type of simulation (simulink, matlab or real robot)
 simulation_ = true;
-sym_type = "matlab";
-print_robot = true;
+sym_type = "robot";
+print_robot = false;
 
 
 % Simulation
@@ -123,10 +145,10 @@ if simulation_ == true
         noise_ = true;
         debug_ = false;
         print_ = false;
-        disturbance_ = false;
+        disturbance_ = true;
          
         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
-        params = helper.save_parameters("exp1_smooth_traj_10000",[x_s; y_s; theta_s; S_p_x; S_p_y],[u_n; u_t],time_plot, mode_vect);
+        params = helper.save_parameters("exp1_smooth_traj_",[x_s; y_s; theta_s; S_p_y],[u_n; u_t],time_plot, mode_vect);
 
     elseif(strcmp(sym_type,"robot"))
         disp("ROBOT EXPERIMENT")
@@ -141,18 +163,17 @@ end
 %% PLOT
 if sym_type == "robot"
     params.t = params.t(1:end-1);
+    helper.my_plot_robot(params.t, [controller.y_ref(1:4,:) repmat(controller.y_ref(1:4,end),1,(abs(length(params.x_S) - length(controller.y_ref))))], params.x_S, params.y_S, params.theta_S, params.S_p_y, params.u_n, params.u_t);
+else
+    helper.my_plot(params.t, [controller.y_ref(1:3,:); controller.y_ref(4,:)], params.x_S, params.y_S, params.theta_S, params.S_p_y, params.u_n, params.u_t, controller.cost_function_vect, helper.convert_str2num(params.mode_vect));
 end
-helper.my_plot(params.t, [controller.y_ref(1:3,:); controller.y_ref(4,:)], params.x_S, params.y_S, params.theta_S, params.S_p_y, params.u_n, params.u_t, controller.cost_function_vect, helper.convert_str2num(params.mode_vect));
-
 
 %% ANIMATE
+% helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))]);
+params.S_p_x = repmat(-p.slider_params.xwidth/2,1,length(params.x_S));
 helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))]);
 
 
-
-
-
-% 
 
 
 

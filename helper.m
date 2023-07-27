@@ -22,6 +22,26 @@ classdef helper
             mode_vect_num = str2num(char(mode_vect_str));
         end
 
+        function my_plot_robot(time, traj, x_s, y_s, theta_s, S_p_y, u_n, u_t)
+            if length(traj(1,:)) < length(time)
+                traj = [traj traj(:,end).*ones(length(traj(:,end)),length(time)-length(traj(1,:)))];
+            end
+            set(0,'DefaultLineLineWidth',1.5);
+            figure,
+            ax1 = subplot(3,2,1); plot(time,x_s), hold on, plot(time,traj(1,:)), xlabel('t [s]'), ylabel('x_S'),legend('x_S','xref_S'), subtitle('x_S tracking'), grid on
+            ax2 = subplot(3,2,3); plot(time,y_s), hold on, plot(time,traj(2,:)), xlabel('t [s]'), ylabel('y_S'),legend('y_S','yref_S'), subtitle('y_S tracking'), grid on
+            ax3 = subplot(3,2,5); plot(time,theta_s), hold on, plot(time,traj(3,:)),xlabel('t [s]'), ylabel('\theta_S'), legend('\theta_S','\thetaref_S'), subtitle('\theta_S tracking'), grid on
+            %             ax4 = subplot(3,2,2); plot(time,S_p_x),hold on, plot(time,traj(4,:)),xlabel('t [s]'), ylabel('S_ p_x'), legend('S_ p_x','ref'), subtitle('S_ p_x tracking'), grid on
+            ax5 = subplot(3,2,2); plot(time,S_p_y),hold on, plot(time,traj(4,:)),xlabel('t [s]'), ylabel('S_ p_y'), legend('S_ p_y','ref'), subtitle('S_ p_y tracking'), grid on
+
+            figure
+            ax6 = subplot(2,1,1); plot(time,u_n), xlabel('t [s]'), ylabel('u_n'), subtitle("normal control"), grid on
+            ax7 = subplot(2,1,2); plot(time,u_t), xlabel('t [s]'), ylabel('u_t'), subtitle("tangential control"), grid on
+
+            linkaxes([ax1,ax2,ax3,ax5,ax6,ax7],'x');
+            xlim([ax1,ax2,ax3,ax5,ax6,ax7],[0 time(end)])
+        end
+
         function my_plot(time, traj, x_s, y_s, theta_s, S_p_y, u_n, u_t,cost_function_vect, mode_vect)
             if length(traj(1,:)) < length(time)
                 traj = [traj traj(:,end).*ones(length(traj(:,end)),length(time)-length(traj(1,:)))];
@@ -59,12 +79,12 @@ classdef helper
             p0_s = [x(1) y(1) 0];
             quat0_s = quaternion(helper.my_rotz(theta(1)),'rotmat','frame');
             figure
-            slider_p = poseplot(quat0_s,p0_s, MeshFileName="cad_models/cuboide_santal.stl", ScaleFactor=0.001);%,PatchFaceColor="yellow");
+            slider_p = poseplot(quat0_s,p0_s, "MeshFileName","cad_models/cuboide_santal.stl", "ScaleFactor",0.001);%,PatchFaceColor="yellow");
             hold on
 
             p0_ref = [traj(1:2,1)' 0];
             quat0_ref = quaternion(helper.my_rotz(traj(3,1)),'rotmat','frame');
-            slider_ref = poseplot(quat0_ref,p0_ref, MeshFileName="cad_models/cuboide_santal.stl", ScaleFactor=0.001);%,PatchFaceColor="yellow");
+            slider_ref = poseplot(quat0_ref,p0_ref, "MeshFileName","cad_models/cuboide_santal.stl", "ScaleFactor",0.001);%,PatchFaceColor="yellow");
 
 
             % Pusher frame
@@ -92,11 +112,11 @@ classdef helper
                 h.Visible = false;
                 position_s = [x(i) y(i) 0]';
                 quat_s = quaternion([0 0 theta(i)],'rotvec');
-                set(slider_p,Orientation=quat_s,Position=position_s);
+                set(slider_p,"Orientation",quat_s,"Position",position_s);
 
                 position_ref = [traj(1:2,i)' 0]';
                 quat_ref = quaternion([0 0 traj(3,i)],'rotvec');
-                set(slider_ref,Orientation=quat_ref,Position=position_ref);
+                set(slider_ref,"Orientation",quat_ref,"Position",position_ref);
 
                 hold on
                 pusher_position = [x(i) y(i) 0]'+ helper.my_rotz(theta(i))*[rx(i) ry(i) 0]';
@@ -148,7 +168,7 @@ classdef helper
 
                 % solve OCP
                 tic;
-                u(:,i) = controller.solve(xk_sim,i,plant);
+                u(:,i) = controller.solve(xk_sim,i+controller.delay_buff_comp);
                 toc;
 
                 controller.u_buff_contr = [u(:,i) controller.u_buff_contr(:,1:end-1)];
@@ -230,8 +250,8 @@ classdef helper
             params.x_S = x(1,:);
             params.y_S = x(2,:);
             params.theta_S = x(3,:);
-            params.S_p_x = x(4,:);
-            params.S_p_y = x(5,:);
+            %             params.S_p_x = x(4,:);
+            params.S_p_y = x(4,:);
             params.u_n = u(1,:);
             params.u_t = u(2,:);
             params.mode_vect = mode_vect;

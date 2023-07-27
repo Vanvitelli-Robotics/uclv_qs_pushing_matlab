@@ -23,17 +23,18 @@ command_msg = rosmessage(command_pub);
 start_time = rostime('now');
 
 % State and control variables
-global x u time_vec print_
+global x u time_vec print_ found_sol
 x = [];
 u = [];
 time_vec = [];
+found_sol = [];
 print_ = print_robot;
 params = struct;
 mpc_state_sub = rossubscriber("/mpc_state","std_msgs/Float64MultiArray", {@get_mpc_state,T_BS0, p, controller, start_time, command_pub, command_msg, time_exp, params}, "BufferSize",1);
 
 
 function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, p, controller, start_time, command_pub, command_msg, time_exp, params)
-    global x u time_vec print_
+    global x u time_vec print_ found_sol
     tic
     mpc_pose.X = mpc_state.Data(1);
     mpc_pose.Y = mpc_state.Data(2);
@@ -62,24 +63,24 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, p, controller, start_tim
     S_p(1) = -p.slider_params.xwidth/2;
 
     %     Get state [x y theta rx ry]
-    x_ = [mpc_pose.X mpc_pose.Y mpc_pose.Theta S_p']';
+    x_ = [mpc_pose.X mpc_pose.Y mpc_pose.Theta S_p(2)]';
     x = [x x_];
 
     % Delay Buffer Simulation
     xk = controller.delay_buffer_sim(p, x(:,end));
-    u = [u controller.solve(xk)];
-%     if t.seconds > time_exp/4
-%         u_ = [0.01; 0];
-% 
-%     else 
-%         u_ = [0 0]';
-%     end
-%     u = [u u_];
+    u = [u controller.solve(xk,round(time_vec(end)/controller.sample_time)+controller.delay_buff_comp)];
+%         if t.seconds > time_exp/4
+%             u_ = [0.01; 0];
+%     
+%         else
+%             u_ = [0 0]';
+%         end
+%         u = [u u_];
 
     controller.u_buff_contr = [u(:,end) controller.u_buff_contr(:,1:end-1)];
-
+    status = controller.ocp_solver.get('status');
+    
     if print_ == true
-        status = controller.ocp_solver.get('status');
         sqp_iter = controller.ocp_solver.get('sqp_iter');
         time_tot = controller.ocp_solver.get('time_tot');
         time_lin = controller.ocp_solver.get('time_lin');
@@ -87,11 +88,15 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, p, controller, start_tim
 
         fprintf('\nstatus = %d, sqp_iter = %d, time_int = %f [ms] (time_lin = %f [ms], time_qp_sol = %f [ms])\n',...
             status, sqp_iter, time_tot*1e3, time_lin*1e3, time_qp_sol*1e3);
-        if status~=0
-            disp('acados ocp solver failed');
-            keyboard
-        end
     end
+    if status~=0
+        disp('acados ocp solver failed');
+        %             keyboard
+        found_sol = [found_sol false];
+    else
+        found_sol = [found_sol true];
+    end
+
 
     % Send command to robot
     T_S0B = inv(T_BS0);

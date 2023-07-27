@@ -54,6 +54,8 @@ classdef NMPC_controller < casadi.Callback
         delay_buff_comp;
         u_buff_contr;
 
+        plant;
+
     end
 
     methods
@@ -79,6 +81,8 @@ classdef NMPC_controller < casadi.Callback
             self.Hp = Hp;
             self.sample_time = sample_time;
             self.T = self.Hp*self.sample_time;
+
+            self.plant = plant;
 
             construct(self, name);
         end
@@ -262,7 +266,7 @@ classdef NMPC_controller < casadi.Callback
             end
         end
 
-        function u = solve(self,x0, index_time, plant)
+        function u = solve(self,x0, index_time)
             % update initial state
             %             tic
             self.ocp_solver.set('constr_x0', x0);
@@ -284,7 +288,7 @@ classdef NMPC_controller < casadi.Callback
 
             self.xtraj(:,1) = x0;
             for i_x = 2 : size(self.xtraj,2)
-                self.xtraj(:,i_x) = plant.eval_model(self.xtraj(:,i_x-1),self.utraj(:,i_x-1));
+                self.xtraj(:,i_x) = self.plant.eval_model(self.xtraj(:,i_x-1),self.utraj(:,i_x-1));
             end
 
             self.ocp_solver.set('init_x', self.xtraj);
@@ -315,7 +319,7 @@ classdef NMPC_controller < casadi.Callback
 
         function set_reference_trajectory(self,y_ref)
             % Update reference trajectory
-            self.y_ref = [zeros(size(y_ref,1),self.delay_buff_comp) y_ref];
+            self.y_ref = [repmat([self.initial_condition; 0; 0],1,self.delay_buff_comp) y_ref];%[zeros(size(y_ref,1),self.delay_buff_comp) y_ref];
             self.y_ref(self.sym_model.nx+self.sym_model.nu,1:self.delay_buff_comp) = self.y_ref(self.sym_model.nx+self.sym_model.nu,self.delay_buff_comp+1);
             %             self.y_ref = y_ref(:,self.delay_buff_comp:end);
         end
