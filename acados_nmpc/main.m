@@ -12,7 +12,7 @@ model_path = fullfile(pwd,'../cad_models');
 addpath(model_path);
 
 % Specify if linux or windows (true = linux, false = windows)
-linux_set = true;
+linux_set = false;
 
 if linux_set == false
     env_vars_acados;
