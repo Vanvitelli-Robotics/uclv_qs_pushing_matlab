@@ -5,16 +5,19 @@ classdef bspline_shape
         p; % p = degree bspline
         n;
         m;
+        s; % ascissa curvilinea
     end
 
     methods
 
         function obj = bspline_shape(S,P,p)
+            import casadi.*
             obj.p = p;
             obj.S = S;
             obj.P = P;
             obj.n = length(P);
             obj.m = length(S);
+            obj.s = SX.sym('s');   %curvilinear abscess
         end
 
         function Ni_p = eval_bspline_sym(self, s, i, ord)
@@ -52,20 +55,34 @@ classdef bspline_shape
         end
 
         function FC = getSymbolicSpline(self,ord)
-            % Get symbolic expression of spline given:
-
             import casadi.*
-            s = SX.sym('s');   %curvilinear abscess
+            % Get symbolic expression of spline given:
             C = 0;
             for ind = 1:self.n
-                C = C + self.eval_bspline_sym(s,ind,ord)*self.P(ind,:);
+                C = C + self.eval_bspline_sym(self.s,ind,ord)*self.P(ind,:);
             end
-            FC = Function('F_C',{s},{C});
+            FC = Function('F_C',{self.s},{C});
         end
 
-        %         function FC_dot = getSymboliSplineDot(P,S,p)
-        %             cj = p*(()/());
-        %         end
+        function FC_dot = getSymboliSplineDot(self,ord)
+            import casadi.*
+            if ord < 1
+                disp("ERROR: order p must be grater than 1")
+            else
+                C_dot = 0;
+                for ii = 2 : self.n
+                    if self.S(ii+ord)==self.S(ii)
+                        cj_1 = 0;
+                    else
+                        cj_1 = ord*((self.P(ii)-self.P(ii-1))/(self.S(ii+ord)-self.S(ii)));
+                    end
+
+                    C_dot = C_dot + cj_1*self.eval_bspline_sym(self.s,ii,ord-1);
+                end
+            end
+
+            FC_dot = Function('FC_dot',{self.s},{C_dot});
+        end
 
         function FC_val = evalSpline(self,FC,s_values)
             FC_val = zeros(length(s_values),2);

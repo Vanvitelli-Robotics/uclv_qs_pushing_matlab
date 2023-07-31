@@ -37,9 +37,22 @@ SP = bspline_shape(S,P,p);
 
 FC = SP.getSymbolicSpline(p);
 
+FC_dot = SP.getSymboliSplineDot(p);
+
 %% PLOT
 s_values = a:0.001:b;
 
 FC_values = SP.evalSpline(FC, s_values);
+FC_values = [FC_values zeros(length(FC_values),1)];
 
-plot(FC_values(:,1),FC_values(:,2),'*'), hold on, plot(P(:,1),P(:,2),'*')
+FC_dot_values = SP.evalSpline(FC_dot,s_values);
+FC_dot_values = [FC_dot_values zeros(length(FC_dot_values),1)];
+
+quiver3(FC_values(1:10:end,1), FC_values(1:10:end,2), FC_values(1:10:end,3), FC_dot_values(1:10:end,1),FC_dot_values(1:10:end,2),FC_dot_values(1:10:end,3),'r','AutoScaleFactor',10), hold on
+plot(FC_values(:,1),FC_values(:,2),'*'), plot(P(:,1),P(:,2),'*')
+
+
+% surf(FC_values(:,1), FC_values(:,2), FC_values(:,3))
+% axis equal
+
+
