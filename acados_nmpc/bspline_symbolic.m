@@ -57,6 +57,7 @@ F_C = Function('F_C',{s},{C});
 %% PLOT
 
 FC_values = zeros(length(s_values),2);
+F_C = FC;
 
 for k = 1:length(s_values)
     FC_values(k,:) = full(F_C(s_values(k)));
