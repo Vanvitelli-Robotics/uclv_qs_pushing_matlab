@@ -127,6 +127,52 @@ classdef helper
                 drawnow
             end
         end
+        
+        function [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_sim_vec] = open_loop_matlab(plant,x0,u_n,u_t, time_sim,sample_time, sim_noise)
+            % OPEN LOOP SIMULATION for variable shape
+
+            % Time of overall simulation
+            time_sim_vec = 0:sample_time:time_sim;
+            time_sim_ = length(time_sim_vec);
+
+            % State
+            x = zeros(plant.nx, time_sim_+1);
+            x(:,1) = x0;
+
+            % Input Signal
+            u = repmat([u_n;u_t],1, time_sim_);
+
+            % Delay buffer to simulate the delay of the plant
+            delay_buff_plant = ceil(plant.time_delay / sample_time);
+            u_buff_plant = zeros(plant.nu,delay_buff_plant);
+
+            tic;
+            for i = 1:time_sim_
+
+                % noise simulation
+                if(sim_noise == true)
+                    x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 randn()*1e-4 randn()*1e-4]';
+                end
+           
+                if delay_buff_plant == 0
+                    x_dot_ = plant.eval_model(x(:,i),u(:,i)); 
+                    %x_dot_ = plant.eval_model_variable_shape(x(:,i),u(:,i));    
+                else
+                    x_dot_ = plant.eval_model(x(:,i),u_buff_plant(:,end));
+                    u_buff_plant = [u(:,i) u_buff_plant(:,1:end-1)];
+                end
+
+                % Euler integration
+                x(:,i+1) = x(:,i) + sample_time*x_dot_;
+
+            end
+            toc;
+           
+
+            x_s = x(1,1:end-1); y_s = x(2,1:end-1); theta_s = x(3,1:end-1); S_p_x = x(4,1:end-1); S_p_y = x(5,1:end-1);
+            u_n = u(1,:);
+            u_t = u(2,:);
+        end
 
         function [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_sim_vec,mode_vect, found_sol] = closed_loop_matlab(plant, controller,x0, time_sim, print_, sim_noise, debug_cost,disturbance_)
             % CLOSED LOOP SIMULATION

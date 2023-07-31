@@ -29,6 +29,9 @@ classdef PusherSliderModel < casadi.Callback
         sym_model = struct;
         time_delay;
 
+        cad_model = struct;
+        has_cad_model = false;
+
     end
 
     methods
@@ -45,8 +48,44 @@ classdef PusherSliderModel < casadi.Callback
             self.slider_params.tau_max = self.tau_max_func(self.slider_params.mu_sg, self.slider_params.m, helper.g, self.slider_params.area, self.slider_params.xwidth, self.slider_params.ywidth);
             self.slider_params.c_ellipse = self.slider_params.tau_max/self.slider_params.f_max;
             self.set_delay(time_delay);
+            self.open_cad_model("../cad_models/cuboide_santal.stl");
             construct(self, name);
         end
+
+        function open_cad_model(self, cad_model_path)
+            % This function open and save the cad model of the Slider
+            if(not(isempty(cad_model_path)))
+                self.cad_model.path = cad_model_path;
+                self.cad_model.stl = stlread(self.cad_model.path);
+                self.cad_model.DT = delaunayTriangulation(self.cad_model.stl.Points);
+                [self.cad_model.T,self.cad_model.Xb] = freeBoundary(self.cad_model.DT);
+                self.cad_model.TR = triangulation(self.cad_model.T,self.cad_model.Xb);
+                self.cad_model.TriangleCenters = incenter(self.cad_model.TR);
+                self.cad_model.TriangleNormals = faceNormal(self.cad_model.TR);
+                self.cad_model.scale_factor = 1000; % mesh scale
+                self.has_cad_model = true;
+                disp("Cad model saved");
+            else
+                self.has_cad_model = false;
+                disp("No cad model specified");
+            end
+        end
+
+        function print_cad_model(self)
+            figure,
+            trisurf(self.cad_model.T,self.cad_model.Xb(:,1),self.cad_model.Xb(:,2),self.cad_model.Xb(:,3), ...
+                'FaceColor','cyan','FaceAlpha',0.8);
+            axis equal
+            %
+            %             hold on
+            %             quiver3(self.cad_model.TriangleCenters(idx,1),self.cad_model.TriangleCenters(idx,2),self.cad_model.TriangleCenters(idx,3), ...
+            %             normal(1),normal(2),0,100,'color','r');
+            %             hold on
+            %             quiver3(self.cad_model.TriangleCenters(idx,1),self.cad_model.TriangleCenters(idx,2),self.cad_model.TriangleCenters(idx,3), ...
+            %                                 tangential(1),tangential(2),0,100,'color','b');
+            %             plot(p(1)*1000,p(2)*1000,'ro')
+        end
+
 
         function set_delay(self, time_delay)
             self.time_delay = time_delay;
@@ -124,34 +163,34 @@ classdef PusherSliderModel < casadi.Callback
             else
                 if (u_fract <= gamma_l) && (u_fract >= gamma_r)
                     mode = "ST";
-%                     disp("Motion Cone CHECK: Sticking Mode")
+                    %                     disp("Motion Cone CHECK: Sticking Mode")
                 elseif u_fract > gamma_l
                     mode = "SL";
-%                     disp("Motion Cone CHECK: Sliding Left Mode")
+                    %                     disp("Motion Cone CHECK: Sliding Left Mode")
                 else
                     mode = "SR";
-%                     disp("Motion Cone CHECK: Sliding Right Mode")
+                    %                     disp("Motion Cone CHECK: Sliding Right Mode")
                 end
             end
-           
+
 
             % Model matrices
             factor_matrix = 1/(self.slider_params.c_ellipse^2+S_p_x^2+S_p_y^2);
             Q = [self.slider_params.c_ellipse^2+S_p_x^2 S_p_x*S_p_y; S_p_x*S_p_y self.slider_params.c_ellipse^2+S_p_y^2];
-%             mode = 'ST';
+            %             mode = 'ST';
             switch mode
                 case 'ST'
                     P = eye(2);
                     b = [-S_p_y S_p_x]';
-%                     disp('sticking mode')
+                    %                     disp('sticking mode')
                 case 'SL'                   % the pusher slides on the object surface
                     P = [v_l zeros(2,1)];
                     b = [-S_p_y+gamma_l*S_p_x 0]';
-%                     disp('sliding left mode')
+                    %                     disp('sliding left mode')
                 case 'SR'                   % the pusher slides on the object surface
                     P = [v_r zeros(2,1)];
                     b = [-S_p_y+gamma_r*S_p_x 0]';
-%                     disp('sliding right mode')
+                    %                     disp('sliding right mode')
                 otherwise                   % the pusher is not in contact with the slider
                     %disp('no contact')
                     x_dot = [0 0 0 u_t]';
@@ -180,7 +219,7 @@ classdef PusherSliderModel < casadi.Callback
             u_t = SX.sym('u_t');         % tangential pusher velocity w.r.t. slider frame S [m/s]
 
             % (unnamed) symbolic variables
-%             sym_x = vertcat(x,y,theta,S_p_x,S_p_y);     % x state vector
+            %             sym_x = vertcat(x,y,theta,S_p_x,S_p_y);     % x state vector
             sym_x = vertcat(x,y,theta,S_p_y);
             sym_u = vertcat(u_n,u_t);                   % u control vector
 
@@ -226,30 +265,30 @@ classdef PusherSliderModel < casadi.Callback
             %     );
 
             % symbolic quintic function
-% %             s0 = SX.sym('s0');
-% %             sf = SX.sym('sf');
-% %             tau = SX.sym('tau');
-% %             s_tilde = Function('s_tilde',{tau},{6*tau^5-15*tau^4+10*tau^3});
-% %             s_t = Function('s_t',{s0,sf,tau},{s0 + (sf-s0)*s_tilde(tau)});
+            % %             s0 = SX.sym('s0');
+            % %             sf = SX.sym('sf');
+            % %             tau = SX.sym('tau');
+            % %             s_tilde = Function('s_tilde',{tau},{6*tau^5-15*tau^4+10*tau^3});
+            % %             s_t = Function('s_t',{s0,sf,tau},{s0 + (sf-s0)*s_tilde(tau)});
 
             % epsilon switching values
-% %             eps_sl = abs(0.5*gamma_l);
-% %             eps_sr = abs(0.5*gamma_r);
+            % %             eps_sl = abs(0.5*gamma_l);
+            % %             eps_sr = abs(0.5*gamma_r);
 
             % Symbolic function sticking decision
-% %             S_st = Function('S_st_fun',{sym_x,sym_u},{(u_fract>=gamma_r+eps_sr)*(u_fract<=gamma_l-eps_sl) ...
-% %                 + (u_fract<gamma_r+eps_sr)*(u_fract>gamma_r-eps_sr)*s_t(0,1,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))...
-% %                 + (u_fract<gamma_l+eps_sl)*(u_fract>gamma_l-eps_sl)*s_t(1,0,(u_fract-(gamma_l-eps_sl))/(2*eps_sl))...
-% %                 } ...
-% %                 );
-% % 
-% %             S_sl = Function('S_sl_fun',{sym_x,sym_u},{(u_fract<gamma_l+eps_sl)*(u_fract>gamma_l-eps_sl)*s_t(0,1,(u_fract-(gamma_l-eps_sl))/(2*eps_sl))...
-% %                 + (u_fract>gamma_l+eps_sl)} ...
-% %                 );
-% % 
-% %             S_sr = Function('S_sr_fun',{sym_x,sym_u},{(u_fract<gamma_r+eps_sr)*(u_fract>gamma_r-eps_sr)*s_t(1,0,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))...
-% %                 + (u_fract<gamma_r-eps_sr)} ...
-% %                 );
+            % %             S_st = Function('S_st_fun',{sym_x,sym_u},{(u_fract>=gamma_r+eps_sr)*(u_fract<=gamma_l-eps_sl) ...
+            % %                 + (u_fract<gamma_r+eps_sr)*(u_fract>gamma_r-eps_sr)*s_t(0,1,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))...
+            % %                 + (u_fract<gamma_l+eps_sl)*(u_fract>gamma_l-eps_sl)*s_t(1,0,(u_fract-(gamma_l-eps_sl))/(2*eps_sl))...
+            % %                 } ...
+            % %                 );
+            % %
+            % %             S_sl = Function('S_sl_fun',{sym_x,sym_u},{(u_fract<gamma_l+eps_sl)*(u_fract>gamma_l-eps_sl)*s_t(0,1,(u_fract-(gamma_l-eps_sl))/(2*eps_sl))...
+            % %                 + (u_fract>gamma_l+eps_sl)} ...
+            % %                 );
+            % %
+            % %             S_sr = Function('S_sr_fun',{sym_x,sym_u},{(u_fract<gamma_r+eps_sr)*(u_fract>gamma_r-eps_sr)*s_t(1,0,(u_fract-(gamma_r-eps_sr))/(2*eps_sr))...
+            % %                 + (u_fract<gamma_r-eps_sr)} ...
+            % %                 );
 
             % explicit dynamic function
 
@@ -257,25 +296,25 @@ classdef PusherSliderModel < casadi.Callback
                 + (u_fract>gamma_l)*x_dot_sl...
                 + (u_fract<gamma_r)*x_dot_sr);
 
-%             expr_f_expl = vertcat((S_st(sym_x,sym_u)*x_dot_st ...
-%                 + S_sl(sym_x,sym_u)*x_dot_sl...
-%                 + S_sr(sym_x,sym_u)*x_dot_sr));
-% 
-%             expr_f_expl = vertcat((1*x_dot_st ...
-%                 + 0*x_dot_sl...
-%                 + 0*x_dot_sr));
+            %             expr_f_expl = vertcat((S_st(sym_x,sym_u)*x_dot_st ...
+            %                 + S_sl(sym_x,sym_u)*x_dot_sl...
+            %                 + S_sr(sym_x,sym_u)*x_dot_sr));
+            %
+            %             expr_f_expl = vertcat((1*x_dot_st ...
+            %                 + 0*x_dot_sl...
+            %                 + 0*x_dot_sr));
 
             % implicit dynamic function
-%             expr_f_impl = expr_f_expl - sym_xdot;
+            %             expr_f_impl = expr_f_expl - sym_xdot;
 
             % Populate structure
             model.nx = self.nx;
             model.nu = self.nu;
             model.sym_x = sym_x;
-%             model.sym_xdot = sym_xdot;
+            %             model.sym_xdot = sym_xdot;
             model.sym_u = sym_u;
             model.expr_f_expl = expr_f_expl;
-%             model.expr_f_impl = expr_f_impl;
+            %             model.expr_f_impl = expr_f_impl;
 
             self.sym_model = model;
         end
