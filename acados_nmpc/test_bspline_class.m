@@ -64,8 +64,8 @@ t_vers_val = SP.evalSpline(t_vers,s_values);
 n_vers_val = SP.evalSpline(n_vers,s_values);
 
 % quiver3(FC_values(1:10:end,1), FC_values(1:10:end,2), FC_values(1:10:end,3), FC_dot_values(1:10:end,1),FC_dot_values(1:10:end,2),FC_dot_values(1:10:end,3),'r','AutoScaleFactor',10), hold on
-quiver3(FC_values(1:10:end,1), FC_values(1:10:end,2), FC_values(1:10:end,3), t_vers_val(1:10:end,1),t_vers_val(1:10:end,2),FC_dot_values(1:10:end,3),'r'), hold on
-quiver3(FC_values(1:10:end,1), FC_values(1:10:end,2), FC_values(1:10:end,3), n_vers_val(1:10:end,1),n_vers_val(1:10:end,2),FC_dot_values(1:10:end,3),'b')
+quiver3(FC_values(1:1:end,1), FC_values(1:1:end,2), zeros(length(FC_values),1), t_vers_val(1:1:end,1),t_vers_val(1:1:end,2),zeros(length(FC_values),1),'r'), hold on
+quiver3(FC_values(1:1:end,1), FC_values(1:1:end,2), zeros(length(FC_values),1), n_vers_val(1:1:end,1),n_vers_val(1:1:end,2),zeros(length(FC_values),1),'b')
 plot(FC_values(:,1),FC_values(:,2),'*'), plot(P(:,1),P(:,2),'*')
 
 

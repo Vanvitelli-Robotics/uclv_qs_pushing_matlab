@@ -28,16 +28,19 @@ classdef PusherSliderModel < casadi.Callback
 
         sym_model = struct;
         time_delay;
+        xdot_func; % symbolic expression of model
 
         cad_model = struct;
-        has_cad_model = false;
+        has_cad_model = false
+
+        SP; % Spline object interpolating cad model points
 
     end
 
     methods
 
         % Constructor
-        function self = PusherSliderModel(name, slider_parameters, time_delay)
+        function self = PusherSliderModel(name, slider_parameters, time_delay,cad_model_path,order_spline,z_limit)
             % Constructor of the pusher_slider model.
             % Input: name = string
             %        slider_parameters = struct
@@ -48,11 +51,11 @@ classdef PusherSliderModel < casadi.Callback
             self.slider_params.tau_max = self.tau_max_func(self.slider_params.mu_sg, self.slider_params.m, helper.g, self.slider_params.area, self.slider_params.xwidth, self.slider_params.ywidth);
             self.slider_params.c_ellipse = self.slider_params.tau_max/self.slider_params.f_max;
             self.set_delay(time_delay);
-            self.open_cad_model("../cad_models/cuboide_santal.stl");
+            self.open_cad_model(cad_model_path,order_spline,z_limit);
             construct(self, name);
         end
 
-        function open_cad_model(self, cad_model_path)
+        function open_cad_model(self, cad_model_path,p,z_limit)
             % This function open and save the cad model of the Slider
             if(not(isempty(cad_model_path)))
                 self.cad_model.path = cad_model_path;
@@ -65,10 +68,53 @@ classdef PusherSliderModel < casadi.Callback
                 self.cad_model.scale_factor = 1000; % mesh scale
                 self.has_cad_model = true;
                 disp("Cad model saved");
+                
+                self.getSpline(p,z_limit);
+
             else
                 self.has_cad_model = false;
                 disp("No cad model specified");
             end
+        end
+
+        function Pxy_sorted = sortCadPoints(self,z_limit)
+            P = self.cad_model.stl.Points;
+            Pxy = P(abs(P(:,3))<z_limit,:);
+            Pxy = Pxy(:,1:2);
+
+            [~, ind] = min(Pxy(:,1));
+            Pxy_tmp = Pxy(ind,:);
+            Pxy(ind,:) = Inf;
+
+            Pxy_sorted = zeros(size(Pxy));
+            Pxy_sorted(1,:) = Pxy_tmp;
+
+            for i = 2:length(Pxy)
+                [~, ind_tmp] = min(vecnorm((Pxy-Pxy_tmp)'));
+                Pxy_tmp = Pxy(ind_tmp,:);
+                Pxy_sorted(i,:) = Pxy_tmp;
+                Pxy(ind_tmp,:) = Inf;
+            end
+
+            Pxy_sorted = Pxy_sorted.*(1/self.cad_model.scale_factor);
+            Pxy_sorted(end+1,:) = Pxy_sorted(1,:);
+        end
+
+        function getSpline(self,p,z_limit)
+            % Points of contact P
+            P = self.sortCadPoints(z_limit);
+            n = length(P);
+
+            % Knots vector S = [s0 s1, ..., sm]
+            m = n+p+1-2*p;
+            a = 0; b = sum(vecnorm(diff(P)'));
+            S_ = linspace(a,b,m);
+            S = [a*ones(1,p) S_ b*ones(1,p)];
+
+            self.SP = bspline_shape(S,P,p);
+            self.SP.getSymbolicSpline(p);
+            self.SP.getSymboliSplineDot(p);
+            self.SP.getNormalTangentialVersors;
         end
 
         function print_cad_model(self)
@@ -319,5 +365,109 @@ classdef PusherSliderModel < casadi.Callback
             self.sym_model = model;
         end
 
+        % Symbolic model (symbolic)
+        function model = symbolic_model_variable_shape(self)
+            % This method returns the symbolic expression of the nonlinear pusher-slider model x_dot = f(x,u)
+            % Output: x_dot
+
+            import casadi.*
+
+            % named symbolic variables
+            x = SX.sym('x');         % x-coordinate slider w.r.t. world frame [m]
+            y = SX.sym('y');         % y-coordinate slider w.r.t. world frame [m]
+            theta = SX.sym('theta'); % rotation angle of the slider frame w.r.t. the world frame [rad]
+            s = SX.sym('s');         % curvilinear abscissa of the pusher position w.r.t. the slider frame S [m]
+
+            u_n = SX.sym('u_n');     % normal pusher velocity w.r.t. slider frame S [m/s]
+            u_t = SX.sym('u_t');     % tangential pusher velocity w.r.t. slider frame S [m/s]
+
+            % (unnamed) symbolic variables
+            sym_x = vertcat(x,y,theta,s);  % x state vector
+            sym_u = vertcat(u_n,u_t);      % u control vector
+
+            % s -> [S_p_x, S_p_y] slider frame
+            s = mod(s,self.SP.b);
+            S_p = self.SP.FC(s);
+
+            % conversion [S_p_x, S_p_y] and theta to normal-tangential
+            S_R_NT = self.SP.R_NT_fun(s);
+            NT_p = S_R_NT'*S_p';
+            S_p_x = NT_p(1);
+            S_p_y = NT_p(2);
+
+%             S_theta_NT = atan2(S_R_NT(2,1),S_R_NT(1,1));
+%             W_theta_NT = theta + S_theta_NT;
+
+            % Model matrices
+            sin_theta = sin(theta);
+            cos_theta = cos(theta);
+            c_ellipse = self.slider_params.c_ellipse;
+            mu_sp = self.slider_params.mu_sp;
+            factor_matrix = 1/(c_ellipse^2+S_p_x^2+S_p_y^2);
+
+            % Motion cone edge
+            gamma_l = (mu_sp*c_ellipse^2-S_p_x*S_p_y+mu_sp*S_p_x^2)/(c_ellipse^2+S_p_y^2-mu_sp*S_p_x*S_p_y);
+            gamma_r = (-mu_sp*c_ellipse^2-S_p_x*S_p_y-mu_sp*S_p_x^2)/(c_ellipse^2+S_p_y^2+mu_sp*S_p_x*S_p_y);
+            v_l = [1 gamma_l]';     % left edge of the motion cone
+            v_r = [1 gamma_r]';     % right edge of the motion cone
+            u_fract = u_t/u_n;
+
+            % Model
+            W_R_S = [cos_theta -sin_theta;sin_theta cos_theta];
+            Q = [c_ellipse^2+S_p_x^2 S_p_x*S_p_y; S_p_x*S_p_y c_ellipse^2+S_p_y^2];
+            % Sticking
+            P_st = eye(2);
+            b_st = [-S_p_y S_p_x]';
+            c_st = eye(2)-factor_matrix*(Q*P_st+[-S_p_y; S_p_x]*b_st');
+            F_st = [W_R_S*S_R_NT*factor_matrix*Q*P_st; factor_matrix*b_st'];
+            x_dot_st = [F_st*[u_n u_t]'; [0 0]];
+
+            % Sliding left
+            P_sl = [v_l zeros(2,1)];
+            b_sl = [-S_p_y+gamma_l*S_p_x 0]';
+            c_sl = eye(2)-factor_matrix*(Q*P_sl+[-S_p_y; S_p_x]*b_sl');
+            
+            % ---- s_dot evaluation
+            S_p_dot_sl = S_R_NT*c_sl*[u_n u_t]';
+            FC_dot = self.SP.FC_dot(s);
+            s_dot_sl = (S_p_dot_sl(1)+S_p_dot_sl(2))/(FC_dot(1)+FC_dot(2));
+
+            F_sl = [W_R_S*S_R_NT*factor_matrix*Q*P_sl; factor_matrix*b_sl'];
+            x_dot_sl = [F_sl*[u_n u_t]'; s_dot_sl];
+
+            % Sliding right
+            P_sr = [v_r zeros(2,1)];
+            b_sr = [-S_p_y+gamma_r*S_p_x 0]';
+            c_sr = eye(2)-factor_matrix*(Q*P_sr+[-S_p_y; S_p_x]*b_sr');
+            
+            % ---- s_dot evaluation
+            S_p_dot_sr = S_R_NT*c_sr*[u_n u_t]';
+            s_dot_sr = (S_p_dot_sr(1)+S_p_dot_sr(2))/(FC_dot(1)+FC_dot(2));
+
+            F_sr = [W_R_S*S_R_NT*factor_matrix*Q*P_sr; factor_matrix*b_sr']; 
+            x_dot_sr = [F_sr*[u_n u_t]'; s_dot_sr];
+
+
+            expr_f_expl = vertcat((u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
+                + (u_fract>gamma_l)*x_dot_sl...
+                + (u_fract<gamma_r)*x_dot_sr);
+
+            self.xdot_func = Function('xdot_func',{sym_x,sym_u},{expr_f_expl});
+
+            % Populate structure
+            model.nx = self.nx;
+            model.nu = self.nu;
+            model.sym_x = sym_x;
+            %             model.sym_xdot = sym_xdot;
+            model.sym_u = sym_u;
+            model.expr_f_expl = expr_f_expl;
+            %             model.expr_f_impl = expr_f_impl;
+
+            self.sym_model = model;
+        end
+        
+        function x_dot = evalModelVariableShape(self,x,u)
+            x_dot = full(self.xdot_func(x,u));
+        end
     end
 end

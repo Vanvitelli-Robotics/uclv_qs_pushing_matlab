@@ -105,7 +105,7 @@ classdef helper
             ylabel("y [m]")
             zlabel("z [m]")
             for t_k = 0:step_time:t(end)
-                index_ = find(t>t_k);
+                index_ = find(t>=t_k);
                 i = index_(1);
                 %             end
                 %             for i = 2:1:length(x)
@@ -155,10 +155,11 @@ classdef helper
                 end
            
                 if delay_buff_plant == 0
-                    x_dot_ = plant.eval_model(x(:,i),u(:,i)); 
+                    x_dot_ = plant.evalModelVariableShape(x(:,i),u(:,i)); %plant.eval_model(x(:,i),u(:,i)); 
                     %x_dot_ = plant.eval_model_variable_shape(x(:,i),u(:,i));    
                 else
-                    x_dot_ = plant.eval_model(x(:,i),u_buff_plant(:,end));
+                    x_dot_ = plant.evalModelVariableShape(x(:,i),u_buff_plant(:,end));
+%                     x_dot_ = plant.eval_model(x(:,i),u_buff_plant(:,end));
                     u_buff_plant = [u(:,i) u_buff_plant(:,1:end-1)];
                 end
 
@@ -169,7 +170,10 @@ classdef helper
             toc;
            
 
-            x_s = x(1,1:end-1); y_s = x(2,1:end-1); theta_s = x(3,1:end-1); S_p_x = x(4,1:end-1); S_p_y = x(5,1:end-1);
+            x_s = x(1,1:end-1); y_s = x(2,1:end-1); theta_s = x(3,1:end-1); %S_p_x = x(4,1:end-1); S_p_y = x(5,1:end-1);
+            S_p = plant.SP.evalSpline(plant.SP.FC,x(4,1:end-1));
+            S_p_x = S_p(:,1)';
+            S_p_y = S_p(:,2)';
             u_n = u(1,:);
             u_t = u(2,:);
         end
@@ -292,15 +296,18 @@ classdef helper
 
         function params = save_parameters(name_exp, x, u, t, mode_vect, params)
             %             params = struct;
+            
             params.t = t;
             params.x_S = x(1,:);
             params.y_S = x(2,:);
             params.theta_S = x(3,:);
-            %             params.S_p_x = x(4,:);
+%                         params.S_p_x = x(4,:);
             params.S_p_y = x(4,:);
             params.u_n = u(1,:);
             params.u_t = u(2,:);
-            params.mode_vect = mode_vect;
+            if nargin > 4
+                 params.mode_vect = mode_vect;
+            end
             name_exp_ext = strcat(name_exp,'.mat');
             save(name_exp_ext,'params');
         end

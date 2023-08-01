@@ -11,6 +11,8 @@ classdef bspline_shape < handle
         n_fun; % normal versor
         t_fun; % tangential versor
         R_NT_fun; % rotation matrix for tangential and normal frame
+        a;
+        b;
     end
 
     methods
@@ -26,6 +28,8 @@ classdef bspline_shape < handle
             obj.FC = 0;
             obj.FC_dot = 0;
             obj.R_NT_fun = eye(2);
+            obj.a = 0;
+            obj.b = sum(vecnorm(diff(P)'));
         end
 
         function Ni_p = eval_bspline_sym(self, s, i, ord)
@@ -107,11 +111,23 @@ classdef bspline_shape < handle
         
 
         function FC_val = evalSpline(self,F, s_values)
+            s_values = mod(s_values,self.b);
             FC_val = zeros(length(s_values),2);
             % Evaluate numeric spline
             for k = 1:length(s_values)
                 FC_val(k,:) = full(F(s_values(k)));
             end
+        end
+
+        function printSpline(self, a, b, step)
+            s_values = a:step:b;
+            FC_values = self.evalSpline(self.FC,s_values);
+            t_vers_val = self.evalSpline(self.t_fun,s_values);
+            n_vers_val = self.evalSpline(self.n_fun,s_values);
+
+            quiver3(FC_values(1:1:end,1), FC_values(1:1:end,2), zeros(length(FC_values),1), t_vers_val(1:1:end,1),t_vers_val(1:1:end,2),zeros(length(FC_values),1),'r'), hold on
+            quiver3(FC_values(1:1:end,1), FC_values(1:1:end,2), zeros(length(FC_values),1), n_vers_val(1:1:end,1),n_vers_val(1:1:end,2),zeros(length(FC_values),1),'b')
+            plot(FC_values(:,1),FC_values(:,2),"LineWidth",2), plot(self.P(:,1),self.P(:,2),'*')
         end
     end
 end
