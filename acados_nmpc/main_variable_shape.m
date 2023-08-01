@@ -42,10 +42,11 @@ p.symbolic_model_variable_shape();
 time_sim = 18;
 sample_time = 0.05;
 %x0 = [0 0 deg2rad(0) -slider.xwidth/2*1 -slider.ywidth/2*0]';
-x0 = [0 0 deg2rad(0) 0]';
+x0 = [0 0 deg2rad(0) 0.25/2.5]';
 % velocità pusher in terna normale/tangenziale 
 u_n_ = 0.01;
-u_t_ = 0.0;
+u_t_ = 0.00;
+
 [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.open_loop_matlab(p,x0,u_n_,u_t_,time_sim,sample_time,false);
 % params = helper.save_parameters("exp1_no_noise",[x_s; y_s; theta_s; S_p_x; S_p_y],[u_n; u_t],time_plot);
 

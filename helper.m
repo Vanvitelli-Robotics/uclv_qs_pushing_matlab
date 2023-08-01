@@ -155,10 +155,10 @@ classdef helper
                 end
            
                 if delay_buff_plant == 0
-                    x_dot_ = plant.evalModelVariableShape(x(:,i),u(:,i)); %plant.eval_model(x(:,i),u(:,i)); 
+                    x_dot_ = plant.eval_model_variable_shape(x(:,i),u(:,i)); %plant.eval_model(x(:,i),u(:,i)); 
                     %x_dot_ = plant.eval_model_variable_shape(x(:,i),u(:,i));    
                 else
-                    x_dot_ = plant.evalModelVariableShape(x(:,i),u_buff_plant(:,end));
+                    x_dot_ = plant.eval_model_variable_shape(x(:,i),u_buff_plant(:,end));
 %                     x_dot_ = plant.eval_model(x(:,i),u_buff_plant(:,end));
                     u_buff_plant = [u(:,i) u_buff_plant(:,1:end-1)];
                 end

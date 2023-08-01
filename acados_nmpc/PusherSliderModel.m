@@ -68,7 +68,7 @@ classdef PusherSliderModel < casadi.Callback
                 self.cad_model.scale_factor = 1000; % mesh scale
                 self.has_cad_model = true;
                 disp("Cad model saved");
-                
+
                 self.getSpline(p,z_limit);
 
             else
@@ -247,6 +247,116 @@ classdef PusherSliderModel < casadi.Callback
             x_dot = F*[u_n u_t]';
         end
 
+        function x_dot = eval_model_variable_shape(self,x,u)
+            % This method returns the symbolic expression of the nonlinear pusher-slider model x_dot = f(x,u)
+            % Output: x_dot
+
+            import casadi.*
+
+            % named symbolic variables
+            theta = x(3); % rotation angle of the slider frame w.r.t. the world frame [rad]
+            s = x(4);         % curvilinear abscissa of the pusher position w.r.t. the slider frame S [m]
+
+            u_n = u(1);     % normal pusher velocity w.r.t. slider frame S [m/s]
+            u_t = u(2);     % tangential pusher velocity w.r.t. slider frame S [m/s]
+
+            % s -> [S_p_x, S_p_y] slider frame
+            S_p = self.SP.evalSpline(self.SP.FC,s);
+
+            % conversion [S_p_x, S_p_y] and theta to normal-tangential
+            S_R_NT = full(self.SP.R_NT_fun(s));%self.SP.evalSpline(self.SP.R_NT_fun,s);
+            NT_p = S_R_NT'*S_p';
+            S_p_x = NT_p(1);
+            S_p_y = NT_p(2);
+
+            %             S_theta_NT = atan2(S_R_NT(2,1),S_R_NT(1,1));
+            %             W_theta_NT = theta + S_theta_NT;
+
+            % Model matrices
+            sin_theta = sin(theta);
+            cos_theta = cos(theta);
+            c_ellipse = self.slider_params.c_ellipse;
+            mu_sp = self.slider_params.mu_sp;
+            factor_matrix = 1/(c_ellipse^2+S_p_x^2+S_p_y^2);
+
+            % Motion cone edge
+            gamma_l = (mu_sp*c_ellipse^2-S_p_x*S_p_y+mu_sp*S_p_x^2)/(c_ellipse^2+S_p_y^2-mu_sp*S_p_x*S_p_y);
+            gamma_r = (-mu_sp*c_ellipse^2-S_p_x*S_p_y-mu_sp*S_p_x^2)/(c_ellipse^2+S_p_y^2+mu_sp*S_p_x*S_p_y);
+            v_l = [1 gamma_l]';     % left edge of the motion cone
+            v_r = [1 gamma_r]';     % right edge of the motion cone
+            u_fract = u_t/u_n;
+
+            % Model
+            W_R_S = [cos_theta -sin_theta;sin_theta cos_theta];
+            Q = [c_ellipse^2+S_p_x^2 S_p_x*S_p_y; S_p_x*S_p_y c_ellipse^2+S_p_y^2];
+            % Sticking
+            P_st = eye(2);
+            b_st = [-S_p_y S_p_x]';
+            c_st = eye(2)-factor_matrix*(Q*P_st+[-S_p_y; S_p_x]*b_st');
+            F_st = [W_R_S*S_R_NT*factor_matrix*Q*P_st; factor_matrix*b_st'];
+            x_dot_st = [F_st*[u_n u_t]'; 0];
+
+
+            % Sliding left
+            P_sl = [v_l zeros(2,1)];
+            b_sl = [-S_p_y+gamma_l*S_p_x 0]';
+            c_sl = eye(2)-factor_matrix*(Q*P_sl+[-S_p_y; S_p_x]*b_sl');
+
+            % ---- s_dot evaluation
+            S_p_dot_sl = S_R_NT*c_sl*[u_n u_t]';
+            FC_dot = self.SP.evalSpline(self.SP.FC_dot,s);
+            s_dot_sl = (S_p_dot_sl(1)+S_p_dot_sl(2))/(FC_dot(1)+FC_dot(2));
+
+            F_sl = [W_R_S*S_R_NT*factor_matrix*Q*P_sl; factor_matrix*b_sl'];
+            x_dot_sl = [F_sl*[u_n u_t]'; s_dot_sl];
+
+            % Sliding right
+            P_sr = [v_r zeros(2,1)];
+            b_sr = [-S_p_y+gamma_r*S_p_x 0]';
+            c_sr = eye(2)-factor_matrix*(Q*P_sr+[-S_p_y; S_p_x]*b_sr');
+
+            % ---- s_dot evaluation
+            S_p_dot_sr = S_R_NT*c_sr*[u_n u_t]';
+            s_dot_sr = (S_p_dot_sr(1)+S_p_dot_sr(2))/(FC_dot(1)+FC_dot(2));
+
+            F_sr = [W_R_S*S_R_NT*factor_matrix*Q*P_sr; factor_matrix*b_sr'];
+            x_dot_sr = [F_sr*[u_n u_t]'; s_dot_sr];
+
+            if not(contact_surface(self,S_p_x,S_p_y))
+                mode="NC";
+                disp("Not in contact!");
+            else
+                if (u_fract <= gamma_l) && (u_fract >= gamma_r)
+                    mode = "ST";
+                    %                     disp("Motion Cone CHECK: Sticking Mode")
+                elseif u_fract > gamma_l
+                    mode = "SL";
+                    %                     disp("Motion Cone CHECK: Sliding Left Mode")
+                else
+                    mode = "SR";
+                    %                     disp("Motion Cone CHECK: Sliding Right Mode")
+                end
+            end
+
+            switch mode
+                case 'ST'
+                    x_dot = x_dot_st;
+                    disp('sticking mode')
+                case 'SL'                   % the pusher slides on the object surface
+                    x_dot = x_dot_sl;
+                    disp('sliding left mode')
+                case 'SR'                   % the pusher slides on the object surface
+                    x_dot = x_dot_sr;
+                    disp('sliding right mode')
+                otherwise                   % the pusher is not in contact with the slider
+                    disp('no contact')
+                    x_dot = [0 0 0 u_t]';
+                    return;
+            end
+
+
+        end
+
         % Symbolic model (symbolic)
         function model = symbolic_model(self)
             % This method returns the symbolic expression of the nonlinear pusher-slider model x_dot = f(x,u)
@@ -395,8 +505,8 @@ classdef PusherSliderModel < casadi.Callback
             S_p_x = NT_p(1);
             S_p_y = NT_p(2);
 
-%             S_theta_NT = atan2(S_R_NT(2,1),S_R_NT(1,1));
-%             W_theta_NT = theta + S_theta_NT;
+            %             S_theta_NT = atan2(S_R_NT(2,1),S_R_NT(1,1));
+            %             W_theta_NT = theta + S_theta_NT;
 
             % Model matrices
             sin_theta = sin(theta);
@@ -420,13 +530,14 @@ classdef PusherSliderModel < casadi.Callback
             b_st = [-S_p_y S_p_x]';
             c_st = eye(2)-factor_matrix*(Q*P_st+[-S_p_y; S_p_x]*b_st');
             F_st = [W_R_S*S_R_NT*factor_matrix*Q*P_st; factor_matrix*b_st'];
-            x_dot_st = [F_st*[u_n u_t]'; [0 0]];
+            x_dot_st = [F_st*[u_n u_t]'; 0];
+
 
             % Sliding left
             P_sl = [v_l zeros(2,1)];
             b_sl = [-S_p_y+gamma_l*S_p_x 0]';
             c_sl = eye(2)-factor_matrix*(Q*P_sl+[-S_p_y; S_p_x]*b_sl');
-            
+
             % ---- s_dot evaluation
             S_p_dot_sl = S_R_NT*c_sl*[u_n u_t]';
             FC_dot = self.SP.FC_dot(s);
@@ -439,14 +550,13 @@ classdef PusherSliderModel < casadi.Callback
             P_sr = [v_r zeros(2,1)];
             b_sr = [-S_p_y+gamma_r*S_p_x 0]';
             c_sr = eye(2)-factor_matrix*(Q*P_sr+[-S_p_y; S_p_x]*b_sr');
-            
+
             % ---- s_dot evaluation
             S_p_dot_sr = S_R_NT*c_sr*[u_n u_t]';
             s_dot_sr = (S_p_dot_sr(1)+S_p_dot_sr(2))/(FC_dot(1)+FC_dot(2));
 
-            F_sr = [W_R_S*S_R_NT*factor_matrix*Q*P_sr; factor_matrix*b_sr']; 
+            F_sr = [W_R_S*S_R_NT*factor_matrix*Q*P_sr; factor_matrix*b_sr'];
             x_dot_sr = [F_sr*[u_n u_t]'; s_dot_sr];
-
 
             expr_f_expl = vertcat((u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
                 + (u_fract>gamma_l)*x_dot_sl...
@@ -465,7 +575,7 @@ classdef PusherSliderModel < casadi.Callback
 
             self.sym_model = model;
         end
-        
+
         function x_dot = evalModelVariableShape(self,x,u)
             x_dot = full(self.xdot_func(x,u));
         end
