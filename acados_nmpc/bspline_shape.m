@@ -1,4 +1,4 @@
-classdef bspline_shape
+classdef bspline_shape < handle
     properties
         S; % S = knot vector
         P; % P = control points
@@ -6,6 +6,11 @@ classdef bspline_shape
         n;
         m;
         s; % ascissa curvilinea
+        FC; % function representing spline
+        FC_dot; % function represeting dot spline
+        n_fun; % normal versor
+        t_fun; % tangential versor
+        R_NT_fun; % rotation matrix for tangential and normal frame
     end
 
     methods
@@ -18,6 +23,9 @@ classdef bspline_shape
             obj.n = length(P);
             obj.m = length(S);
             obj.s = SX.sym('s');   %curvilinear abscess
+            obj.FC = 0;
+            obj.FC_dot = 0;
+            obj.R_NT_fun = eye(2);
         end
 
         function Ni_p = eval_bspline_sym(self, s, i, ord)
@@ -54,17 +62,17 @@ classdef bspline_shape
 
         end
 
-        function FC = getSymbolicSpline(self,ord)
+        function getSymbolicSpline(self,ord)
             import casadi.*
             % Get symbolic expression of spline given:
             C = 0;
             for ind = 1:self.n
                 C = C + self.eval_bspline_sym(self.s,ind,ord)*self.P(ind,:);
             end
-            FC = Function('F_C',{self.s},{C});
+            self.FC = Function('F_C',{self.s},{C});
         end
 
-        function FC_dot = getSymboliSplineDot(self,ord)
+        function getSymboliSplineDot(self,ord)
             import casadi.*
             if ord < 1
                 disp("ERROR: order p must be grater than 1")
@@ -74,21 +82,35 @@ classdef bspline_shape
                     if self.S(ii+ord)==self.S(ii)
                         cj_1 = 0;
                     else
-                        cj_1 = ord*((self.P(ii)-self.P(ii-1))/(self.S(ii+ord)-self.S(ii)));
+                        cj_1 = ord*((self.P(ii,:)-self.P(ii-1,:))/(self.S(ii+ord)-self.S(ii)));
                     end
 
                     C_dot = C_dot + cj_1*self.eval_bspline_sym(self.s,ii,ord-1);
                 end
             end
 
-            FC_dot = Function('FC_dot',{self.s},{C_dot});
+            self.FC_dot = Function('FC_dot',{self.s},{C_dot});
         end
 
-        function FC_val = evalSpline(self,FC,s_values)
+        function getNormalTangentialVersors(self)
+            import casadi.*
+            t_ = self.FC_dot(self.s);
+            tvers = t_/norm(t_);
+            nvers = -[-tvers(2) tvers(1)];
+            R_NT = [nvers' tvers'];
+            
+            self.t_fun = Function('t_fun',{self.s},{tvers});
+            self.n_fun = Function('n_fun',{self.s},{nvers});
+            self.R_NT_fun = Function('R_NT_fun',{self.s},{R_NT});
+        end
+
+        
+
+        function FC_val = evalSpline(self,F, s_values)
             FC_val = zeros(length(s_values),2);
             % Evaluate numeric spline
             for k = 1:length(s_values)
-                FC_val(k,:) = full(FC(s_values(k)));
+                FC_val(k,:) = full(F(s_values(k)));
             end
         end
     end
