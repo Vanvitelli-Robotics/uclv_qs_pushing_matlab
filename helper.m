@@ -79,12 +79,12 @@ classdef helper
             p0_s = [x(1) y(1) 0];
             quat0_s = quaternion(helper.my_rotz(theta(1)),'rotmat','frame');
             figure
-            slider_p = poseplot(quat0_s,p0_s, "MeshFileName","cad_models/cuboide_santal.stl", "ScaleFactor",0.001);%,PatchFaceColor="yellow");
+            slider_p = poseplot(quat0_s,p0_s, "MeshFileName","cad_models/cuboide_santal_rotated.stl", "ScaleFactor",0.001);%,PatchFaceColor="yellow");
             hold on
 
             p0_ref = [traj(1:2,1)' 0];
             quat0_ref = quaternion(helper.my_rotz(traj(3,1)),'rotmat','frame');
-            slider_ref = poseplot(quat0_ref,p0_ref, "MeshFileName","cad_models/cuboide_santal.stl", "ScaleFactor",0.001);%,PatchFaceColor="yellow");
+            slider_ref = poseplot(quat0_ref,p0_ref, "MeshFileName","cad_models/cuboide_santal_rotated.stl", "ScaleFactor",0.001);%,PatchFaceColor="yellow");
 
 
             % Pusher frame
@@ -257,9 +257,12 @@ classdef helper
                 %%%%%%%%%%%%%%%% PLANT SIM
 
                 if delay_buff_plant == 0
-                    [x_dot_, mode_] = plant.eval_model(x(:,i),u(:,i));
+%                     [x_dot_, mode_] = plant.eval_model(x(:,i),u(:,i));
+                    [x_dot_, mode_] = plant.eval_model_variable_shape(x(:,i),u(:,i));
                 else
-                    [x_dot_, mode_] = plant.eval_model(x(:,i),u_buff_plant(:,end));
+%                     [x_dot_, mode_] = plant.eval_model(x(:,i),u_buff_plant(:,end));
+                    [x_dot_, mode_] = plant.eval_model_variable_shape(x(:,i),u_buff_plant(:,end));
+
                     u_buff_plant = [u(:,i) u_buff_plant(:,1:end-1)];
                 end
 
@@ -277,7 +280,10 @@ classdef helper
             end
             %             toc;
 
-            x_s = x(1,1:end-1); y_s = x(2,1:end-1); theta_s = x(3,1:end-1); S_p_x = -0.034*ones(size(theta_s)); S_p_y = x(4,1:end-1);
+            x_s = x(1,1:end-1); y_s = x(2,1:end-1); theta_s = x(3,1:end-1); %S_p_x = -0.034*ones(size(theta_s)); S_p_y = x(4,1:end-1);
+            S_p = plant.SP.evalSpline(plant.SP.FC,x(4,1:end-1));
+            S_p_x = S_p(:,1)';
+            S_p_y = S_p(:,2)';
             u_n = u(1,:);
             u_t = u(2,:);
         end

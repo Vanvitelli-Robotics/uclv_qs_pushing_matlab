@@ -31,11 +31,12 @@ slider.m = 0.2875;                                    % slider mass [kg]
 plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
-cad_model_path = "../cad_models/cuboide_santal_resampled.stl";
+cad_model_path = "../cad_models/cuboide_santal_resampled_rotated.stl";
 order_spline = 3;
 z_limit = 0.1;
 p = PusherSliderModel('real_plant',slider, plant_time_delay,cad_model_path,order_spline,z_limit);
-p.symbolic_model();
+% p.symbolic_model();
+p.symbolic_model_variable_shape();
 
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP NOMINAL PLANT %%%%%%%%%%%%%%%%%%%%%%
@@ -67,21 +68,24 @@ controller.create_ocp_solver();
 %% SETTING PARAMETERS FOR CONTROLLER AND PLANT
 
 % Change delay of the plant and the delay to compensate with the controller
-p.set_delay(0.35);
-controller.set_delay_comp(0.35);
+p.set_delay(0); %0.35
+controller.set_delay_comp(0);
 
 % Set initial condition
-x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
+% x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
+x0 = [0 0 deg2rad(0) 0]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
-% W_x = 10*diag([10 10 .001 0]);  % State matrix weight
-% W_x_e = 100*diag([10 10 .001 0]); %diag([100 100 0 0 0]);
-% W_u = diag([.1 1]);            % Control matrix weight
-% 
+% Working matrix 
+% % W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
+% % W_x_e = 200*diag([.05 .05 200 0]); %diag([100 100 0 0 0]);
+% % W_u = diag([.1 0.8]);            % Control matrix weight
+
+% Matrix for variable shape
 W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
-W_x_e = 200*diag([.05 .05 200 0]); %diag([100 100 0 0 0]);
-W_u = diag([.1 0.8]);            % Control matrix weight
+W_x_e = 200*diag([1000 1000 100 0]); %diag([100 100 0 0 0]);
+W_u = diag([0 0]);  
 
 
 % controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
@@ -89,11 +93,11 @@ controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
 % Set constraints
 u_n_lb = 0.0; u_n_ub = 0.03;
-u_t_lb = -0.03; u_t_ub = 0.03;
+u_t_lb = -0.05; u_t_ub = 0.05;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % Create desired trajectory
-xf = [0.3 0.03 0 x0(4) 0]';
+xf = [0.3 0.03 0 x0(4) 0.07]';
 xf(3) = acos((xf(1)-x0(1))/(norm(xf(1:2)-x0(1:2))));
 
 traj_gen = TrajectoryGenerator(sample_time,u_n_ub/2);
@@ -107,16 +111,19 @@ traj_gen.set_target(x0,xf,t0,tf);
 x0_w = [x0(1:2)' 0];
 % x0_w = [0 0 0];
 xf_w = [ 
-      0.1 0.0 0;
-        0.15 -0.1 0;
-    0.25 -0.2 0;
+      0.2 0.0 0;
+%         0.15 -0.1 0;
+%     0.25 -0.2 0;
     ];
 traj_gen.waypoints_ = [x0_w; xf_w];
 [time, traj] = traj_gen.waypoints_gen;
 traj = [traj(1:3,:); traj(end,:)];
 % traj = [traj repmat(traj(:,end),1,500)];
 % time = [time(1:end-1) time(end):sample_time:(time(end)+sample_time*500)];
-time_sim = time(end) + 2;
+% traj = [zeros(4,50) traj];
+% time_add = time(end)+sample_time:sample_time:time(end)+(50*sample_time);
+% time = [time time_add];
+time_sim = time(end) + 5;
 
 % Set control reference
 u_n_ref = u_n_ub/2; u_t_ref = 0;
@@ -152,7 +159,7 @@ if simulation_ == true
          
         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
         params = helper.save_parameters("exp1_smooth_traj_",[x_s; y_s; theta_s; S_p_y],[u_n; u_t],time_plot, mode_vect);
-
+        params.S_p_x = S_p_x;
     elseif(strcmp(sym_type,"robot"))
         disp("ROBOT EXPERIMENT")
         robot_main;
@@ -173,7 +180,7 @@ end
 
 %% ANIMATE
 % helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))]);
-params.S_p_x = repmat(-p.slider_params.xwidth/2,1,length(params.x_S));
+% params.S_p_x = repmat(-p.slider_params.xwidth/2,1,length(params.x_S));
 helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))]);
 
 

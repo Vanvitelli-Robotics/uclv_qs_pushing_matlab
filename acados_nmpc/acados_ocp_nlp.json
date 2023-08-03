@@ -1,13 +1,13 @@
 {
 	"dims": {
-		"nx": 5,
+		"nx": 4,
 		"nz": 0,
 		"nu": 2,
 		"np": 0,
-		"ny_0": 7,
-		"ny": 7,
-		"ny_e": 5,
-		"nbx_0": 5,
+		"ny_0": 6,
+		"ny": 6,
+		"ny_e": 4,
+		"nbx_0": 4,
 		"npd": 0,
 		"npd_e": 0,
 		"nh": 0,
@@ -26,14 +26,14 @@
 		"ng_e": 0,
 		"nsg": 0,
 		"nsg_e": 0,
-		"N": 20,
+		"N": 25,
 		"nphi": 0,
 		"nphi_e": 0,
 		"nsphi": 0,
 		"nsphi_e": 0,
 		"nr": 0,
 		"nr_e": 0,
-		"nbxe_0": 5,
+		"nbxe_0": 4,
 		"gnsf_nx1": 0,
 		"gnsf_nz1": 0,
 		"gnsf_nout": 0,
@@ -46,25 +46,22 @@
 		"cost_source_ext_cost": [],
 		"cost_function_ext_cost": [],
 		"W": [
-			[200,0,0,0,0,0,0],
-			[0,2,0,0,0,0,0],
-			[0,0,2,0,0,0,0],
-			[0,0,0,0.002,0,0,0],
-			[0,0,0,0,0.002,0,0],
-			[0,0,0,0,0,2,0],
-			[0,0,0,0,0,0,2]
+			[100,0,0,0,0,0],
+			[0,1,0,0,0,0],
+			[0,0,1,0,0,0],
+			[0,0,0,0.001,0,0],
+			[0,0,0,0,1,0],
+			[0,0,0,0,0,1]
 		],
 		"Vx": [
-			[1,0,0,0,0],
-			[0,1,0,0,0],
-			[0,0,1,0,0],
-			[0,0,0,1,0],
-			[0,0,0,0,1],
-			[0,0,0,0,0],
-			[0,0,0,0,0]
+			[1,0,0,0],
+			[0,1,0,0],
+			[0,0,1,0],
+			[0,0,0,1],
+			[0,0,0,0],
+			[0,0,0,0]
 		],
 		"Vu": [
-			[0,0],
 			[0,0],
 			[0,0],
 			[0,0],
@@ -74,10 +71,10 @@
 		],
 		"Vz": {
 			"_ArrayType_": "double",
-			"_ArraySize_": [7,0],
+			"_ArraySize_": [6,0],
 			"_ArrayData_": []
 		},
-		"yref": [-0,-0,-0,-0,-0,-0,-0],
+		"yref": [0,0,0,0,0,0],
 		"Zl": {
 			"_ArrayType_": "double",
 			"_ArraySize_": [1,0],
@@ -103,25 +100,22 @@
 		"cost_source_ext_cost_0": [],
 		"cost_function_ext_cost_0": [],
 		"W_0": [
-			[200,0,0,0,0,0,0],
-			[0,2,0,0,0,0,0],
-			[0,0,2,0,0,0,0],
-			[0,0,0,0.002,0,0,0],
-			[0,0,0,0,0.002,0,0],
-			[0,0,0,0,0,2,0],
-			[0,0,0,0,0,0,2]
+			[100,0,0,0,0,0],
+			[0,1,0,0,0,0],
+			[0,0,1,0,0,0],
+			[0,0,0,0.001,0,0],
+			[0,0,0,0,1,0],
+			[0,0,0,0,0,1]
 		],
 		"Vx_0": [
-			[1,0,0,0,0],
-			[0,1,0,0,0],
-			[0,0,1,0,0],
-			[0,0,0,1,0],
-			[0,0,0,0,1],
-			[0,0,0,0,0],
-			[0,0,0,0,0]
+			[1,0,0,0],
+			[0,1,0,0],
+			[0,0,1,0],
+			[0,0,0,1],
+			[0,0,0,0],
+			[0,0,0,0]
 		],
 		"Vu_0": [
-			[0,0],
 			[0,0],
 			[0,0],
 			[0,0],
@@ -131,29 +125,27 @@
 		],
 		"Vz_0": {
 			"_ArrayType_": "double",
-			"_ArraySize_": [7,0],
+			"_ArraySize_": [6,0],
 			"_ArrayData_": []
 		},
-		"yref_0": [-0,-0,-0,-0,-0,-0,-0],
+		"yref_0": [0,0,0,0,0,0],
 		"cost_type_e": "LINEAR_LS",
 		"cost_ext_fun_type_e": "casadi",
 		"cost_source_ext_cost_e": [],
 		"cost_function_ext_cost_e": [],
 		"W_e": [
-			[200,0,0,0,0],
-			[0,2,0,0,0],
-			[0,0,2,0,0],
-			[0,0,0,0.002,0],
-			[0,0,0,0,0.002]
+			[200,0,0,0],
+			[0,2,0,0],
+			[0,0,2,0],
+			[0,0,0,0.002]
 		],
 		"Vx_e": [
-			[1,0,0,0,0],
-			[0,1,0,0,0],
-			[0,0,1,0,0],
-			[0,0,0,1,0],
-			[0,0,0,0,1]
+			[1,0,0,0],
+			[0,1,0,0],
+			[0,0,1,0],
+			[0,0,0,1]
 		],
-		"yref_e": [-0,-0,-0,-0,-0],
+		"yref_e": [0,0,0,0],
 		"Zl_e": {
 			"_ArrayType_": "double",
 			"_ArraySize_": [1,0],
@@ -179,14 +171,14 @@
 		"constr_type": "BGH",
 		"constr_type_e": "BGH",
 		"lbx": [
-			-0.028125
+			-10
 		],
 		"lbu": [0,-0.05],
 		"idxbx": [
-			4
+			3
 		],
 		"ubx": [
-			0.028125
+			10
 		],
 		"ubu": [0.05,0.05],
 		"idxbu": [0,1],
@@ -317,7 +309,7 @@
 		},
 		"C": {
 			"_ArrayType_": "double",
-			"_ArraySize_": [0,5],
+			"_ArraySize_": [0,4],
 			"_ArrayData_": []
 		},
 		"lg": {
@@ -332,7 +324,7 @@
 		},
 		"C_e": {
 			"_ArrayType_": "double",
-			"_ArraySize_": [0,5],
+			"_ArraySize_": [0,4],
 			"_ArrayData_": []
 		},
 		"lg_e": {
@@ -365,10 +357,10 @@
 			"_ArraySize_": [1,0],
 			"_ArrayData_": []
 		},
-		"lbx_0": [0,0,0,0,0],
-		"ubx_0": [0,0,0,0,0],
-		"idxbx_0": [0,1,2,3,4],
-		"idxbxe_0": [0,1,2,3,4],
+		"lbx_0": [0,0,0,0],
+		"ubx_0": [0,0,0,0],
+		"idxbx_0": [0,1,2,3],
+		"idxbxe_0": [0,1,2,3],
 		"lphi": {
 			"_ArrayType_": "double",
 			"_ArraySize_": [1,0],
@@ -424,7 +416,7 @@
 		"qp_solver": "PARTIAL_CONDENSING_HPIPM",
 		"hessian_approx": "GAUSS_NEWTON",
 		"integrator_type": "ERK",
-		"tf": 1,
+		"tf": 1.25,
 		"Tsim": 0.05,
 		"time_steps": [
 			0.05,
@@ -446,10 +438,20 @@
 			0.05,
 			0.05,
 			0.05,
+			0.05,
+			0.05,
+			0.05,
+			0.05,
+			0.05,
 			0.05
 		],
-		"nlp_solver_type": "SQP_RTI",
+		"nlp_solver_type": "SQP",
 		"sim_method_num_steps": [
+			1,
+			1,
+			1,
+			1,
+			1,
 			1,
 			1,
 			1,
@@ -472,6 +474,11 @@
 			1
 		],
 		"sim_method_num_stages": [
+			4,
+			4,
+			4,
+			4,
+			4,
 			4,
 			4,
 			4,
@@ -515,9 +522,14 @@
 			0,
 			0,
 			0,
+			0,
+			0,
+			0,
+			0,
+			0,
 			0
 		],
-		"nlp_solver_max_iter": 100,
+		"nlp_solver_max_iter": 30,
 		"nlp_solver_tol_stat": 1e-06,
 		"nlp_solver_tol_eq": 1e-06,
 		"nlp_solver_tol_ineq": 1e-06,
@@ -542,9 +554,9 @@
 		"ext_cost_num_hess": 0,
 		"alpha_min": 0.05,
 		"alpha_reduction": 0.7,
-		"globalization": "FIXED_STEP",
+		"globalization": "MERIT_BACKTRACKING",
 		"collocation_type": "GAUSS_LEGENDRE",
-		"line_search_use_sufficient_descent": 0,
+		"line_search_use_sufficient_descent": 1,
 		"globalization_use_SOC": 0,
 		"full_step_dual": 0,
 		"eps_sufficient_descent": 0.0001,
@@ -552,10 +564,10 @@
 		"qp_solver_ric_alg": 1,
 		"qp_solver_cond_ric_alg": 1,
 		"nlp_solver_ext_qp_res": 0,
-		"ext_fun_compile_flags": ""
+		"ext_fun_compile_flags": "-O2"
 	},
 	"model": {
-		"name": "pusher_slider_model",
+		"name": "real_plant",
 		"dyn_ext_fun_type": "casadi",
 		"dyn_generic_source": [],
 		"dyn_disc_fun_jac_hess": [],

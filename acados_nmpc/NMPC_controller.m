@@ -74,8 +74,10 @@ classdef NMPC_controller < casadi.Callback
             self.initial_condition = zeros(plant.sym_model.nx,1);
 
             % Constraints
-            self.h_constr_ub = [0.9*plant.slider_params.ywidth/2 self.u_n_ub self.u_t_ub];
-            self.h_constr_lb = [-0.9*plant.slider_params.ywidth/2 self.u_n_lb self.u_t_lb];
+%             self.h_constr_ub = [0.9*plant.slider_params.ywidth/2 self.u_n_ub self.u_t_ub];
+%             self.h_constr_lb = [-0.9*plant.slider_params.ywidth/2 self.u_n_lb self.u_t_lb];
+            self.h_constr_ub = [10 self.u_n_ub self.u_t_ub];
+            self.h_constr_lb = [-10 self.u_n_lb self.u_t_lb];
 
             % Controller parameters
             self.Hp = Hp;
@@ -96,7 +98,8 @@ classdef NMPC_controller < casadi.Callback
         function xk_sim = delay_buffer_sim(self, plant, x)
             xk_sim = x;
             for k = 1 : self.delay_buff_comp
-                x_dot_sim = plant.eval_model(xk_sim,self.u_buff_contr(:,end-k+1));
+%                 x_dot_sim = plant.eval_model(xk_sim,self.u_buff_contr(:,end-k+1));
+                x_dot_sim = plant.eval_model_variable_shape(xk_sim,self.u_buff_contr(:,end-k+1));
                 x_sim = xk_sim + self.sample_time*x_dot_sim;
                 xk_sim = x_sim;
             end
@@ -288,7 +291,8 @@ classdef NMPC_controller < casadi.Callback
 
             self.xtraj(:,1) = x0;
             for i_x = 2 : size(self.xtraj,2)
-                self.xtraj(:,i_x) = self.plant.eval_model(self.xtraj(:,i_x-1),self.utraj(:,i_x-1));
+%                 self.xtraj(:,i_x) = self.plant.eval_model(self.xtraj(:,i_x-1),self.utraj(:,i_x-1));
+                self.xtraj(:,i_x) = self.plant.eval_model_variable_shape(self.xtraj(:,i_x-1),self.utraj(:,i_x-1));
             end
 
             self.ocp_solver.set('init_x', self.xtraj);

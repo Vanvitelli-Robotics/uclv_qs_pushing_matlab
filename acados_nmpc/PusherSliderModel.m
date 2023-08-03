@@ -229,15 +229,15 @@ classdef PusherSliderModel < casadi.Callback
                 case 'ST'
                     P = eye(2);
                     b = [-S_p_y S_p_x]';
-                                        disp('sticking mode')
+%                                         disp('sticking mode')
                 case 'SL'                   % the pusher slides on the object surface
                     P = [v_l zeros(2,1)];
                     b = [-S_p_y+gamma_l*S_p_x 0]';
-                                        disp('sliding left mode')
+%                                         disp('sliding left mode')
                 case 'SR'                   % the pusher slides on the object surface
                     P = [v_r zeros(2,1)];
                     b = [-S_p_y+gamma_r*S_p_x 0]';
-                                        disp('sliding right mode')
+%                                         disp('sliding right mode')
                 otherwise                   % the pusher is not in contact with the slider
                     %disp('no contact')
                     x_dot = [0 0 0 u_t]';
@@ -249,7 +249,7 @@ classdef PusherSliderModel < casadi.Callback
         end
         
         % Evaluate model with variable shape (numerical)
-        function x_dot = eval_model_variable_shape(self,x,u)
+        function [x_dot, mode] = eval_model_variable_shape(self,x,u)
             % This method returns the symbolic expression of the nonlinear pusher-slider model x_dot = f(x,u)
             % Output: x_dot
 
@@ -263,7 +263,11 @@ classdef PusherSliderModel < casadi.Callback
             u_t = u(2);     % tangential pusher velocity w.r.t. slider frame S [m/s]
 
             % s -> [S_p_x, S_p_y] slider frame
+            if s < 0
+                s = self.SP.b + s;
+            end
             s = mod(s,self.SP.b);
+            
             S_p = self.SP.evalSpline(self.SP.FC,s);
 
             % conversion [S_p_x, S_p_y] and theta to normal-tangential
@@ -349,13 +353,13 @@ classdef PusherSliderModel < casadi.Callback
             switch mode
                 case 'ST'
                     x_dot = x_dot_st;
-                    disp('sticking mode')
+%                     disp('sticking mode')
                 case 'SL'                   % the pusher slides on the object surface
                     x_dot = x_dot_sl;
-                    disp('sliding left mode')
+%                     disp('sliding left mode')
                 case 'SR'                   % the pusher slides on the object surface
                     x_dot = x_dot_sr;
-                    disp('sliding right mode')
+%                     disp('sliding right mode')
                 otherwise                   % the pusher is not in contact with the slider
                     disp('no contact')
                     x_dot = [0 0 0 u_t]';
@@ -504,6 +508,9 @@ classdef PusherSliderModel < casadi.Callback
             sym_u = vertcat(u_n,u_t);      % u control vector
 
             % s -> [S_p_x, S_p_y] slider frame
+
+            s = s + (s<0)*(self.SP.b);
+
             s = mod(s,self.SP.b);
             S_p = self.SP.FC(s);
 
@@ -581,7 +588,8 @@ classdef PusherSliderModel < casadi.Callback
 
             self.sym_model = model;
         end
-
+        
+        % Evaluate symbolic model with numeric values
         function x_dot = evalModelVariableShape(self,x,u)
             x_dot = full(self.xdot_func(x,u));
         end
