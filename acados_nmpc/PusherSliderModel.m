@@ -78,6 +78,8 @@ classdef PusherSliderModel < casadi.Callback
         end
 
         function Pxy_sorted = sortCadPoints(self,z_limit)
+%             PC = pcread('../cad_models/santal_planar_surface.ply');
+%             Pxy = PC.Location(:,1:2);
             P = self.cad_model.stl.Points;
             Pxy = P(abs(P(:,3))<z_limit,:);
             Pxy = Pxy(:,1:2);
@@ -131,7 +133,6 @@ classdef PusherSliderModel < casadi.Callback
             %                                 tangential(1),tangential(2),0,100,'color','b');
             %             plot(p(1)*1000,p(2)*1000,'ro')
         end
-
 
         function set_delay(self, time_delay)
             self.time_delay = time_delay;
@@ -228,15 +229,15 @@ classdef PusherSliderModel < casadi.Callback
                 case 'ST'
                     P = eye(2);
                     b = [-S_p_y S_p_x]';
-                    %                     disp('sticking mode')
+                                        disp('sticking mode')
                 case 'SL'                   % the pusher slides on the object surface
                     P = [v_l zeros(2,1)];
                     b = [-S_p_y+gamma_l*S_p_x 0]';
-                    %                     disp('sliding left mode')
+                                        disp('sliding left mode')
                 case 'SR'                   % the pusher slides on the object surface
                     P = [v_r zeros(2,1)];
                     b = [-S_p_y+gamma_r*S_p_x 0]';
-                    %                     disp('sliding right mode')
+                                        disp('sliding right mode')
                 otherwise                   % the pusher is not in contact with the slider
                     %disp('no contact')
                     x_dot = [0 0 0 u_t]';
@@ -246,7 +247,8 @@ classdef PusherSliderModel < casadi.Callback
             F = [R_z*factor_matrix*Q*P; factor_matrix*b'; c(end,:)];
             x_dot = F*[u_n u_t]';
         end
-
+        
+        % Evaluate model with variable shape (numerical)
         function x_dot = eval_model_variable_shape(self,x,u)
             % This method returns the symbolic expression of the nonlinear pusher-slider model x_dot = f(x,u)
             % Output: x_dot
@@ -261,6 +263,7 @@ classdef PusherSliderModel < casadi.Callback
             u_t = u(2);     % tangential pusher velocity w.r.t. slider frame S [m/s]
 
             % s -> [S_p_x, S_p_y] slider frame
+            s = mod(s,self.SP.b);
             S_p = self.SP.evalSpline(self.SP.FC,s);
 
             % conversion [S_p_x, S_p_y] and theta to normal-tangential
@@ -305,10 +308,12 @@ classdef PusherSliderModel < casadi.Callback
             % ---- s_dot evaluation
             S_p_dot_sl = S_R_NT*c_sl*[u_n u_t]';
             FC_dot = self.SP.evalSpline(self.SP.FC_dot,s);
-            s_dot_sl = (S_p_dot_sl(1)+S_p_dot_sl(2))/(FC_dot(1)+FC_dot(2));
+%             s_dot_sl = (S_p_dot_sl(1)+S_p_dot_sl(2))/(FC_dot(1)+FC_dot(2));
+            vp = c_sl*[u_n u_t]';
+            s_dot_sl = vp-vp(1)*v_l;
 
             F_sl = [W_R_S*S_R_NT*factor_matrix*Q*P_sl; factor_matrix*b_sl'];
-            x_dot_sl = [F_sl*[u_n u_t]'; s_dot_sl];
+            x_dot_sl = [F_sl*[u_n u_t]'; s_dot_sl(2)];
 
             % Sliding right
             P_sr = [v_r zeros(2,1)];
@@ -317,10 +322,13 @@ classdef PusherSliderModel < casadi.Callback
 
             % ---- s_dot evaluation
             S_p_dot_sr = S_R_NT*c_sr*[u_n u_t]';
-            s_dot_sr = (S_p_dot_sr(1)+S_p_dot_sr(2))/(FC_dot(1)+FC_dot(2));
+%             s_dot_sr = (S_p_dot_sr(1)+S_p_dot_sr(2))/(FC_dot(1)+FC_dot(2));
+%             s_dot_sr = (eye(2) - c_sr)*[u_n u_t]';
+            vp = c_sr*[u_n u_t]';
+            s_dot_sr = vp-vp(1)*v_r;
 
             F_sr = [W_R_S*S_R_NT*factor_matrix*Q*P_sr; factor_matrix*b_sr'];
-            x_dot_sr = [F_sr*[u_n u_t]'; s_dot_sr];
+            x_dot_sr = [F_sr*[u_n u_t]'; s_dot_sr(2)];
 
             if not(contact_surface(self,S_p_x,S_p_y))
                 mode="NC";
@@ -475,7 +483,7 @@ classdef PusherSliderModel < casadi.Callback
             self.sym_model = model;
         end
 
-        % Symbolic model (symbolic)
+        % Symbolic model for variable shape (symbolic)
         function model = symbolic_model_variable_shape(self)
             % This method returns the symbolic expression of the nonlinear pusher-slider model x_dot = f(x,u)
             % Output: x_dot
@@ -528,7 +536,6 @@ classdef PusherSliderModel < casadi.Callback
             % Sticking
             P_st = eye(2);
             b_st = [-S_p_y S_p_x]';
-            c_st = eye(2)-factor_matrix*(Q*P_st+[-S_p_y; S_p_x]*b_st');
             F_st = [W_R_S*S_R_NT*factor_matrix*Q*P_st; factor_matrix*b_st'];
             x_dot_st = [F_st*[u_n u_t]'; 0];
 
@@ -539,12 +546,11 @@ classdef PusherSliderModel < casadi.Callback
             c_sl = eye(2)-factor_matrix*(Q*P_sl+[-S_p_y; S_p_x]*b_sl');
 
             % ---- s_dot evaluation
-            S_p_dot_sl = S_R_NT*c_sl*[u_n u_t]';
-            FC_dot = self.SP.FC_dot(s);
-            s_dot_sl = (S_p_dot_sl(1)+S_p_dot_sl(2))/(FC_dot(1)+FC_dot(2));
-
+            NT_p_dot_sl = c_sl*[u_n u_t]';
+            s_dot_sl = NT_p_dot_sl-NT_p_dot_sl(1)*v_l;
+            
             F_sl = [W_R_S*S_R_NT*factor_matrix*Q*P_sl; factor_matrix*b_sl'];
-            x_dot_sl = [F_sl*[u_n u_t]'; s_dot_sl];
+            x_dot_sl = [F_sl*[u_n u_t]'; s_dot_sl(2)];
 
             % Sliding right
             P_sr = [v_r zeros(2,1)];
@@ -552,11 +558,11 @@ classdef PusherSliderModel < casadi.Callback
             c_sr = eye(2)-factor_matrix*(Q*P_sr+[-S_p_y; S_p_x]*b_sr');
 
             % ---- s_dot evaluation
-            S_p_dot_sr = S_R_NT*c_sr*[u_n u_t]';
-            s_dot_sr = (S_p_dot_sr(1)+S_p_dot_sr(2))/(FC_dot(1)+FC_dot(2));
+            NT_p_dot_sr = c_sr*[u_n u_t]';
+            s_dot_sr = NT_p_dot_sr-NT_p_dot_sr(1)*v_r;
 
             F_sr = [W_R_S*S_R_NT*factor_matrix*Q*P_sr; factor_matrix*b_sr'];
-            x_dot_sr = [F_sr*[u_n u_t]'; s_dot_sr];
+            x_dot_sr = [F_sr*[u_n u_t]'; s_dot_sr(2)];
 
             expr_f_expl = vertcat((u_fract>=gamma_r)*x_dot_st*(u_fract<=gamma_l) ...
                 + (u_fract>gamma_l)*x_dot_sl...

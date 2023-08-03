@@ -33,19 +33,20 @@ plant_time_delay = 0;                               % delay of the plant [s]
 % Create Pusher Slider object
 %cad_santal_centered1
 %cuboide_santal
-cad_model_path = "../cad_models/cad_santal_centered1.stl";
+cad_model_path = "../cad_models/cuboide_santal_resampled.stl";
 order_spline = 3;
 z_limit = 0.1;
 p = PusherSliderModel('pusher_slider_model',slider, plant_time_delay,cad_model_path,order_spline,z_limit);
 p.symbolic_model_variable_shape();
+
 %%
-time_sim = 18;
+time_sim = 20;
 sample_time = 0.05;
-%x0 = [0 0 deg2rad(0) -slider.xwidth/2*1 -slider.ywidth/2*0]';
-x0 = [0 0 deg2rad(0) 0.25/2.5]';
+% x0 = [0 0 deg2rad(0) -slider.ywidth/2*0.8]';
+x0 = [0 0 deg2rad(0) p.SP.b+0.01]';
 % velocità pusher in terna normale/tangenziale 
-u_n_ = 0.01;
-u_t_ = 0.00;
+u_n_ = 0.001;
+u_t_ = 0.05;
 
 [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.open_loop_matlab(p,x0,u_n_,u_t_,time_sim,sample_time,false);
 % params = helper.save_parameters("exp1_no_noise",[x_s; y_s; theta_s; S_p_x; S_p_y],[u_n; u_t],time_plot);

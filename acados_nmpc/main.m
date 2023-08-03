@@ -31,7 +31,10 @@ slider.m = 0.2875;                                    % slider mass [kg]
 plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
-p = PusherSliderModel('real_plant',slider, plant_time_delay);
+cad_model_path = "../cad_models/cuboide_santal_resampled.stl";
+order_spline = 3;
+z_limit = 0.1;
+p = PusherSliderModel('real_plant',slider, plant_time_delay,cad_model_path,order_spline,z_limit);
 p.symbolic_model();
 
 
@@ -47,8 +50,8 @@ slider_nominal.m = 0.2875;                                    % slider mass [kg]
 plant_time_delay_inc = 0.3;                               % delay of the plant [s]
 
 % Create Pusher Slider object
-p_inc = PusherSliderModel('nominal_plant',slider_nominal, plant_time_delay_inc);
-p_inc.symbolic_model();
+% p_inc = PusherSliderModel('nominal_plant',slider_nominal, plant_time_delay_inc);
+% p_inc.symbolic_model();
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP CONTROLLER %%%%%%%%%%%%%%%%%%%%%%
 
@@ -68,7 +71,7 @@ p.set_delay(0.35);
 controller.set_delay_comp(0.35);
 
 % Set initial condition
-x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0]';
+x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
@@ -129,7 +132,7 @@ controller.set_reference_trajectory([traj; control_ref]);
 % If you want to simulate set simulation_ true and then set the
 % type of simulation (simulink, matlab or real robot)
 simulation_ = true;
-sym_type = "robot";
+sym_type = "matlab";
 print_robot = false;
 
 

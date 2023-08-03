@@ -127,7 +127,7 @@ classdef helper
                 drawnow
             end
         end
-        
+
         function [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_sim_vec] = open_loop_matlab(plant,x0,u_n,u_t, time_sim,sample_time, sim_noise)
             % OPEN LOOP SIMULATION for variable shape
 
@@ -153,12 +153,13 @@ classdef helper
                 if(sim_noise == true)
                     x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 randn()*1e-4 randn()*1e-4]';
                 end
-           
+
                 if delay_buff_plant == 0
-                    x_dot_ = plant.eval_model_variable_shape(x(:,i),u(:,i)); %plant.eval_model(x(:,i),u(:,i)); 
-                    %x_dot_ = plant.eval_model_variable_shape(x(:,i),u(:,i));    
+                    x_dot_ = plant.evalModelVariableShape(x(:,i),u(:,i)); %plant.eval_model(x(:,i),u(:,i));
+%                     x_dot_ = plant.eval_model(x(:,i),u(:,i));
+%                     x_dot_ = plant.eval_model_variable_shape(x(:,i),u(:,i));
                 else
-                    x_dot_ = plant.eval_model_variable_shape(x(:,i),u_buff_plant(:,end));
+                    x_dot_ = plant.evalModelVariableShape(x(:,i),u_buff_plant(:,end));
 %                     x_dot_ = plant.eval_model(x(:,i),u_buff_plant(:,end));
                     u_buff_plant = [u(:,i) u_buff_plant(:,1:end-1)];
                 end
@@ -168,7 +169,7 @@ classdef helper
 
             end
             toc;
-           
+
 
             x_s = x(1,1:end-1); y_s = x(2,1:end-1); theta_s = x(3,1:end-1); %S_p_x = x(4,1:end-1); S_p_y = x(5,1:end-1);
             S_p = plant.SP.evalSpline(plant.SP.FC,x(4,1:end-1));
@@ -296,22 +297,21 @@ classdef helper
 
         function params = save_parameters(name_exp, x, u, t, mode_vect, params)
             %             params = struct;
-            
+
             params.t = t;
             params.x_S = x(1,:);
             params.y_S = x(2,:);
             params.theta_S = x(3,:);
-%                         params.S_p_x = x(4,:);
+            %                         params.S_p_x = x(4,:);
             params.S_p_y = x(4,:);
             params.u_n = u(1,:);
             params.u_t = u(2,:);
             if nargin > 4
-                 params.mode_vect = mode_vect;
+                params.mode_vect = mode_vect;
             end
             name_exp_ext = strcat(name_exp,'.mat');
             save(name_exp_ext,'params');
         end
-
 
         function cost_fcn_ = evaluate_cost_function(xn, controller, plant,t, u_vect)
             cost_fcn_ = 0;
@@ -325,8 +325,6 @@ classdef helper
             yn_ref = controller.get_y_ref(time_index+controller.Hp);
             cost_fcn_ = cost_fcn_ + (xn-yn_ref(1:4))'*controller.W_x_e*(xn-yn_ref(1:4));
         end
-
-
 
         function u_min = debug_cost_function(x0, u_n_lb, u_t_lb, u_n_ub, u_t_ub, controller, plant, index, t)
             import casadi.*
