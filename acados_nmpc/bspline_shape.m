@@ -6,6 +6,7 @@ classdef bspline_shape < handle
         n;
         m;
         s; % ascissa curvilinea
+        C_sym; % symbolic spline
         FC; % function representing spline
         FC_dot; % function represeting dot spline
         n_fun; % normal versor
@@ -73,6 +74,7 @@ classdef bspline_shape < handle
             for ind = 1:self.n
                 C = C + self.eval_bspline_sym(self.s,ind,ord)*self.P(ind,:);
             end
+            self.C_sym = C;
             self.FC = Function('F_C',{self.s},{C});
         end
 

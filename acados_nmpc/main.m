@@ -12,7 +12,7 @@ model_path = fullfile(pwd,'../cad_models');
 addpath(model_path);
 
 % Specify if linux or windows (true = linux, false = windows)
-linux_set = false;
+linux_set = true;
 
 if linux_set == false
     env_vars_acados;
@@ -31,7 +31,7 @@ slider.m = 0.2875;                                    % slider mass [kg]
 plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
-cad_model_path = "../cad_models/cuboide_santal_resampled_rotated.stl";
+cad_model_path = "../cad_models/cuboide_santal_rotated.stl"; %"../cad_models/cuboide_santal_resampled_rotated.stl";
 order_spline = 3;
 z_limit = 0.1;
 p = PusherSliderModel('real_plant',slider, plant_time_delay,cad_model_path,order_spline,z_limit);
@@ -68,8 +68,8 @@ controller.create_ocp_solver();
 %% SETTING PARAMETERS FOR CONTROLLER AND PLANT
 
 % Change delay of the plant and the delay to compensate with the controller
-p.set_delay(0); %0.35
-controller.set_delay_comp(0);
+p.set_delay(0.35); %0.35
+controller.set_delay_comp(0.35);
 
 % Set initial condition
 % x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
@@ -133,9 +133,8 @@ control_ref = repmat([u_n_ref; u_t_ref],1,length(time));
 controller.set_reference_trajectory([traj; control_ref]);
 % controller.set_reference_trajectory(traj);
 
-% controller.create_ocp_solver();
-% SIMULATION START
 
+%%%%%%%%%%%%% SIMULATION START %%%%%%%%%%%%%%%%%%%%%
 % If you want to simulate set simulation_ true and then set the
 % type of simulation (simulink, matlab or real robot)
 simulation_ = true;

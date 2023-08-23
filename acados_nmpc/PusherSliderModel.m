@@ -78,10 +78,10 @@ classdef PusherSliderModel < casadi.Callback
         end
 
         function Pxy_sorted = sortCadPoints(self,z_limit)
-%             PC = pcread('../cad_models/santal_planar_surface.ply');
-%             Pxy = PC.Location(:,1:2);
-            P = self.cad_model.stl.Points;
-            Pxy = P(abs(P(:,3))<z_limit,:);
+            PC = pcread('../cad_models/santal_planar_surface_simplified.ply');
+            Pxy = PC.Location(:,1:2);
+%             P = self.cad_model.stl.Points;
+%             Pxy = P(abs(P(:,3))<z_limit,:);
             Pxy = Pxy(:,1:2);
 
             [~, ind] = min(Pxy(:,1));
