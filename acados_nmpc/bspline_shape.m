@@ -101,8 +101,8 @@ classdef bspline_shape < handle
         function getNormalTangentialVersors(self)
             import casadi.*
             t_ = self.FC_dot(self.s);
-            tvers = t_/norm(t_);
-            nvers = -[-tvers(2) tvers(1)];
+            tvers = -t_/norm(t_);       %t_/norm(t_);
+            nvers = -[-tvers(2) tvers(1)]; %-[-tvers(2) tvers(1)]
             R_NT = [nvers' tvers'];
             
             self.t_fun = Function('t_fun',{self.s},{tvers});

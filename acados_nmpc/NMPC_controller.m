@@ -226,25 +226,25 @@ classdef NMPC_controller < casadi.Callback
         function ocp_opts = create_ocp_opts(self)
             field_s = ["nlp_solver", "qp_solver", "sim_method",  "globalization", "codgen_model", "compile_model", "compile_interface"];
             values_s = ["sqp", "partial_condensing_hpipm", "erk", "merit_backtracking", "true", "false", "false"];
-            solver_params_s = dictionary(field_s,values_s);
+            %solver_params_s = dictionary(field_s,values_s);
 
             field_d = ["qp_solver_cond_N", "nlp_solver_max_iter","line_search_use_sufficient_descent","nlp_solver_tol_stat","nlp_solver_tol_eq","nlp_solver_tol_ineq","nlp_solver_tol_comp"];
             values_d = [5, 30, 1,1e-6,1e-6,1e-6,1e-6];
-            solver_params_d = dictionary(field_d,values_d);
+            %solver_params_d = dictionary(field_d,values_d);
 
             % acados ocp set opts
             ocp_opts = acados_ocp_opts();
             ocp_opts.set('param_scheme_N', self.Hp);
-            ent = solver_params_s.keys;
-            val = solver_params_s.values;
-            for ent_ind = 1:length(solver_params_s.keys)
-                ocp_opts.set(ent(ent_ind),val(ent_ind));
+            %ent = solver_params_s.keys;
+            %val = solver_params_s.values;
+            for index = 1:length(field_s)
+                ocp_opts.set(field_s(index),values_s(index));
             end
  
-            ent = solver_params_d.keys;
-            val = solver_params_d.values;
-            for ent_ind = 1:length(solver_params_d.keys)
-                ocp_opts.set(ent(ent_ind),val(ent_ind));
+%             ent = solver_params_d.keys;
+%             val = solver_params_d.values;
+            for index = 1:length(field_d)
+                ocp_opts.set(field_d(index),values_d(index));
             end
 
 

@@ -31,7 +31,7 @@ slider.m = 0.2875;                                    % slider mass [kg]
 plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
-cad_model_path = "../cad_models/cuboide_santal_rotated.stl"; %"../cad_models/cuboide_santal_resampled_rotated.stl";
+cad_model_path = "../cad_models/cuboide_santal_resampled_rotated.stl"; %"../cad_models/cuboide_santal_rotated.stl";
 order_spline = 3;
 z_limit = 0.1;
 p = PusherSliderModel('real_plant',slider, plant_time_delay,cad_model_path,order_spline,z_limit);
@@ -58,7 +58,7 @@ plant_time_delay_inc = 0.3;                               % delay of the plant [
 
 % Controller parameters
 sample_time = 0.05;
-Hp = 25;
+Hp = 10;
 
 % Setup Controller and Optimization Object
 controller = NMPC_controller('NMPC',p,sample_time,Hp);
@@ -73,7 +73,7 @@ controller.set_delay_comp(0.35);
 
 % Set initial condition
 % x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
-x0 = [0 0 deg2rad(0) 0]';
+x0 = [0 0 deg2rad(0) p.SP.b/4]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
@@ -86,7 +86,6 @@ controller.initial_condition_update(x0);
 W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
 W_x_e = 200*diag([1000 1000 100 0]); %diag([100 100 0 0 0]);
 W_u = diag([0 0]);  
-
 
 % controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
@@ -103,7 +102,7 @@ xf(3) = acos((xf(1)-x0(1))/(norm(xf(1:2)-x0(1:2))));
 traj_gen = TrajectoryGenerator(sample_time,u_n_ub/2);
 traj_gen.set_plot = false;
 
-time_sim = 20;
+time_sim = 10;
 t0 = 0; tf = time_sim*1;
 traj_gen.set_target(x0,xf,t0,tf);
 % [time, traj] = traj_gen.straight_line(true);
@@ -154,7 +153,7 @@ if simulation_ == true
         noise_ = true;
         debug_ = false;
         print_ = false;
-        disturbance_ = true;
+        disturbance_ = false;
          
         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
         params = helper.save_parameters("exp1_smooth_traj_",[x_s; y_s; theta_s; S_p_y],[u_n; u_t],time_plot, mode_vect);

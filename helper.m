@@ -79,12 +79,12 @@ classdef helper
             p0_s = [x(1) y(1) 0];
             quat0_s = quaternion(helper.my_rotz(theta(1)),'rotmat','frame');
             figure
-            slider_p = poseplot(quat0_s,p0_s, "MeshFileName","cad_models/cuboide_santal_rotated.stl", "ScaleFactor",0.001);%,PatchFaceColor="yellow");
+            slider_p = poseplot(quat0_s,p0_s, "MeshFileName","cad_models/cad_santal_centered_scaled_rotated_reduced.stl", "PatchFaceAlpha", 0.2, "ScaleFactor",0.001);%,PatchFaceColor="yellow");
             hold on
 
             p0_ref = [traj(1:2,1)' 0];
             quat0_ref = quaternion(helper.my_rotz(traj(3,1)),'rotmat','frame');
-            slider_ref = poseplot(quat0_ref,p0_ref, "MeshFileName","cad_models/cuboide_santal_rotated.stl", "ScaleFactor",0.001);%,PatchFaceColor="yellow");
+            slider_ref = poseplot(quat0_ref,p0_ref, "MeshFileName","cad_models/cad_santal_centered_scaled_rotated_reduced.stl", "PatchFaceAlpha", 0.2,"ScaleFactor",0.001);%,PatchFaceColor="yellow");
 
 
             % Pusher frame
@@ -191,7 +191,7 @@ classdef helper
             x(:,1) = x0;
             u = zeros(plant.nu, time_sim_);
             mode_vect = string(zeros(time_sim_,1));
-            found_sol = true(length(time_sim_vec),1);
+            found_sol = false(length(time_sim_vec),1);
 
             % Delay buffer to simulate the delay of the plant
             delay_buff_plant = ceil(plant.time_delay / controller.sample_time);
@@ -223,10 +223,19 @@ classdef helper
                 toc;
 
                 controller.u_buff_contr = [u(:,i) controller.u_buff_contr(:,1:end-1)];
+                status = controller.ocp_solver.get('status');
+                if status~=0
+                    disp('acados ocp solver failed');
+                    found_sol(i) = false;
+                    %                         keyboard
+                else
+                    found_sol(i) = true;
+                end
+            
 
                 if print_ == true
                     controller.ocp_solver.print;
-                    status = controller.ocp_solver.get('status');
+                    
                     sqp_iter = controller.ocp_solver.get('sqp_iter');
                     time_tot = controller.ocp_solver.get('time_tot');
                     time_lin = controller.ocp_solver.get('time_lin');
@@ -234,12 +243,9 @@ classdef helper
 
                     fprintf('\nstatus = %d, sqp_iter = %d, time_int = %f [ms] (time_lin = %f [ms], time_qp_sol = %f [ms])\n',...
                         status, sqp_iter, time_tot*1e3, time_lin*1e3, time_qp_sol*1e3);
-                    if status~=0
-                        disp('acados ocp solver failed');
-                        found_sol(i) = false;
-                        %                         keyboard
-                    end
                 end
+
+                
 
                 if debug_cost == true
                     if i*controller.sample_time < 0.06 || (i*controller.sample_time > 0.85 && i*controller.sample_time < 1.2)% && mod(i,5)==0)
