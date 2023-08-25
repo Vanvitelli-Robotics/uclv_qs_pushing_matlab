@@ -57,7 +57,7 @@ plant_time_delay_inc = 0.3;                               % delay of the plant [
 % %%%%%%%%%%%%%%%%%%%%%% SETUP CONTROLLER %%%%%%%%%%%%%%%%%%%%%%
 
 % Controller parameters
-sample_time = 0.05;
+sample_time = 0.07;
 Hp = 10;
 
 % Setup Controller and Optimization Object
@@ -68,12 +68,12 @@ controller.create_ocp_solver();
 %% SETTING PARAMETERS FOR CONTROLLER AND PLANT
 
 % Change delay of the plant and the delay to compensate with the controller
-p.set_delay(0.35); %0.35
-controller.set_delay_comp(0.35);
+p.set_delay(0.3); %0.35
+controller.set_delay_comp(0.3);
 
 % Set initial condition
 % x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
-x0 = [0 0 deg2rad(0) p.SP.b/4]';
+x0 = [0 0 deg2rad(0) 0.03]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
@@ -137,7 +137,7 @@ controller.set_reference_trajectory([traj; control_ref]);
 % If you want to simulate set simulation_ true and then set the
 % type of simulation (simulink, matlab or real robot)
 simulation_ = true;
-sym_type = "matlab";
+sym_type = "robot";
 print_robot = false;
 
 
@@ -179,6 +179,11 @@ end
 %% ANIMATE
 % helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))]);
 % params.S_p_x = repmat(-p.slider_params.xwidth/2,1,length(params.x_S));
+if sym_type == "robot"
+    S_p = p.SP.evalSpline(p.SP.FC,params.S_p_y);
+    params.S_p_x = S_p(:,1);
+    params.S_p_y = S_p(:,2);
+end
 helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))]);
 
 

@@ -57,7 +57,7 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, p, controller, start_tim
         command_msg.Linear.Y = 0;
         send(command_pub,command_msg)
 
-        rosshutdown;
+        rosshutdown
         disp("Saving parameters")
         helper.save_parameters("exp_robot_traj",x,u,time_vec-time_vec(1), params);
         return
@@ -88,7 +88,7 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, p, controller, start_tim
     xk = controller.delay_buffer_sim(p, x(:,end));
     u = [u controller.solve(xk,round(time_vec(end)/controller.sample_time)+controller.delay_buff_comp)];
 %     if t.seconds > 1
-%         u_ = [0; 0.005];
+%         u_ = [0.001; -0.005];
 %     else
 %         u_ = [0 0]';
 %     end
@@ -120,6 +120,7 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, p, controller, start_tim
     R_NT_S_ = p.SP.R_NT_fun(1);
     R_NT_S = full(R_NT_S_(mod(smin_spline,p.SP.b)));
     R_NT_S_3d = [R_NT_S zeros(2,1); zeros(1,2), 1];
+    u(2,end) = -u(2,end);
     u_robot = T_S0B(1:3,1:3)*helper.my_rotz(xk(3))*R_NT_S_3d*[u(:,end);0];
 
     command_msg.Linear.X = u_robot(1);
