@@ -101,7 +101,7 @@ classdef bspline_shape < handle
         function getNormalTangentialVersors(self)
             import casadi.*
             t_ = self.FC_dot(self.s);
-            tvers = -t_/norm(t_);       %t_/norm(t_);
+            tvers = t_/norm(t_);       %t_/norm(t_);
             nvers = -[-tvers(2) tvers(1)]; %-[-tvers(2) tvers(1)]
             R_NT = [nvers' tvers'];
             
@@ -110,7 +110,7 @@ classdef bspline_shape < handle
             self.R_NT_fun = Function('R_NT_fun',{self.s},{R_NT});
         end
 
-        
+        function getSymbolicSplineDotDot(self,ord)
 
         function FC_val = evalSpline(self,F, s_values)
             s_values = mod(s_values,self.b);

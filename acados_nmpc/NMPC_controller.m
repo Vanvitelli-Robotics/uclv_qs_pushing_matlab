@@ -99,7 +99,7 @@ classdef NMPC_controller < casadi.Callback
             xk_sim = x;
             for k = 1 : self.delay_buff_comp
 %                 x_dot_sim = plant.eval_model(xk_sim,self.u_buff_contr(:,end-k+1));
-                x_dot_sim = plant.eval_model_variable_shape(xk_sim,self.u_buff_contr(:,end-k+1));
+                x_dot_sim = plant.evalModelVariableShape(xk_sim,self.u_buff_contr(:,end-k+1));
                 x_sim = xk_sim + self.sample_time*x_dot_sim;
                 xk_sim = x_sim;
             end
@@ -285,14 +285,14 @@ classdef NMPC_controller < casadi.Callback
             % set initial guess
             if(isempty(self.utraj) || isempty(self.xtraj))
                 self.xtraj = zeros(self.sym_model.nx, self.Hp+1);
-                self.utraj = repmat([0;0],1,self.Hp);
+                self.utraj = repmat([self.u_n_lb;0],1,self.Hp);
                 self.ptraj = zeros(self.sym_model.nx, self.Hp);
             end
 
             self.xtraj(:,1) = x0;
             for i_x = 2 : size(self.xtraj,2)
 %                 self.xtraj(:,i_x) = self.plant.eval_model(self.xtraj(:,i_x-1),self.utraj(:,i_x-1));
-                self.xtraj(:,i_x) = self.plant.eval_model_variable_shape(self.xtraj(:,i_x-1),self.utraj(:,i_x-1));
+                self.xtraj(:,i_x) = self.plant.evalModelVariableShape(self.xtraj(:,i_x-1),self.utraj(:,i_x-1));
             end
 
             self.ocp_solver.set('init_x', self.xtraj);

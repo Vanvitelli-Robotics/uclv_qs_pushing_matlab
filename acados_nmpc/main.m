@@ -32,7 +32,7 @@ plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
 cad_model_path = "../cad_models/cuboide_santal_resampled_rotated.stl"; %"../cad_models/cuboide_santal_rotated.stl";
-order_spline = 3;
+order_spline = 2;
 z_limit = 0.1;
 p = PusherSliderModel('real_plant',slider, plant_time_delay,cad_model_path,order_spline,z_limit);
 % p.symbolic_model();
@@ -68,12 +68,12 @@ controller.create_ocp_solver();
 %% SETTING PARAMETERS FOR CONTROLLER AND PLANT
 
 % Change delay of the plant and the delay to compensate with the controller
-p.set_delay(0.3); %0.35
-controller.set_delay_comp(0.3);
+p.set_delay(0.33); %0.35
+controller.set_delay_comp(0.33);
 
 % Set initial condition
 % x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
-x0 = [0 0 deg2rad(0) 0.03]';
+x0 = [0 0 deg2rad(0) -0.01]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
@@ -91,8 +91,8 @@ W_u = diag([0 0]);
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
 % Set constraints
-u_n_lb = 0.0; u_n_ub = 0.03;
-u_t_lb = -0.05; u_t_ub = 0.05;
+u_n_lb = 0.0; u_n_ub = 0.015;
+u_t_lb = -0.03; u_t_ub = 0.03;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % Create desired trajectory
@@ -150,13 +150,15 @@ if simulation_ == true
 
     elseif(strcmp(sym_type,"matlab"))
         disp("MATLAB SIMULATION")
-        noise_ = true;
+        noise_ = false;
         debug_ = false;
         print_ = false;
         disturbance_ = false;
          
-        [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
-        params = helper.save_parameters("exp1_smooth_traj_",[x_s; y_s; theta_s; S_p_y],[u_n; u_t],time_plot, mode_vect);
+%         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
+        [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.open_loop_matlab(p,x0,0.0,0.005, time_sim,sample_time, noise_);
+        
+        params = helper.save_parameters("exp1_open_loop",[x_s; y_s; theta_s; S_p_y],[u_n; u_t],time_plot);
         params.S_p_x = S_p_x;
     elseif(strcmp(sym_type,"robot"))
         disp("ROBOT EXPERIMENT")

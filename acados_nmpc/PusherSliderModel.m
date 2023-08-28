@@ -100,11 +100,13 @@ classdef PusherSliderModel < casadi.Callback
 
             Pxy_sorted = Pxy_sorted.*(1/self.cad_model.scale_factor);
             Pxy_sorted(end+1,:) = Pxy_sorted(1,:);
+            Pxy_sorted = flipud(Pxy_sorted);
         end
 
         function getSpline(self,p,z_limit)
             % Points of contact P
             P = self.sortCadPoints(z_limit);
+            
             n = length(P);
 
             % Knots vector S = [s0 s1, ..., sm]

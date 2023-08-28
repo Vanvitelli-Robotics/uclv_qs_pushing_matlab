@@ -75,7 +75,7 @@ classdef helper
             % Input: 2D position [x,y,theta]
 
             % Slider frame
-            %     theta = -theta;
+%                 theta = -theta;
             p0_s = [x(1) y(1) 0];
             quat0_s = quaternion(helper.my_rotz(theta(1)),'rotmat','frame');
             figure
@@ -221,6 +221,7 @@ classdef helper
                 tic;
                 u(:,i) = controller.solve(xk_sim,i+controller.delay_buff_comp);
                 toc;
+%                 u(:,i) = [0.01; 0.00];
 
                 controller.u_buff_contr = [u(:,i) controller.u_buff_contr(:,1:end-1)];
                 status = controller.ocp_solver.get('status');
@@ -264,11 +265,11 @@ classdef helper
 
                 if delay_buff_plant == 0
 %                     [x_dot_, mode_] = plant.eval_model(x(:,i),u(:,i));
-                    [x_dot_, mode_] = plant.eval_model_variable_shape(x(:,i),u(:,i));
+                    x_dot_ = plant.evalModelVariableShape(x(:,i),u(:,i));
                 else
 %                     [x_dot_, mode_] = plant.eval_model(x(:,i),u_buff_plant(:,end));
-                    [x_dot_, mode_] = plant.eval_model_variable_shape(x(:,i),u_buff_plant(:,end));
-
+                    x_dot_ = plant.evalModelVariableShape(x(:,i),u_buff_plant(:,end));
+                    mode_ = 0;
                     u_buff_plant = [u(:,i) u_buff_plant(:,1:end-1)];
                 end
 
