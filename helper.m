@@ -154,6 +154,10 @@ classdef helper
                     x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 randn()*1e-4 randn()*1e-4]';
                 end
 
+                alpha = plant.SP.getNormalizedCurvature(x(4,i));
+                scale_alpha = 0.8;
+                u(2,i) = (1-scale_alpha*alpha)*u(2,i); 
+
                 if delay_buff_plant == 0
                     x_dot_ = plant.evalModelVariableShape(x(:,i),u(:,i)); %plant.eval_model(x(:,i),u(:,i));
 %                     x_dot_ = plant.eval_model(x(:,i),u(:,i));

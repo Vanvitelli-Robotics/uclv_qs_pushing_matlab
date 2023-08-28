@@ -9,11 +9,14 @@ classdef bspline_shape < handle
         C_sym; % symbolic spline
         FC; % function representing spline
         FC_dot; % function represeting dot spline
+        FC_dot_dot; % function representing second derivative of the spline
         n_fun; % normal versor
         t_fun; % tangential versor
         R_NT_fun; % rotation matrix for tangential and normal frame
         a;
         b;
+        cj_1_vect;
+        max_curvature;
     end
 
     methods
@@ -83,6 +86,7 @@ classdef bspline_shape < handle
             if ord < 1
                 disp("ERROR: order p must be grater than 1")
             else
+                self.cj_1_vect(1,:) = [0 0];
                 C_dot = 0;
                 for ii = 2 : self.n
                     if self.S(ii+ord)==self.S(ii)
@@ -90,7 +94,7 @@ classdef bspline_shape < handle
                     else
                         cj_1 = ord*((self.P(ii,:)-self.P(ii-1,:))/(self.S(ii+ord)-self.S(ii)));
                     end
-
+                    self.cj_1_vect(ii,:) = cj_1;
                     C_dot = C_dot + cj_1*self.eval_bspline_sym(self.s,ii,ord-1);
                 end
             end
@@ -111,6 +115,35 @@ classdef bspline_shape < handle
         end
 
         function getSymbolicSplineDotDot(self,ord)
+            import casadi.*
+            if ord < 2
+                disp("ERROR: order p must be grater than 2 to evaluate the second derivative")
+            else
+                C_dot_dot = 0;
+                for ii = 3 : self.n
+                    if self.S(ii+ord)==self.S(ii)
+                        cj_2 = 0;
+                    else
+                        cj_2 = ord*((self.cj_1_vect(ii,:)-self.cj_1_vect(ii-1,:))/(self.S(ii+ord)-self.S(ii)));
+                    end
+%                     self.cj_1_vect(ii-1) = cj_1;
+                    C_dot_dot = C_dot_dot + cj_2*self.eval_bspline_sym(self.s,ii,ord-2);
+                end
+            end
+            self.FC_dot_dot = Function('FC_dot_dot',{self.s},{C_dot_dot});
+        end
+        
+        function getMaxCurvature(self,a, b, step)
+            s_values = a:step:b;
+            curvatures = self.evalSpline(self.FC_dot_dot,s_values);
+            self.max_curvature = max(vecnorm(curvatures'));
+        end
+
+        function norm_curv = getNormalizedCurvature(self, s)
+            curv = self.evalSpline(self.FC_dot_dot,s);
+            curv = norm(curv);
+            norm_curv = curv/self.max_curvature;
+        end
 
         function FC_val = evalSpline(self,F, s_values)
             s_values = mod(s_values,self.b);

@@ -116,7 +116,8 @@ classdef NMPC_controller < casadi.Callback
             self.ocp_solver.set('constr_lbu', [self.u_n_lb; self.u_t_lb]); % lower bound on h
             self.ocp_solver.set('constr_ubu', [self.u_n_ub; self.u_t_ub]);  % upper bound on h
         end
-
+        
+        
         function clear_variables(self)
             % Usefull method to clean some variables for the new experiment
             self.utraj = [];
@@ -273,6 +274,11 @@ classdef NMPC_controller < casadi.Callback
             % update initial state
             %             tic
             self.ocp_solver.set('constr_x0', x0);
+            
+            alpha = self.plant.SP.getNormalizedCurvature(x0(4));
+            scale_alpha = 0.7;
+            self.ocp_solver.set('constr_lbu', [self.u_n_lb; (1-scale_alpha*alpha)*self.u_t_lb]); % lower bound on h
+            self.ocp_solver.set('constr_ubu', [self.u_n_ub; (1-scale_alpha*alpha)*self.u_t_ub]);  % upper bound on h
 
             % reference
             for k=0:self.Hp-1

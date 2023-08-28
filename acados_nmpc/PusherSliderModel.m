@@ -118,6 +118,8 @@ classdef PusherSliderModel < casadi.Callback
             self.SP = bspline_shape(S,P,p);
             self.SP.getSymbolicSpline(p);
             self.SP.getSymboliSplineDot(p);
+            self.SP.getSymbolicSplineDotDot(p);
+            self.SP.getMaxCurvature(self.SP.a,self.SP.b,0.001);
             self.SP.getNormalTangentialVersors;
         end
 

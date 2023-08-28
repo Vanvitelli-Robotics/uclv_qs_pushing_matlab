@@ -32,7 +32,7 @@ plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
 cad_model_path = "../cad_models/cuboide_santal_resampled_rotated.stl"; %"../cad_models/cuboide_santal_rotated.stl";
-order_spline = 2;
+order_spline = 3;
 z_limit = 0.1;
 p = PusherSliderModel('real_plant',slider, plant_time_delay,cad_model_path,order_spline,z_limit);
 % p.symbolic_model();
@@ -73,7 +73,7 @@ controller.set_delay_comp(0.33);
 
 % Set initial condition
 % x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
-x0 = [0 0 deg2rad(0) -0.01]';
+x0 = [0 0 deg2rad(0) -0.05]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
@@ -92,7 +92,7 @@ controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
 % Set constraints
 u_n_lb = 0.0; u_n_ub = 0.015;
-u_t_lb = -0.03; u_t_ub = 0.03;
+u_t_lb = -0.05; u_t_ub = 0.05;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % Create desired trajectory
@@ -122,7 +122,7 @@ traj = [traj(1:3,:); traj(end,:)];
 % traj = [zeros(4,50) traj];
 % time_add = time(end)+sample_time:sample_time:time(end)+(50*sample_time);
 % time = [time time_add];
-time_sim = time(end) + 5;
+time_sim = time(end) + 8;
 
 % Set control reference
 u_n_ref = u_n_ub/2; u_t_ref = 0;
@@ -150,13 +150,13 @@ if simulation_ == true
 
     elseif(strcmp(sym_type,"matlab"))
         disp("MATLAB SIMULATION")
-        noise_ = false;
+        noise_ = true;
         debug_ = false;
         print_ = false;
-        disturbance_ = false;
+        disturbance_ = true;
          
-%         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
-        [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.open_loop_matlab(p,x0,0.0,0.005, time_sim,sample_time, noise_);
+        [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
+%         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.open_loop_matlab(p,x0,0.0,-0.01, time_sim,sample_time, noise_);
         
         params = helper.save_parameters("exp1_open_loop",[x_s; y_s; theta_s; S_p_y],[u_n; u_t],time_plot);
         params.S_p_x = S_p_x;
@@ -175,7 +175,7 @@ if sym_type == "robot"
     params.t = params.t(1:end-1);
     helper.my_plot_robot(params.t, [controller.y_ref(1:4,:) repmat(controller.y_ref(1:4,end),1,(abs(length(params.x_S) - length(controller.y_ref))))], params.x_S, params.y_S, params.theta_S, params.S_p_y, params.u_n, params.u_t);
 else
-    helper.my_plot(params.t, [controller.y_ref(1:3,:); controller.y_ref(4,:)], params.x_S, params.y_S, params.theta_S, params.S_p_y, params.u_n, params.u_t, controller.cost_function_vect, helper.convert_str2num(params.mode_vect));
+    helper.my_plot(params.t, [controller.y_ref(1:3,:); controller.y_ref(4,:)], params.x_S, params.y_S, params.theta_S, params.S_p_y, params.u_n, params.u_t, controller.cost_function_vect);%, helper.convert_str2num(params.mode_vect));
 end
 
 %% ANIMATE
