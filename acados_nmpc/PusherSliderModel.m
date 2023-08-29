@@ -78,7 +78,8 @@ classdef PusherSliderModel < casadi.Callback
         end
 
         function Pxy_sorted = sortCadPoints(self,z_limit)
-            PC = pcread('../cad_models/santal_planar_surface_simplified.ply');
+            PC = pcread('../cad_models/santal_planar_surface_simplified_167.ply');
+%             PC = pcread('../cad_models/Balea_cad_model_planar_surface_36.ply');
             Pxy = PC.Location(:,1:2);
 %             P = self.cad_model.stl.Points;
 %             Pxy = P(abs(P(:,3))<z_limit,:);
@@ -101,6 +102,7 @@ classdef PusherSliderModel < casadi.Callback
             Pxy_sorted = Pxy_sorted.*(1/self.cad_model.scale_factor);
             Pxy_sorted(end+1,:) = Pxy_sorted(1,:);
             Pxy_sorted = flipud(Pxy_sorted);
+%             Pxy_sorted = [Pxy_sorted(round(end/2):-1:2,:); Pxy_sorted(1:1:round(end/2)-1,:)];
         end
 
         function getSpline(self,p,z_limit)
@@ -119,7 +121,7 @@ classdef PusherSliderModel < casadi.Callback
             self.SP.getSymbolicSpline(p);
             self.SP.getSymboliSplineDot(p);
             self.SP.getSymbolicSplineDotDot(p);
-            self.SP.getMaxCurvature(self.SP.a,self.SP.b,0.001);
+            self.SP.getMaxCurvature();
             self.SP.getNormalTangentialVersors;
         end
 
@@ -267,9 +269,9 @@ classdef PusherSliderModel < casadi.Callback
             u_t = u(2);     % tangential pusher velocity w.r.t. slider frame S [m/s]
 
             % s -> [S_p_x, S_p_y] slider frame
-            if s < 0
-                s = self.SP.b + s;
-            end
+%             if s < 0
+%                 s = self.SP.b + s;
+%             end
             s = mod(s,self.SP.b);
             
             S_p = self.SP.evalSpline(self.SP.FC,s);
@@ -513,13 +515,14 @@ classdef PusherSliderModel < casadi.Callback
 
             % s -> [S_p_x, S_p_y] slider frame
 
-            s = s + (s<0)*(self.SP.b);
+%             s = s + (s<0)*(self.SP.b);
 
-            s = mod(s,self.SP.b);
-            S_p = self.SP.FC(s);
+            s_mod = Function('s_mod',{s},{mod(s,self.SP.b)+(s<0)*(self.SP.b)});
+
+            S_p = self.SP.FC(s_mod(s));
 
             % conversion [S_p_x, S_p_y] and theta to normal-tangential
-            S_R_NT = self.SP.R_NT_fun(s);
+            S_R_NT = self.SP.R_NT_fun(s_mod(s));
             NT_p = S_R_NT'*S_p';
             S_p_x = NT_p(1);
             S_p_y = NT_p(2);

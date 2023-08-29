@@ -121,10 +121,10 @@ classdef bspline_shape < handle
             else
                 C_dot_dot = 0;
                 for ii = 3 : self.n
-                    if self.S(ii+ord)==self.S(ii)
+                    if abs(self.S(ii+ord-1)-self.S(ii))<1e-5
                         cj_2 = 0;
                     else
-                        cj_2 = ord*((self.cj_1_vect(ii,:)-self.cj_1_vect(ii-1,:))/(self.S(ii+ord)-self.S(ii)));
+                        cj_2 = (ord-1)*((self.cj_1_vect(ii,:)-self.cj_1_vect(ii-1,:))/(self.S(ii+ord-1)-self.S(ii)));
                     end
 %                     self.cj_1_vect(ii-1) = cj_1;
                     C_dot_dot = C_dot_dot + cj_2*self.eval_bspline_sym(self.s,ii,ord-2);
@@ -132,16 +132,42 @@ classdef bspline_shape < handle
             end
             self.FC_dot_dot = Function('FC_dot_dot',{self.s},{C_dot_dot});
         end
+
+        function curvatures = getCurvatures(self,s_values)
+            s_values = mod(s_values, self.b);
+            curvatures = zeros(length(s_values),1);
+            delta_01 = 0.011;%norm(self.P(2,:)-self.P(1,:));
+            delta_0n = 0.011;%norm(self.P(end-1,:)-self.P(1,:));
+            
+            s1 = self.a + delta_01;
+            s0 = self.a-delta_0n;
+
+            sn = self.b + delta_01;
+            sn_1 = self.b - delta_0n;
+
+            for i = 1 : length(s_values)
+                if (s_values(i) <= s1 && s_values(i) >= s0) 
+                    y1 = norm(self.evalSpline(self.FC_dot_dot,s1));
+                    y0 = norm(self.evalSpline(self.FC_dot_dot,s0));
+                    curvatures(i) = (y1-y0)*(s_values(i)-s0)/(s1-s0) + y0;
+                elseif (s_values(i) <= sn && s_values(i) >= sn_1)
+                    yn = norm(self.evalSpline(self.FC_dot_dot,sn));
+                    yn_1 = norm(self.evalSpline(self.FC_dot_dot,sn_1));
+                    curvatures(i) = (yn-yn_1)*(s_values(i)-sn_1)/(sn-sn_1) + yn_1;
+                else
+                    curvatures(i) = norm(self.evalSpline(self.FC_dot_dot,s_values(i)));
+                end
+            end
+        end
         
-        function getMaxCurvature(self,a, b, step)
-            s_values = a:step:b;
-            curvatures = self.evalSpline(self.FC_dot_dot,s_values);
-            self.max_curvature = max(vecnorm(curvatures'));
+        function getMaxCurvature(self)
+            s_values = self.a:0.001:self.b;
+            curvatures = self.getCurvatures(s_values);
+            self.max_curvature = max(curvatures);
         end
 
         function norm_curv = getNormalizedCurvature(self, s)
-            curv = self.evalSpline(self.FC_dot_dot,s);
-            curv = norm(curv);
+            curv = self.getCurvatures(s);
             norm_curv = curv/self.max_curvature;
         end
 

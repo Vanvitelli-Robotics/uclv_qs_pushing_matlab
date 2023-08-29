@@ -14,6 +14,7 @@ addpath(model_path);
 % Specify if linux or windows (true = linux, false = windows)
 linux_set = true;
 
+
 if linux_set == false
     env_vars_acados;
 end
@@ -92,7 +93,7 @@ controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
 % Set constraints
 u_n_lb = 0.0; u_n_ub = 0.015;
-u_t_lb = -0.05; u_t_ub = 0.05;
+u_t_lb = -0.03; u_t_ub = 0.03;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % Create desired trajectory
@@ -137,7 +138,7 @@ controller.set_reference_trajectory([traj; control_ref]);
 % If you want to simulate set simulation_ true and then set the
 % type of simulation (simulink, matlab or real robot)
 simulation_ = true;
-sym_type = "robot";
+sym_type = "matlab";
 print_robot = false;
 
 
@@ -153,10 +154,10 @@ if simulation_ == true
         noise_ = true;
         debug_ = false;
         print_ = false;
-        disturbance_ = true;
+        disturbance_ = false;
          
         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
-%         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.open_loop_matlab(p,x0,0.0,-0.01, time_sim,sample_time, noise_);
+%         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.open_loop_matlab(p,x0,0.0,-0.05, time_sim,sample_time, noise_);
         
         params = helper.save_parameters("exp1_open_loop",[x_s; y_s; theta_s; S_p_y],[u_n; u_t],time_plot);
         params.S_p_x = S_p_x;
