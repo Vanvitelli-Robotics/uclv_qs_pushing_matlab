@@ -10,6 +10,8 @@ model_path = fullfile(pwd,'..');
 addpath(model_path);
 model_path = fullfile(pwd,'../cad_models');
 addpath(model_path);
+model_path = fullfile(pwd,'./objects_database');
+addpath(model_path);
 
 % Specify if linux or windows (true = linux, false = windows)
 linux_set = true;
@@ -22,38 +24,18 @@ end
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP REAL MODEL %%%%%%%%%%%%%%%%%%%%%%
 
-% Pusher_Slider struct parameters
-slider.mu_sg = 0.32;                                  % friction coefficient between slider and ground
-slider.mu_sp = 0.19;                                 % friction coefficient between slider and pusher
-slider.xwidth = 0.068;                               % width of the slider along x-direction [m]
-slider.ywidth = 0.082;                                % width of the slider along y-direction [m]
-slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
-slider.m = 0.2875;                                    % slider mass [kg]
+slider = object_selection('balea');
 plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
-cad_model_path = "../cad_models/cuboide_santal_resampled_rotated.stl"; %"../cad_models/cuboide_santal_rotated.stl";
+cad_model_path = slider.cad_model_path; %"/home/workstation/pusher_slider_matlab/cad_models/cad_santal_centered_scaled_rotated_reduced.stl"; %"../cad_models/cuboide_santal_rotated.stl";
+pcl_path = slider.pcl_path; %'/home/workstation/pusher_slider_matlab/cad_models/santal_planar_surface_simplified.ply';
 order_spline = 3;
-z_limit = 0.1;
-p = PusherSliderModel('real_plant',slider, plant_time_delay,cad_model_path,order_spline,z_limit);
+p = PusherSliderModel('real_plant',slider, plant_time_delay,cad_model_path,order_spline,pcl_path);
 % p.symbolic_model();
 p.symbolic_model_variable_shape();
 
 
-% %%%%%%%%%%%%%%%%%%%%%% SETUP NOMINAL PLANT %%%%%%%%%%%%%%%%%%%%%%
-
-% Pusher_Slider struct parameters
-slider_nominal.mu_sg = 0.32 - 0.1;                                  % friction coefficient between slider and ground
-slider_nominal.mu_sp = 0.19 - 0.1;                                 % friction coefficient between slider and pusher
-slider_nominal.xwidth = 0.068;                               % width of the slider along x-direction [m]
-slider_nominal.ywidth = 0.082;                                % width of the slider along y-direction [m]
-slider_nominal.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
-slider_nominal.m = 0.2875;                                    % slider mass [kg]
-plant_time_delay_inc = 0.3;                               % delay of the plant [s]
-
-% Create Pusher Slider object
-% p_inc = PusherSliderModel('nominal_plant',slider_nominal, plant_time_delay_inc);
-% p_inc.symbolic_model();
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP CONTROLLER %%%%%%%%%%%%%%%%%%%%%%
 
@@ -138,7 +120,7 @@ controller.set_reference_trajectory([traj; control_ref]);
 % If you want to simulate set simulation_ true and then set the
 % type of simulation (simulink, matlab or real robot)
 simulation_ = true;
-sym_type = "matlab";
+sym_type = "robot";
 print_robot = false;
 
 
@@ -187,7 +169,7 @@ if sym_type == "robot"
     params.S_p_x = S_p(:,1);
     params.S_p_y = S_p(:,2);
 end
-helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))]);
+helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))],cad_model_path);
 
 
 

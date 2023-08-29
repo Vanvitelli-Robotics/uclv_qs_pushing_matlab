@@ -58,19 +58,19 @@ classdef helper
             ax6 = subplot(2,1,1); plot(time,u_n), xlabel('t [s]'), ylabel('u_n'), subtitle("normal control"), grid on
             ax7 = subplot(2,1,2); plot(time,u_t), xlabel('t [s]'), ylabel('u_t'), subtitle("tangential control"), grid on
 
-            figure
-            ax8 = subplot(2,1,1); plot(time, cost_function_vect), xlabel('t [s]'), ylabel('cost_function'), subtitle("Cost function"), grid on
-            ax9 = subplot(2,1,2); plot(time(mode_vect==1), mode_vect(mode_vect==1),'*', "Color",'r'), hold on
-            plot(time(mode_vect==2), mode_vect(mode_vect==2),'*', "Color",'g'),
-            plot(time(mode_vect==3), mode_vect(mode_vect==3),'*', "Color",'y'),
-            hold off
-            xlabel('t [s]'), ylabel('mode'), subtitle("Mode"), legend('sticking','sliding left', 'sliding right'), grid on
+%             figure
+%             ax8 = subplot(2,1,1); plot(time, cost_function_vect), xlabel('t [s]'), ylabel('cost_function'), subtitle("Cost function"), grid on
+%             ax9 = subplot(2,1,2); plot(time(mode_vect==1), mode_vect(mode_vect==1),'*', "Color",'r'), hold on
+%             plot(time(mode_vect==2), mode_vect(mode_vect==2),'*', "Color",'g'),
+%             plot(time(mode_vect==3), mode_vect(mode_vect==3),'*', "Color",'y'),
+%             hold off
+%             xlabel('t [s]'), ylabel('mode'), subtitle("Mode"), legend('sticking','sliding left', 'sliding right'), grid on
 
-            linkaxes([ax1,ax2,ax3,ax5,ax6,ax7,ax8,ax9],'x');
-            xlim([ax1,ax2,ax3,ax5,ax6,ax7,ax8,ax9],[0 time(end)])
+            linkaxes([ax1,ax2,ax3,ax5,ax6,ax7],'x') %,ax8,ax9],'x');
+            xlim([ax1,ax2,ax3,ax5,ax6,ax7],[0 time(end)]) %,ax8,ax9]
         end
 
-        function my_animate(x, y, theta, rx, ry, t, step_time, traj)
+        function my_animate(x, y, theta, rx, ry, t, step_time, traj, cad_model_path)
             % Function to animate the trajectory tracking of the pusher slider system
             % Input: 2D position [x,y,theta]
 
@@ -79,12 +79,12 @@ classdef helper
             p0_s = [x(1) y(1) 0];
             quat0_s = quaternion(helper.my_rotz(theta(1)),'rotmat','frame');
             figure
-            slider_p = poseplot(quat0_s,p0_s, "MeshFileName","cad_models/cad_santal_centered_scaled_rotated_reduced.stl", "PatchFaceAlpha", 0.2, "ScaleFactor",0.001);%,PatchFaceColor="yellow");
+            slider_p = poseplot(quat0_s,p0_s, "MeshFileName",cad_model_path, "PatchFaceAlpha", 0.2, "ScaleFactor",0.001);%,PatchFaceColor="yellow");
             hold on
 
             p0_ref = [traj(1:2,1)' 0];
             quat0_ref = quaternion(helper.my_rotz(traj(3,1)),'rotmat','frame');
-            slider_ref = poseplot(quat0_ref,p0_ref, "MeshFileName","cad_models/cad_santal_centered_scaled_rotated_reduced.stl", "PatchFaceAlpha", 0.2,"ScaleFactor",0.001);%,PatchFaceColor="yellow");
+            slider_ref = poseplot(quat0_ref,p0_ref, "MeshFileName",cad_model_path, "PatchFaceAlpha", 0.2,"ScaleFactor",0.001);%,PatchFaceColor="yellow");
 
 
             % Pusher frame
@@ -151,7 +151,7 @@ classdef helper
 
                 % noise simulation
                 if(sim_noise == true)
-                    x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 randn()*1e-4 randn()*1e-4]';
+                    x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 randn()*1e-4]';
                 end
 
                 alpha = plant.SP.getNormalizedCurvature(x(4,i));

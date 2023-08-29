@@ -40,7 +40,7 @@ classdef PusherSliderModel < casadi.Callback
     methods
 
         % Constructor
-        function self = PusherSliderModel(name, slider_parameters, time_delay,cad_model_path,order_spline,z_limit)
+        function self = PusherSliderModel(name, slider_parameters, time_delay,cad_model_path,order_spline,pcl_path)
             % Constructor of the pusher_slider model.
             % Input: name = string
             %        slider_parameters = struct
@@ -51,11 +51,11 @@ classdef PusherSliderModel < casadi.Callback
             self.slider_params.tau_max = self.tau_max_func(self.slider_params.mu_sg, self.slider_params.m, helper.g, self.slider_params.area, self.slider_params.xwidth, self.slider_params.ywidth);
             self.slider_params.c_ellipse = self.slider_params.tau_max/self.slider_params.f_max;
             self.set_delay(time_delay);
-            self.open_cad_model(cad_model_path,order_spline,z_limit);
+            self.open_cad_model(cad_model_path,order_spline,pcl_path);
             construct(self, name);
         end
 
-        function open_cad_model(self, cad_model_path,p,z_limit)
+        function open_cad_model(self, cad_model_path,p, pcl_path)
             % This function open and save the cad model of the Slider
             if(not(isempty(cad_model_path)))
                 self.cad_model.path = cad_model_path;
@@ -69,7 +69,7 @@ classdef PusherSliderModel < casadi.Callback
                 self.has_cad_model = true;
                 disp("Cad model saved");
 
-                self.getSpline(p,z_limit);
+                self.getSpline(p, pcl_path);
 
             else
                 self.has_cad_model = false;
@@ -77,12 +77,11 @@ classdef PusherSliderModel < casadi.Callback
             end
         end
 
-        function Pxy_sorted = sortCadPoints(self,z_limit)
-            PC = pcread('../cad_models/santal_planar_surface_simplified_167.ply');
+        function Pxy_sorted = sortCadPoints(self, pcl_path)
+            PC = pcread(pcl_path);
 %             PC = pcread('../cad_models/Balea_cad_model_planar_surface_36.ply');
             Pxy = PC.Location(:,1:2);
-%             P = self.cad_model.stl.Points;
-%             Pxy = P(abs(P(:,3))<z_limit,:);
+
             Pxy = Pxy(:,1:2);
 
             [~, ind] = min(Pxy(:,1));
@@ -101,7 +100,7 @@ classdef PusherSliderModel < casadi.Callback
 
             Pxy_sorted = Pxy_sorted.*(1/self.cad_model.scale_factor);
             Pxy_sorted(end+1,:) = Pxy_sorted(1,:);
-            Pxy_sorted = flipud(Pxy_sorted);
+%             Pxy_sorted = flipud(Pxy_sorted);
 %             Pxy_sorted = [Pxy_sorted(round(end/2):-1:2,:); Pxy_sorted(1:1:round(end/2)-1,:)];
         end
 
