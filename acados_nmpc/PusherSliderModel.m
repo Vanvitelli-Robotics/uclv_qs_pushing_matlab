@@ -122,6 +122,7 @@ classdef PusherSliderModel < casadi.Callback
             self.SP.getSymbolicSplineDotDot(p);
             self.SP.getMaxCurvature();
             self.SP.getNormalTangentialVersors;
+            self.SP.getSymbolicAngleCurvatures;
         end
 
         function print_cad_model(self)

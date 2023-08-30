@@ -125,6 +125,7 @@ classdef helper
                 plot(ax1,traj(1,:), traj(2,:), '-.','LineWidth',3,'Color','red');
                 %                 pause(sampling_time)
                 drawnow
+                pause(step_time)
             end
         end
 
@@ -154,9 +155,16 @@ classdef helper
                     x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 randn()*1e-4]';
                 end
 
-                alpha = plant.SP.getNormalizedCurvature(x(4,i));
-                scale_alpha = 0.8;
-                u(2,i) = (1-scale_alpha*alpha)*u(2,i); 
+%                 alpha = plant.SP.getNormalizedCurvature(x(4,i));
+%                 scale_alpha = 0.8;
+%                  u(2,i) = (1-scale_alpha*alpha)*u(2,i);
+                
+                v_alpha = 0.005*200;
+                t_angle = abs(plant.SP.getAngleCurvatures(x(4,i)));
+                v_bound = min(v_alpha/t_angle,u_t);
+
+                u(2,i) = v_bound;
+                
 
                 if delay_buff_plant == 0
                     x_dot_ = plant.evalModelVariableShape(x(:,i),u(:,i)); %plant.eval_model(x(:,i),u(:,i));

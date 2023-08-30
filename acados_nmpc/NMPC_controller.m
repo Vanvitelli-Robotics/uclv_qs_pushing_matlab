@@ -56,6 +56,8 @@ classdef NMPC_controller < casadi.Callback
 
         plant;
 
+        v_alpha;
+
     end
 
     methods
@@ -270,15 +272,29 @@ classdef NMPC_controller < casadi.Callback
             end
         end
 
+        function set_v_alpha(self,alpha)
+            self.v_alpha = alpha;
+        end
+
+        function v_bound = update_tangential_velocity_bounds(self,s)
+            t_angle = abs(self.plant.SP.getAngleCurvatures(s));
+            v_bound = min(self.v_alpha/t_angle,self.u_t_ub);
+
+%             self.ocp_solver.set('constr_lbu', [self.u_n_lb; -v_bound]); % lower bound on h
+%             self.ocp_solver.set('constr_ubu', [self.u_n_ub; v_bound]);  % upper bound on h
+        end
+        
+
         function u = solve(self,x0, index_time)
             % update initial state
             %             tic
             self.ocp_solver.set('constr_x0', x0);
             
-            alpha = self.plant.SP.getNormalizedCurvature(x0(4));
-            scale_alpha = 0.6;
-            self.ocp_solver.set('constr_lbu', [self.u_n_lb; (1-scale_alpha*alpha)*self.u_t_lb]); % lower bound on h
-            self.ocp_solver.set('constr_ubu', [self.u_n_ub; (1-scale_alpha*alpha)*self.u_t_ub]);  % upper bound on h
+%             alpha = self.plant.SP.getNormalizedCurvature(x0(4));
+%             scale_alpha = 0.7;
+%             self.ocp_solver.set('constr_lbu', [self.u_n_lb; (1-scale_alpha*alpha)*self.u_t_lb]); % lower bound on h
+%             self.ocp_solver.set('constr_ubu', [self.u_n_ub; (1-scale_alpha*alpha)*self.u_t_ub]);  % upper bound on h
+%             self.update_tangential_velocity_bounds(x0(4));
 
             % reference
             for k=0:self.Hp-1
@@ -322,6 +338,14 @@ classdef NMPC_controller < casadi.Callback
             % status = ocp.get('status'); % 0 - success
             % ocp.print('stat')
             u = self.ocp_solver.get('u', 0);
+
+
+            ut_old = u(2);
+            u(2) = min(ut_old, self.update_tangential_velocity_bounds(x0(4)));
+            u(1) = u(2)*u(1)/ut_old;
+
+
+
             self.cost_function_vect = [self.cost_function_vect; self.ocp_solver.get_cost];
 
             %             toc

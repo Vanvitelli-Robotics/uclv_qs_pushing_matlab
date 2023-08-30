@@ -10,6 +10,7 @@ classdef bspline_shape < handle
         FC; % function representing spline
         FC_dot; % function represeting dot spline
         FC_dot_dot; % function representing second derivative of the spline
+        FC_angle_dot;
         n_fun; % normal versor
         t_fun; % tangential versor
         R_NT_fun; % rotation matrix for tangential and normal frame
@@ -131,6 +132,23 @@ classdef bspline_shape < handle
                 end
             end
             self.FC_dot_dot = Function('FC_dot_dot',{self.s},{C_dot_dot});
+        end
+        
+        function getSymbolicAngleCurvatures(self)
+            import casadi.*
+            t_vers_s = self.FC_dot(self.s);
+
+            t_angle = atan2(t_vers_s(:,2),t_vers_s(:,1));
+
+            self.FC_angle_dot = Function('t_angle_dot',{self.s},{gradient(t_angle,self.s)});
+        end
+
+        function t_angle_dot_values = getAngleCurvatures(self,s_values)
+            s_values = mod(s_values, self.b);
+            t_angle_dot_values = zeros(length(s_values),1);
+            for j = 1:length(s_values)
+                t_angle_dot_values(j) = full(self.FC_angle_dot(s_values(j)));
+            end
         end
 
         function curvatures = getCurvatures(self,s_values)

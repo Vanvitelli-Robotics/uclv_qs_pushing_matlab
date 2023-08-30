@@ -1,5 +1,5 @@
 clear all
-close all
+% close all
 clc
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP ACADOS %%%%%%%%%%%%%%%%%%%%%%
@@ -16,7 +16,6 @@ addpath(model_path);
 % Specify if linux or windows (true = linux, false = windows)
 linux_set = true;
 
-
 if linux_set == false
     env_vars_acados;
 end
@@ -24,7 +23,7 @@ end
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP REAL MODEL %%%%%%%%%%%%%%%%%%%%%%
 
-slider = object_selection('balea');
+slider = object_selection('santal');
 plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
@@ -65,18 +64,25 @@ controller.initial_condition_update(x0);
 % % W_x_e = 200*diag([.05 .05 200 0]); %diag([100 100 0 0 0]);
 % % W_u = diag([.1 0.8]);            % Control matrix weight
 
-% Matrix for variable shape
+% Matrix for variable shape 
+% % W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
+% % W_x_e = 200*diag([1000 1000 100 0]); %diag([100 100 0 0 0]);
+% % W_u = diag([0 0]);  
+
 W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
-W_x_e = 200*diag([1000 1000 100 0]); %diag([100 100 0 0 0]);
+W_x_e = 200*diag([1000 1000 10 0]); %diag([100 100 0 0 0]);
 W_u = diag([0 0]);  
 
 % controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
 % Set constraints
-u_n_lb = 0.0; u_n_ub = 0.015;
+u_n_lb = 0.0; u_n_ub = 0.02;
 u_t_lb = -0.03; u_t_ub = 0.03;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
+
+% set constraints tangential velocity 
+controller.set_v_alpha(0.008*200);
 
 % Create desired trajectory
 xf = [0.3 0.03 0 x0(4) 0.07]';
@@ -100,12 +106,8 @@ xf_w = [
 traj_gen.waypoints_ = [x0_w; xf_w];
 [time, traj] = traj_gen.waypoints_gen;
 traj = [traj(1:3,:); traj(end,:)];
-% traj = [traj repmat(traj(:,end),1,500)];
-% time = [time(1:end-1) time(end):sample_time:(time(end)+sample_time*500)];
-% traj = [zeros(4,50) traj];
-% time_add = time(end)+sample_time:sample_time:time(end)+(50*sample_time);
-% time = [time time_add];
-time_sim = time(end) + 8;
+
+time_sim = time(end) + 15;
 
 % Set control reference
 u_n_ref = u_n_ub/2; u_t_ref = 0;
@@ -120,7 +122,7 @@ controller.set_reference_trajectory([traj; control_ref]);
 % If you want to simulate set simulation_ true and then set the
 % type of simulation (simulink, matlab or real robot)
 simulation_ = true;
-sym_type = "robot";
+sym_type = "matlab";
 print_robot = false;
 
 
@@ -139,7 +141,7 @@ if simulation_ == true
         disturbance_ = false;
          
         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
-%         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.open_loop_matlab(p,x0,0.0,-0.05, time_sim,sample_time, noise_);
+%         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.open_loop_matlab(p,x0,0.0,0.05, time_sim,sample_time, noise_);
         
         params = helper.save_parameters("exp1_open_loop",[x_s; y_s; theta_s; S_p_y],[u_n; u_t],time_plot);
         params.S_p_x = S_p_x;

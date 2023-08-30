@@ -8,7 +8,7 @@ function slider = object_selection(obj)
             slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
             slider.m = 0.2875;                                    % slider mass [kg]
             slider.cad_model_path = "/home/workstation/pusher_slider_matlab/cad_models/cad_santal_centered_scaled_rotated_reduced.stl";
-            slider.pcl_path = '/home/workstation/pusher_slider_matlab/cad_models/planar_surface_santal_36_uniformed.ply';
+            slider.pcl_path = "planar_surface_santal_70_modified_vertices.ply";%"planar_surface_santal_70";%'/home/workstation/pusher_slider_matlab/cad_models/planar_surface_santal_36_uniformed.ply';
         case 'balea'
             slider.mu_sg = 0.2;  
             slider.mu_sp = 0.13; 
