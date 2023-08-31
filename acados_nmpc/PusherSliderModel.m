@@ -101,7 +101,7 @@ classdef PusherSliderModel < casadi.Callback
             Pxy_sorted = Pxy_sorted.*(1/self.cad_model.scale_factor);
             Pxy_sorted(end+1,:) = Pxy_sorted(1,:);
 %             Pxy_sorted = flipud(Pxy_sorted);
-%             Pxy_sorted = [Pxy_sorted(round(end/2):-1:2,:); Pxy_sorted(1:1:round(end/2)-1,:)];
+
         end
 
         function getSpline(self,p,z_limit)

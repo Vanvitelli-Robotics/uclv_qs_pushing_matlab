@@ -1,5 +1,5 @@
 clear all
-% close all
+close all
 clc
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP ACADOS %%%%%%%%%%%%%%%%%%%%%%
@@ -23,7 +23,7 @@ end
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP REAL MODEL %%%%%%%%%%%%%%%%%%%%%%
 
-slider = object_selection('santal');
+slider = object_selection('balea');
 plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
@@ -55,34 +55,35 @@ controller.set_delay_comp(0.33);
 
 % Set initial condition
 % x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
-x0 = [0 0 deg2rad(0) -0.05]';
+x0 = [0 0 deg2rad(0) 0.05]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
-% Working matrix 
+% Working matrix non variable shape
 % % W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
-% % W_x_e = 200*diag([.05 .05 200 0]); %diag([100 100 0 0 0]);
+% % W_x_e = 200*diag([.05 .05 200 0]); 
 % % W_u = diag([.1 0.8]);            % Control matrix weight
 
 % Matrix for variable shape 
-% % W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
-% % W_x_e = 200*diag([1000 1000 100 0]); %diag([100 100 0 0 0]);
-% % W_u = diag([0 0]);  
-
 W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
-W_x_e = 200*diag([1000 1000 10 0]); %diag([100 100 0 0 0]);
+W_x_e = 200*diag([1000 1000 100 0]); %diag([100 100 0 0 0]);
 W_u = diag([0 0]);  
 
-% controller.update_cost_function(W_x,W_u,W_x_e,Hp,Hp);
+% Working matrix variable shape 2
+% W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
+% W_x_e = 200*diag([1000 1000 10 0]); %diag([100 100 0 0 0]);
+% W_u = diag([0 0]); 
+
+
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
 % Set constraints
-u_n_lb = 0.0; u_n_ub = 0.02;
+u_n_lb = 0.0; u_n_ub = 0.015;
 u_t_lb = -0.03; u_t_ub = 0.03;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % set constraints tangential velocity 
-controller.set_v_alpha(0.008*200);
+% controller.set_v_alpha(0.004*200);
 
 % Create desired trajectory
 xf = [0.3 0.03 0 x0(4) 0.07]';
@@ -122,7 +123,7 @@ controller.set_reference_trajectory([traj; control_ref]);
 % If you want to simulate set simulation_ true and then set the
 % type of simulation (simulink, matlab or real robot)
 simulation_ = true;
-sym_type = "matlab";
+sym_type = "robot";
 print_robot = false;
 
 
