@@ -20,7 +20,7 @@ function slider = object_selection(obj)
             slider.pcl_path = '/home/workstation/pusher_slider_matlab/cad_models/Balea_cad_model_planar_surface_36.ply';
         case 'montana'
             slider.mu_sg = 0.18;
-            slider.mu_sp = 0.16;
+            slider.mu_sp = 0.10;
             slider.xwidth = 0.057;                               % width of the slider along x-direction [m]
             slider.ywidth = 0.101;                                % width of the slider along y-direction [m]
             slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]

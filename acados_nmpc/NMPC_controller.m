@@ -122,8 +122,8 @@ classdef NMPC_controller < casadi.Callback
 
 %             self.ocp_solver.set('constr_lbu', self.u_n_lb); % lower bound on h
 %             self.ocp_solver.set('constr_ubu', self.u_n_ub);  % upper bound on h
-            self.ocp_solver.set('constr_lh', [self.h_constr_lb(2:end), -1000, -0]); % lower bound on h
-            self.ocp_solver.set('constr_uh', [self.h_constr_ub(2:end), 0, 1000]);  % upper bound on h
+            self.ocp_solver.set('constr_lh', [self.h_constr_lb(2:end)]);%, -1000, -0]); % lower bound on h
+            self.ocp_solver.set('constr_uh', [self.h_constr_ub(2:end)]);%, 0, 1000]);  % upper bound on h
         end
         
         
@@ -220,7 +220,7 @@ classdef NMPC_controller < casadi.Callback
             u_t_bound_n = Function('u_t_bound_p',{self.sym_model.sym_x(4)},{(self.sym_model.sym_u(2)-v_bound_f(s_mod(self.sym_model.sym_x(4))))});
             u_t_bound_p = Function('u_t_bound_n',{self.sym_model.sym_x(4)},{(self.sym_model.sym_u(2)+v_bound_f(s_mod(self.sym_model.sym_x(4))))});
 % 
-            expr_h = vertcat(self.sym_model.sym_u(1),self.sym_model.sym_u(2),u_t_bound_n(self.sym_model.sym_x(4)),u_t_bound_p(self.sym_model.sym_x(4))); % (self.sym_model.sym_u(2)+v_bound_f(s_mod(self.sym_model.sym_x(4)))));
+            expr_h = vertcat(self.sym_model.sym_u(1),self.sym_model.sym_u(2));%,u_t_bound_n(self.sym_model.sym_x(4)),u_t_bound_p(self.sym_model.sym_x(4))); % (self.sym_model.sym_u(2)+v_bound_f(s_mod(self.sym_model.sym_x(4)))));
 
             ocp_model.set('constr_type', 'bgh');
 %             ocp_model.set('constr_type', 'auto');
@@ -229,8 +229,8 @@ classdef NMPC_controller < casadi.Callback
 %             ocp_model.set('constr_lh', self.h_constr_lb); % lower bound on h
 %             ocp_model.set('constr_uh', self.h_constr_ub);  % upper bound on h
 
-            ocp_model.set('constr_lh', [self.h_constr_lb(2:end) -1000 -0]); % lower bound on h
-            ocp_model.set('constr_uh', [self.h_constr_ub(2:end) 0 1000]);  % upper bound on h
+            ocp_model.set('constr_lh', [self.h_constr_lb(2:end)]);% -1000 -0]); % lower bound on h
+            ocp_model.set('constr_uh', [self.h_constr_ub(2:end)]);% 0 1000]);  % upper bound on h
 
 
             % % on the state
@@ -334,28 +334,28 @@ classdef NMPC_controller < casadi.Callback
                 self.ptraj = zeros(self.sym_model.nx, self.Hp);
             end
 
-            v_bounds = self.update_tangential_velocity_bounds(x0(4));
-            if abs(self.utraj(2,1)) > v_bounds 
-                disp("Violated constraint")
-                
-                ut_old = self.utraj(2,1);
-                self.utraj(2,1) = sign(ut_old)*v_bounds;
-                self.utraj(1,1) = self.utraj(2,1)*self.utraj(1,1)/ut_old;
-            end
+%             v_bounds = self.update_tangential_velocity_bounds(x0(4));
+%             if abs(self.utraj(2,1)) > v_bounds 
+%                 disp("Violated constraint")
+%                 
+%                 ut_old = self.utraj(2,1);
+%                 self.utraj(2,1) = sign(ut_old)*v_bounds;
+%                 self.utraj(1,1) = self.utraj(2,1)*self.utraj(1,1)/ut_old;
+%             end
 
             self.xtraj(:,1) = x0;
             for i_x = 2 : size(self.xtraj,2)
 %                 self.xtraj(:,i_x) = self.plant.eval_model(self.xtraj(:,i_x-1),self.utraj(:,i_x-1));
                 self.xtraj(:,i_x) = self.plant.evalModelVariableShape(self.xtraj(:,i_x-1),self.utraj(:,i_x-1));
-                v_bounds = self.update_tangential_velocity_bounds(self.xtraj(4,i_x));
-                if i_x == size(self.xtraj,2)
-                    break;
-                end
-                if abs(self.utraj(2,i_x)) > v_bounds
-                    ut_old = self.utraj(2,i_x);
-                    self.utraj(2,i_x) = sign(ut_old)*v_bounds;
-                    self.utraj(1,i_x) = self.utraj(2,i_x)*self.utraj(1,i_x)/ut_old;
-                end
+%                 v_bounds = self.update_tangential_velocity_bounds(self.xtraj(4,i_x));
+%                 if i_x == size(self.xtraj,2)
+%                     break;
+%                 end
+%                 if abs(self.utraj(2,i_x)) > v_bounds
+%                     ut_old = self.utraj(2,i_x);
+%                     self.utraj(2,i_x) = sign(ut_old)*v_bounds;
+%                     self.utraj(1,i_x) = self.utraj(2,i_x)*self.utraj(1,i_x)/ut_old;
+%                 end
             end
 
             self.ocp_solver.set('init_x', self.xtraj);
@@ -374,19 +374,19 @@ classdef NMPC_controller < casadi.Callback
 
 
             self.utraj = [self.utraj(:,2:end) self.utraj(:,end)];
-%             self.utraj = repmat([self.utraj(:,2)],1,self.Hp);
             self.xtraj = [self.xtraj(:,2:end) self.xtraj(:,end)];
             self.ptraj = [self.ptraj(:,2:end) self.ptraj(:,end)];
 
             % status = ocp.get('status'); % 0 - success
             % ocp.print('stat')
             u = self.ocp_solver.get('u', 0);
+            v_bounds = self.update_tangential_velocity_bounds(x0(4));
 
-
-%             ut_old = u(2);
-%             u(2) = min(abs(ut_old), self.update_tangential_velocity_bounds(x0(4)));
-%             u(2) = sign(ut_old)*u(2);
-%             u(1) = u(2)*u(1)/ut_old;
+            if abs(u(2)) > v_bounds
+                ut_old = u(2);
+                u(2) = sign(ut_old)*v_bounds;
+                u(1) = (u(2)/ut_old)*u(1);
+            end
 
             self.cost_function_vect = [self.cost_function_vect; self.ocp_solver.get_cost];
 
