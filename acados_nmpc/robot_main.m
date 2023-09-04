@@ -2,9 +2,9 @@
 time_exp = time_sim; % Time of the experiment [s]
 
 
-rosshutdown
+% rosshutdown
 
-rosinit('192.168.2.94',11310)
+% rosinit('192.168.2.94',11310)
 % ros.Node("/robot_test",'192.168.2.94',11310);
 
 has_robot = false;
@@ -38,10 +38,10 @@ options = optimoptions('fminunc','Display','off');
 s0_spline = 0;
 
 
-mpc_state_sub = rossubscriber("/mpc_state","std_msgs/Float64MultiArray", {@get_mpc_state,T_BS0, p, controller, start_time, command_pub, command_msg, time_exp, params}, "BufferSize",1);
+mpc_state_sub = rossubscriber("/mpc_state","std_msgs/Float64MultiArray", {@get_mpc_state,T_BS0, tftree, p, controller, start_time, command_pub, command_msg, time_exp, params}, "BufferSize",1);
 
 
-function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, p, controller, start_time, command_pub, command_msg, time_exp, params)
+function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, tftree, p, controller, start_time, command_pub, command_msg, time_exp, params)
     global x u time_vec print_ found_sol f s0_spline options
     tic
     mpc_pose.X = mpc_state.Data(1);
@@ -56,8 +56,10 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, p, controller, start_tim
         command_msg.Linear.X = 0;
         command_msg.Linear.Y = 0;
         send(command_pub,command_msg)
-
-        rosshutdown
+        delete(mpc_state_sub);
+        delete(command_pub);
+        delete(tftree);
+%         rosshutdown
         disp("Saving parameters")
         helper.save_parameters("exp_robot_traj",x,u,time_vec-time_vec(1), params);
         return
@@ -120,10 +122,16 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, p, controller, start_tim
     R_NT_S_ = p.SP.R_NT_fun(1);
     R_NT_S = full(R_NT_S_(mod(smin_spline,p.SP.b)));
     R_NT_S_3d = [R_NT_S zeros(2,1); zeros(1,2), 1];
-    u_robot = T_S0B(1:3,1:3)*helper.my_rotz(xk(3))*R_NT_S_3d*[u(:,end);0];
+    R_NT_W = T_S0B(1:3,1:3)*helper.my_rotz(xk(3))*R_NT_S_3d;
+    u_robot = R_NT_W*[u(:,end);0];
+    
+    % Calculate omega-y to rotate the end-effector
+%     R_P_W = getTransform(tftree, "base_link", "push_frame",rostime(0));
+
 
     command_msg.Linear.X = u_robot(1);
     command_msg.Linear.Y = u_robot(2);
+    % command_msg.Angular.Y = 
     send(command_pub,command_msg)
 
     %     helper.save_parameters("exp_robot",x,u,time_vec, params);

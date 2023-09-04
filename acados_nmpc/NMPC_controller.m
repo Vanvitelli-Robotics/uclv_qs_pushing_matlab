@@ -250,7 +250,7 @@ classdef NMPC_controller < casadi.Callback
 
         function ocp_opts = create_ocp_opts(self)
             field_s = ["nlp_solver", "qp_solver", "sim_method",  "globalization", "codgen_model", "compile_model", "compile_interface"];
-            values_s = ["sqp", "partial_condensing_hpipm", "erk", "merit_backtracking", "true", "false", "false"];
+            values_s = ["sqp", "partial_condensing_hpipm", "erk", "merit_backtracking", "false", "false", "false"];
             %solver_params_s = dictionary(field_s,values_s);
 
             field_d = ["qp_solver_cond_N", "nlp_solver_max_iter","line_search_use_sufficient_descent","nlp_solver_tol_stat","nlp_solver_tol_eq","nlp_solver_tol_ineq","nlp_solver_tol_comp"];
@@ -297,7 +297,7 @@ classdef NMPC_controller < casadi.Callback
             self.v_alpha = alpha;
         end
 
-        function v_bound = update_tangential_velocity_bounds(self,s)
+        function [v_bound, t_angle] = update_tangential_velocity_bounds(self,s)
             s = mod(s,self.plant.SP.b);
             t_angle = abs(self.plant.SP.getAngleCurvatures(s));
             v_bound = min(self.v_alpha/t_angle,self.u_t_ub);
@@ -380,13 +380,18 @@ classdef NMPC_controller < casadi.Callback
             % status = ocp.get('status'); % 0 - success
             % ocp.print('stat')
             u = self.ocp_solver.get('u', 0);
-            v_bounds = self.update_tangential_velocity_bounds(x0(4));
+            [v_bounds, t_angle] = self.update_tangential_velocity_bounds(x0(4));
 
             if abs(u(2)) > v_bounds
                 ut_old = u(2);
                 u(2) = sign(ut_old)*v_bounds;
                 u(1) = (u(2)/ut_old)*u(1);
+                if t_angle > 190
+                    u(1) = 0.0;
+                end
+                
             end
+
 
             self.cost_function_vect = [self.cost_function_vect; self.ocp_solver.get_cost];
 

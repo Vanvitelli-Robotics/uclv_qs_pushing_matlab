@@ -2,6 +2,9 @@ clear all
 close all
 clc
 
+rosinit('192.168.2.94',11310)
+% rosshutdown
+
 % %%%%%%%%%%%%%%%%%%%%%% SETUP ACADOS %%%%%%%%%%%%%%%%%%%%%%
 % Setting path variables
 model_path = fullfile(pwd,'.');
@@ -87,13 +90,15 @@ u_t_lb = -0.03; u_t_ub = 0.05;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % set constraints tangential velocity 
-controller.set_v_alpha(0.005*200);
+% alpha santal = 0.005*200;
+% alpha montana = 0.0027*200;
+controller.set_v_alpha(0.0027*200);
 
 % Create desired trajectory
 xf = [0.3 0.03 0 x0(4) 0.07]';
 xf(3) = acos((xf(1)-x0(1))/(norm(xf(1:2)-x0(1:2))));
 
-traj_gen = TrajectoryGenerator(sample_time,0.007);
+traj_gen = TrajectoryGenerator(sample_time,0.01);
 traj_gen.set_plot = false;
 
 time_sim = 10;
