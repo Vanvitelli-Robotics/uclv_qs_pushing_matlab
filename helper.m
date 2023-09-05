@@ -186,7 +186,8 @@ classdef helper
             x_s = x(1,1:end-1); y_s = x(2,1:end-1); theta_s = x(3,1:end-1); %S_p_x = x(4,1:end-1); S_p_y = x(5,1:end-1);
             S_p = plant.SP.evalSpline(plant.SP.FC,x(4,1:end-1));
             S_p_x = S_p(:,1)';
-            S_p_y = S_p(:,2)';
+            %S_p_y = S_p(:,2)';
+            S_p_y = x(4,1:end-1);
             u_n = u(1,:);
             u_t = u(2,:);
         end

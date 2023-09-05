@@ -26,7 +26,7 @@ end
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP REAL MODEL %%%%%%%%%%%%%%%%%%%%%%
 
-slider = object_selection('balea');
+slider = object_selection('montana');
 plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
@@ -53,12 +53,12 @@ controller.create_ocp_solver();
 %% SETTING PARAMETERS FOR CONTROLLER AND PLANT
 
 % Change delay of the plant and the delay to compensate with the controller
-p.set_delay(0.35); %0.35
-controller.set_delay_comp(0.35);
+p.set_delay(0.33); %0.35
+controller.set_delay_comp(0.33);
 
 % Set initial condition
 % x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
-x0 = [0 0 deg2rad(0) 0.0]';
+x0 = [0 0 deg2rad(0) 0.02]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
@@ -68,9 +68,9 @@ controller.initial_condition_update(x0);
 % % W_u = diag([.1 0.8]);            % Control matrix weight
 
 % Matrix for variable shape 
-% % W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
-% % W_x_e = 200*diag([1000 1000 100 0]); %diag([100 100 0 0 0]);
-% % W_u = diag([0 0]);  
+% W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
+% W_x_e = 200*diag([1000 1000 100 0]); %diag([100 100 0 0 0]);
+% W_u = diag([0 0]);  
 
 % Working matrix variable shape 2
 % % W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
@@ -78,14 +78,14 @@ controller.initial_condition_update(x0);
 % % W_u = diag([0 0]); 
 
 % montana, santal
-% W_x = 0.01*diag([100 100 0.1 0]);  % State matrix weight
-% W_x_e = 200*diag([1000 1000 0.1 0]); %diag([100 100 0 0 0]);
-% W_u = diag([0 0]); 
+W_x = 0.01*diag([100 100 0.1 0]);  % State matrix weight
+W_x_e = 200*diag([1000 1000 0.1 0]); %diag([100 100 0 0 0]);
+W_u = diag([0 0]); 
 
 % balea
-W_x = 0.01*diag([100 100 0.0 0]);  % State matrix weight
-W_x_e = 200*diag([1000 1000 0.0 0]); %diag([100 100 0 0 0]);
-W_u = diag([0 0]); 
+% W_x = 0.01*diag([100 100 0.0 0]);  % State matrix weight
+% W_x_e = 200*diag([1000 1000 0.0 0]); %diag([100 100 0 0 0]);
+% W_u = diag([0 0]); 
 
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
@@ -97,7 +97,7 @@ controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 % set constraints tangential velocity 
 % alpha santal = 0.005*200;
 % alpha montana = 0.0027*200;
-controller.set_v_alpha(0.1650);%0.035
+% controller.set_v_alpha(0.1650);%0.035
 
 % Create desired trajectory
 xf = [0.3 0.03 0 x0(4) 0.07]';
@@ -114,19 +114,21 @@ traj_gen.set_target(x0,xf,t0,tf);
 x0_w = [x0(1:2)' 0];
 % x0_w = [0 0 0];
 xf_w = [ 
-      0.1 0.0 0;
-      0.15 0.1 0;
-      0.25 0.2 0;
+%       0.05 0 0;
+        0.1 0.0 0;
+        0.15 0.1 0;
+        0.25 0.2 0;
     ];
 traj_gen.waypoints_ = [x0_w; xf_w];
 traj_gen.waypoints_velocities = [0.005 0.01 0.01];
+% traj_gen.waypoints_velocities = [0.005 0.01];
 [time, traj] = traj_gen.waypoints_gen;
 traj = [traj(1:3,:); traj(end,:)];
 
 time_sim = time(end) + 15;
 
 % Set control reference
-u_n_ref = u_n_ub/2; u_t_ref = 0;
+u_n_ref = 0.01; u_t_ref = 0;
 control_ref = repmat([u_n_ref; u_t_ref],1,length(time));
 
 % Set overall reference
@@ -153,7 +155,7 @@ if simulation_ == true
         disp("MATLAB SIMULATION")
         noise_ = true;
         debug_ = false;
-        print_ = false;
+        print_ = true;
         disturbance_ = false;
          
         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
