@@ -2,15 +2,15 @@
 time_exp = time_sim; % Time of the experiment [s]
 
 
-% rosshutdown
-
-% rosinit('192.168.2.94',11310)
+rosshutdown
+rosinit('192.168.2.94',11310)
 % ros.Node("/robot_test",'192.168.2.94',11310);
 
 has_robot = false;
 has_mpc_pose = false;
 
 % tf object
+clear tftree
 tftree = rostf;
 tftree.BufferTime = 0.5;
 pause(2);
@@ -58,7 +58,7 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, tftree, p, controller, s
         send(command_pub,command_msg)
         delete(mpc_state_sub);
         delete(command_pub);
-        delete(tftree);
+        clear tftree
 %         rosshutdown
         disp("Saving parameters")
         helper.save_parameters("exp_robot_traj",x,u,time_vec-time_vec(1), params);

@@ -48,7 +48,7 @@ classdef PusherSliderModel < casadi.Callback
             self@casadi.Callback();
             self.slider_params=slider_parameters;
             self.slider_params.f_max = self.slider_params.mu_sg*self.slider_params.m*helper.g;
-            self.slider_params.tau_max = self.tau_max_func(self.slider_params.mu_sg, self.slider_params.m, helper.g, self.slider_params.area, self.slider_params.xwidth, self.slider_params.ywidth);
+%             self.slider_params.tau_max = self.tau_max_func(self.slider_params.mu_sg, self.slider_params.m, helper.g, self.slider_params.area, self.slider_params.xwidth, self.slider_params.ywidth);
             self.slider_params.c_ellipse = self.slider_params.tau_max/self.slider_params.f_max;
             self.set_delay(time_delay);
             self.open_cad_model(cad_model_path,order_spline,pcl_path);

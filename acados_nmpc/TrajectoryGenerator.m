@@ -14,6 +14,7 @@ classdef TrajectoryGenerator < handle
         tf; % Time to execute the overall trajectory [s]
         t0;
         waypoints_;
+        waypoints_velocities;
         sample_time;
         set_plot = false;
         vel;
@@ -81,7 +82,9 @@ classdef TrajectoryGenerator < handle
             Fs = 1/self.sample_time;
 
             delta_p = abs(self.waypoints_(2:end,:)-self.waypoints_(1:end-1,:));
-            times = vecnorm(delta_p')/self.vel;
+            
+%             times = vecnorm(delta_p')/self.vel;
+            times = vecnorm(delta_p')./self.waypoints_velocities(:)';
             times = [0 times];
             time_tf = cumsum(times);
 

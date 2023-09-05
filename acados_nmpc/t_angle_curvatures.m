@@ -60,5 +60,15 @@ t_curvatures(abs(t_curvatures) > 3*pi/2) = t_curvatures(abs(t_curvatures) > 3*pi
 
 t_curvatures = t_curvatures./diff(s_values);
 
+%%
 
+s_values = p.SP.a:0.0001:p.SP.b;
+curv = zeros(1,length(s_values));
+t_angle = zeros(1,length(s_values));
+for i = 1 : length(s_values)
+    [curv(i), t_angle(i)] = controller.update_tangential_velocity_bounds(s_values(i));
+end
+
+figure, plot(s_values,curv)
+figure, plot(s_values,t_angle)
 

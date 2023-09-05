@@ -1,2 +1,8 @@
 #!/bin/bash
-gnome-terminal --title="matlab_acados" -- bash -c 'source env.sh; sleep 2; /usr/local/MATLAB/R2023a/bin/matlab'
+#gnome-terminal --title="matlab_acados" -- bash -c "source env.sh; sleep 2; /usr/local/MATLAB/R2023a/bin/matlab -r run('main.m')"
+#group wheelers
+source env.sh
+sleep 2
+rosnode cleanup
+#sudo -E nice --adjustment=-20 sudo -E -u workstation /usr/local/MATLAB/R2023a/bin/matlab -nodesktop -nosplash -r "try, run('main.m'); end;"
+/usr/local/MATLAB/R2023a/bin/matlab -nodesktop -nosplash -r "try, run('main.m'); end;"
