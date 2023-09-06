@@ -78,6 +78,21 @@ classdef TrajectoryGenerator < handle
 
         end
 
+        function [time, traj] = waypoint_gen_fixed_angle(self)
+            delta_p = (self.waypoints_(2:end,:)-self.waypoints_(1:end-1,:));
+            times = vecnorm(delta_p')./self.waypoints_velocities(:)';
+
+            time = 0;
+            traj = [self.waypoints_(1,1:2)';self.x0(3:4); 0];
+            for i=1:1:length(self.waypoints_)-1
+                time_i = (time(end)+self.sample_time):self.sample_time:(time(end)+times(i));
+                time = [time time_i];
+                x_i = linspace(self.waypoints_(i,1),self.waypoints_(i+1,1),length(time_i));
+                y_i = linspace(self.waypoints_(i,2),self.waypoints_(i+1,2),length(time_i));
+                traj = [traj, [x_i;y_i;repmat([self.x0(3:4);0],1,length(x_i))]];   
+            end 
+
+        end 
         function [time, traj] = waypoints_gen(self)
             Fs = 1/self.sample_time;
 
@@ -94,7 +109,16 @@ classdef TrajectoryGenerator < handle
 %             eulerAngs(2:end,1) = atan2(self.waypoints_(2:end,2)-self.waypoints_(1:end-1,2),self.waypoints_(2:end,1)-self.waypoints_(1:end-1,1));
 %             q = quaternion(eulerAngs,"euler","ZYX","frame");
 
-            trajectory = waypointTrajectory(self.waypoints_, time_tf, 'SampleRate', Fs);%, 'Orientation',q);
+            orientations = zeros(3,3,size(self.waypoints_,1));
+            orientations(:,:,1) = eye(3);
+            for i=2:size(self.waypoints_,1)-1
+                ang = atan2(self.waypoints_(i+1,2)-self.waypoints_(i,2),self.waypoints_(i+1,1)-self.waypoints_(i,1));
+                orientations(:,:,i) = helper.my_rotz(-ang);
+            end
+            orientations(:,:,end) = eye(3);
+
+
+            trajectory = waypointTrajectory(self.waypoints_, time_tf, 'SampleRate', Fs, 'AutoPitch', true);% 'Orientation',orientations);
 
             % lookup pose information for entire trajectory
             [pos, orient] = lookupPose(trajectory, time_tf(1):1/Fs:time_tf(end));

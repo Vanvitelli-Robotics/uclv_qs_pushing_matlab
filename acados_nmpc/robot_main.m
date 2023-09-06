@@ -24,9 +24,10 @@ command_msg = rosmessage(command_pub);
 start_time = rostime('now');
 
 % State and control variables
-global x u time_vec print_ found_sol f s0_spline options
+global x x_sim u time_vec print_ found_sol f s0_spline options
 
 x = [];
+x_sim = [];
 u = [];
 time_vec = [];
 found_sol = [];
@@ -42,7 +43,7 @@ mpc_state_sub = rossubscriber("/mpc_state","std_msgs/Float64MultiArray", {@get_m
 
 
 function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, tftree, p, controller, start_time, command_pub, command_msg, time_exp, params)
-    global x u time_vec print_ found_sol f s0_spline options
+    global x x_sim u time_vec print_ found_sol f s0_spline options
     tic
     mpc_pose.X = mpc_state.Data(1);
     mpc_pose.Y = mpc_state.Data(2);
@@ -61,7 +62,7 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, tftree, p, controller, s
         clear tftree
 %         rosshutdown
         disp("Saving parameters")
-        helper.save_parameters("exp_robot_traj",x,u,time_vec-time_vec(1), params);
+        helper.save_parameters("exp_robot_traj",x,x_sim,u,time_vec-time_vec(1), params);
         return
     end
 
@@ -88,6 +89,7 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, tftree, p, controller, s
 
     % Delay Buffer Simulation
     xk = controller.delay_buffer_sim(p, x(:,end));
+    x_sim = [x_sim xk];
     u = [u controller.solve(xk,round(time_vec(end)/controller.sample_time)+controller.delay_buff_comp)];
 %     if t.seconds > 1
 %         u_ = [0.0; 0.005];

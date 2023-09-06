@@ -26,7 +26,7 @@ end
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP REAL MODEL %%%%%%%%%%%%%%%%%%%%%%
 
-slider = object_selection('montana');
+slider = object_selection('santal');
 plant_time_delay = 0;                               % delay of the plant [s]
 
 % Create Pusher Slider object
@@ -53,12 +53,12 @@ controller.create_ocp_solver();
 %% SETTING PARAMETERS FOR CONTROLLER AND PLANT
 
 % Change delay of the plant and the delay to compensate with the controller
-p.set_delay(0.33); %0.35
-controller.set_delay_comp(0.33);
+p.set_delay(0.35); %0.35
+controller.set_delay_comp(0.35);
 
 % Set initial condition
 % x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
-x0 = [0 0 deg2rad(0) 0.02]';
+x0 = [0 0 deg2rad(0) -0.08]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
@@ -83,8 +83,8 @@ W_x_e = 200*diag([1000 1000 0.1 0]); %diag([100 100 0 0 0]);
 W_u = diag([0 0]); 
 
 % balea
-% W_x = 0.01*diag([100 100 0.0 0]);  % State matrix weight
-% W_x_e = 200*diag([1000 1000 0.0 0]); %diag([100 100 0 0 0]);
+% W_x = 0.01*diag([100 100 0.001 0]);  % State matrix weight
+% W_x_e = 200*diag([1000 1000 0.001 0]); %diag([100 100 0 0 0]);
 % W_u = diag([0 0]); 
 
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
@@ -113,16 +113,23 @@ traj_gen.set_target(x0,xf,t0,tf);
 
 x0_w = [x0(1:2)' 0];
 % x0_w = [0 0 0];
+% xf_w = [ 
+% %       0.05 0 0; %trajectory exp
+%         0.1 0.0 0;
+%         0.15 0.1 0;
+%         0.25 0.2 0;
+%     ];
 xf_w = [ 
-%       0.05 0 0;
-        0.1 0.0 0;
-        0.15 0.1 0;
-        0.25 0.2 0;
+%       0.05 0 0;   %exp cluttered scene
+        0.0 0.12 0;
+        0.05 0.12 0;
     ];
 traj_gen.waypoints_ = [x0_w; xf_w];
-traj_gen.waypoints_velocities = [0.005 0.01 0.01];
-% traj_gen.waypoints_velocities = [0.005 0.01];
-[time, traj] = traj_gen.waypoints_gen;
+% traj_gen.waypoints_velocities = [0.005 0.01 0.01];
+traj_gen.waypoints_velocities = [0.01 0.01];
+% traj_gen.waypoints_velocities = [0.01];
+% [time, traj] = traj_gen.waypoints_gen;
+[time, traj] = traj_gen.waypoint_gen_fixed_angle;
 traj = [traj(1:3,:); traj(end,:)];
 
 time_sim = time(end) + 15;
@@ -155,13 +162,13 @@ if simulation_ == true
         disp("MATLAB SIMULATION")
         noise_ = true;
         debug_ = false;
-        print_ = true;
+        print_ = false;
         disturbance_ = false;
          
-        [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
+        [x_s, x_sim, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot,mode_vect, found_sol] = helper.closed_loop_matlab(p,controller,x0,time_sim,print_,noise_,debug_, disturbance_);
 %         [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_plot] = helper.open_loop_matlab(p,x0,0.0,-0.05, time_sim,sample_time, noise_);
         
-        params = helper.save_parameters("exp1_open_loop",[x_s; y_s; theta_s; S_p_y],[u_n; u_t],time_plot);
+        params = helper.save_parameters("exp1_open_loop",[x_s; y_s; theta_s; S_p_y],x_sim, [u_n; u_t],time_plot);
         params.S_p_x = S_p_x;
     elseif(strcmp(sym_type,"robot"))
         disp("ROBOT EXPERIMENT")

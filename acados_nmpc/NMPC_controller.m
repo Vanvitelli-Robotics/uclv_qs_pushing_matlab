@@ -58,6 +58,7 @@ classdef NMPC_controller < casadi.Callback
 
         v_alpha;
         d_v_bound;
+        t_angle0;
 
     end
 
@@ -89,11 +90,14 @@ classdef NMPC_controller < casadi.Callback
 
             self.plant = plant;
 
-            self.set_v_alpha(0.035);%0.005*200);
-            self.d_v_bound = 0.0045;
+%             self.set_v_alpha(0.035);%0.005*200);
+%             self.d_v_bound = 0.0045;
 
 %             self.set_v_alpha(0.005*200);
 %             self.d_v_bound = 0;
+            self.set_v_alpha(1*0.5719);%0.005*200);
+            self.d_v_bound = 0.0;
+            self.t_angle0 = 3+0*2.831;
 
             construct(self, name);
         end
@@ -225,7 +229,7 @@ classdef NMPC_controller < casadi.Callback
             s_mod = Function('s_mod',{self.sym_model.sym_x(4)},{(self.sym_model.sym_x(4)<0)*(self.plant.SP.b)+mod(self.sym_model.sym_x(4),self.plant.SP.b)});
             t_angle_fun = self.plant.SP.FC_angle_dot(1);
             t_angle = Function('t_angle',{self.sym_model.sym_x(4)},{abs(t_angle_fun(s_mod(self.sym_model.sym_x(4))))});
-            v_bound = min((self.v_alpha/(t_angle(s_mod(self.sym_model.sym_x(4))) + 0.0001)) + self.d_v_bound,self.u_t_ub);
+            v_bound = min((self.v_alpha/(abs(t_angle(s_mod(self.sym_model.sym_x(4)))-self.t_angle0) + 0.0001)) + self.d_v_bound,self.u_t_ub);
             v_bound_f = Function('v_bound_f',{self.sym_model.sym_x(4)},{v_bound});
             u_t_bound_n = Function('u_t_bound_n',{self.sym_model.sym_x(4)},{(self.sym_model.sym_u(2)-v_bound_f(s_mod(self.sym_model.sym_x(4))))});
             u_t_bound_p = Function('u_t_bound_p',{self.sym_model.sym_x(4)},{(self.sym_model.sym_u(2)+v_bound_f(s_mod(self.sym_model.sym_x(4))))});
@@ -315,7 +319,7 @@ classdef NMPC_controller < casadi.Callback
         function [v_bound, t_angle] = update_tangential_velocity_bounds(self,s)
             s = mod(s,self.plant.SP.b);
             t_angle = abs(self.plant.SP.getAngleCurvatures(s));
-            v_bound = min((self.v_alpha/(t_angle+0.0001)) + self.d_v_bound,self.u_t_ub);
+            v_bound = min((self.v_alpha/(abs(t_angle-self.t_angle0)+0.0001)) + self.d_v_bound,self.u_t_ub);
             
 
 %             self.ocp_solver.set('constr_lbu', [self.u_n_lb; -v_bound]); % lower bound on h
@@ -403,7 +407,7 @@ classdef NMPC_controller < casadi.Callback
 %                 ut_old = u(2);
 %                 u(2) = sign(ut_old)*v_bounds;
 %                 u(1) = (u(2)/ut_old)*u(1);
-            if t_angle > 190
+            if t_angle > 120
                 u(1) = -0.001;
             end
 %                 

@@ -69,11 +69,21 @@ for i = 1 : length(s_values)
     [v_boundd(i), t_angle(i)] = controller.update_tangential_velocity_bounds(s_values(i));
 end
 
-obj_txt = 'montana';
-
-open('test_curvatures/objects.fig')
-subplot(3,1,1),hold on, plot(s_values,v_boundd,'DisplayName',obj_txt)
-subplot(3,1,2),hold on, plot(s_values,t_angle,'DisplayName',obj_txt)
+% obj_txt = 'montana';
+% 
+% open('test_curvatures/objects.fig')
+subplot(3,1,1),hold on, plot(s_values,v_boundd)%;,'DisplayName',obj_txt)
+subplot(3,1,2),hold on, plot(s_values,t_angle);%,'DisplayName',obj_txt)
 t_angle = 0:0.01:250;
-subplot(3,1,3),hold on, plot(t_angle, min(controller.v_alpha./(t_angle+0.0001)+controller.d_v_bound, controller.u_t_ub),'DisplayName',obj_txt)
+subplot(3,1,3),hold on, plot(t_angle, min(0.5*controller.v_alpha./(abs(t_angle-3)+0.0001)+controller.d_v_bound, controller.u_t_ub));%,'DisplayName',obj_txt)
 
+%% 
+s_values = params.x_sim(4,:);
+v_boundd = zeros(1,length(s_values));
+t_angle = zeros(1,length(s_values));
+for i = 1 : length(s_values)
+    [v_boundd(i), t_angle(i)] = controller.update_tangential_velocity_bounds(s_values(i));
+end
+figure
+subplot(3,1,1),hold on, plot(params.t,v_boundd)
+subplot(3,1,2),hold on, plot(params.t,t_angle)

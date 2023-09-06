@@ -11,23 +11,23 @@ function slider = object_selection(obj)
             slider.cad_model_path = "/home/workstation/pusher_slider_matlab/cad_models/cad_santal_centered_scaled_rotated_reduced.stl";
             slider.pcl_path = "planar_surface_santal_36_uniformed.ply";%
         case 'balea'
-            slider.mu_sg = 0.2;
-            slider.mu_sp = 0.13;
+            slider.mu_sg = 0.35;
+            slider.mu_sp = 0.20;
             slider.xwidth = 0.071;                               % width of the slider along x-direction [m]
             slider.ywidth = 0.071;                                % width of the slider along y-direction [m]
             slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
-            slider.m = 0.130;
+            slider.m = 0.1713;
             slider.tau_max = 0.0042;
             slider.cad_model_path = "/home/workstation/pusher_slider_matlab/cad_models/Balea_cad_model v1.stl";
             slider.pcl_path = '/home/workstation/pusher_slider_matlab/cad_models/Balea_cad_model_planar_surface_36.ply';
         case 'montana'
-            slider.mu_sg = 0.18;
+            slider.mu_sg = 0.20;
             slider.mu_sp = 0.10;
             slider.xwidth = 0.057;                               % width of the slider along x-direction [m]
             slider.ywidth = 0.101;                                % width of the slider along y-direction [m]
             slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
             slider.m = 0.2467;
-            slider.tau_max = 0.0021;
+            slider.tau_max = 0.0101;
             slider.cad_model_path = "/home/workstation/pusher_slider_matlab/cad_models/Montana_cad_model.stl";
             slider.pcl_path = '/home/workstation/pusher_slider_matlab/cad_models/Montana_cad_model_planar_section_34.ply';
         otherwise

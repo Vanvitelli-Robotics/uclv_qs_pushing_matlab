@@ -192,7 +192,7 @@ classdef helper
             u_t = u(2,:);
         end
 
-        function [x_s, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_sim_vec,mode_vect, found_sol] = closed_loop_matlab(plant, controller,x0, time_sim, print_, sim_noise, debug_cost,disturbance_)
+        function [x_s, x_sim, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_sim_vec,mode_vect, found_sol] = closed_loop_matlab(plant, controller,x0, time_sim, print_, sim_noise, debug_cost,disturbance_)
             % CLOSED LOOP SIMULATION
             index = 0;
             % Time of overall simulation
@@ -201,6 +201,7 @@ classdef helper
 
             % State and control variables
             x = zeros(plant.nx, time_sim_+1);
+            x_sim = zeros(plant.nx, time_sim_+1);
             x(:,1) = x0;
             u = zeros(plant.nu, time_sim_);
             mode_vect = string(zeros(time_sim_,1));
@@ -229,7 +230,7 @@ classdef helper
                 end
 
                 xk_sim = controller.delay_buffer_sim(plant, x(:,i));
-
+                x_sim = [x_sim xk_sim];
                 % solve OCP
                 tic;
                 u(:,i) = controller.solve(xk_sim,i+controller.delay_buff_comp);
@@ -321,7 +322,7 @@ classdef helper
             time_sim_vec = out.time;
         end
 
-        function params = save_parameters(name_exp, x, u, t, mode_vect, params)
+        function params = save_parameters(name_exp, x, x_sim, u, t, mode_vect, params)
             %             params = struct;
 
             params.t = t;
@@ -332,7 +333,8 @@ classdef helper
             params.S_p_y = x(4,:);
             params.u_n = u(1,:);
             params.u_t = u(2,:);
-            if nargin > 4
+            params.x_sim = x_sim;
+            if nargin > 5
                 params.mode_vect = mode_vect;
             end
             name_exp_ext = strcat(name_exp,'.mat');
