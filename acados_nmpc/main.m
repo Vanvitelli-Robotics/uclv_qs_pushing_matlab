@@ -58,7 +58,7 @@ controller.set_delay_comp(0.35);
 
 % Set initial condition
 % x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
-x0 = [0 0 deg2rad(0) -0.08]';
+x0 = [0 0 deg2rad(0) 0]';
 controller.initial_condition_update(x0);
 
 % Set matrix weights
@@ -87,11 +87,17 @@ W_u = diag([0 0]);
 % W_x_e = 200*diag([1000 1000 0.001 0]); %diag([100 100 0 0 0]);
 % W_u = diag([0 0]); 
 
+% final experiment
+% W_x = 0.01*diag([100 100 0.001 0]);  % State matrix weight
+% W_x_e = 200*diag([1000 1000 0.001 0]); %diag([100 100 0 0 0]);
+% W_u = diag([0 0]); 
+
 controller.update_cost_function(W_x,W_u,W_x_e,1,Hp-1);
 
 % Set constraints
 u_n_lb = 0.0; u_n_ub = 0.03;
 u_t_lb = -0.05; u_t_ub = 0.05;
+% u_t_lb = -0.03; u_t_ub = 0.03;
 controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
 % set constraints tangential velocity 
@@ -119,20 +125,46 @@ x0_w = [x0(1:2)' 0];
 %         0.15 0.1 0;
 %         0.25 0.2 0;
 %     ];
+
+% xf_w = [ 
+% %       0.05 0 0;   %exp cluttered scene
+%         0.0 0.11 0;
+%         -0.05 0.113 0;
+%     ];
+% 
+% xf_w = [ 
+% %       0.05 0 0;   %exp cluttered scene
+%         0.05 0.0 0;
+%         0.13 0 0;
+%     ];
+
+% disturbance trajectory
+
 xf_w = [ 
-%       0.05 0 0;   %exp cluttered scene
-        0.0 0.12 0;
-        0.05 0.12 0;
+%       0.05 0 0; %trajectory exp
+        0.20 0.0 0;
+        0.20 0.05 0;
+        0.20 0.20 0;
+        0.15 0.20 0;
+        0 0.20 0;
     ];
+
+
+
 traj_gen.waypoints_ = [x0_w; xf_w];
 % traj_gen.waypoints_velocities = [0.005 0.01 0.01];
-traj_gen.waypoints_velocities = [0.01 0.01];
-% traj_gen.waypoints_velocities = [0.01];
+% traj_gen.waypoints_velocities = [0.005 0.003];
+% traj_gen.waypoints_velocities = [0.015 0.015];
+
+% disturbance parameters 
+traj_gen.waypoints_velocities = [0.005 0.003 0.005 0.003 0.005];
+
 % [time, traj] = traj_gen.waypoints_gen;
 [time, traj] = traj_gen.waypoint_gen_fixed_angle;
 traj = [traj(1:3,:); traj(end,:)];
 
-time_sim = time(end) + 15;
+time_sim = time(end)+15;
+% time_sim = time(end)+0;
 
 % Set control reference
 u_n_ref = 0.01; u_t_ref = 0;
@@ -147,7 +179,7 @@ controller.set_reference_trajectory([traj; control_ref]);
 % If you want to simulate set simulation_ true and then set the
 % type of simulation (simulink, matlab or robot)
 simulation_ = true;
-sym_type = "matlab";
+sym_type = "robot";
 print_robot = false;
 
 
@@ -201,7 +233,7 @@ if sym_type == "robot"
     params.S_p_x = S_p(:,1);
     params.S_p_y = S_p(:,2);
 end
-helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))],cad_model_path);
+helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_y,params.S_p_y, params.t,0.1, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))],cad_model_path);
 
 
 

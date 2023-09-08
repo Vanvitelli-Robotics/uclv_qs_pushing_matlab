@@ -269,7 +269,7 @@ classdef NMPC_controller < casadi.Callback
 
         function ocp_opts = create_ocp_opts(self)
             field_s = ["nlp_solver", "qp_solver", "sim_method",  "globalization", "codgen_model", "compile_model", "compile_interface"];
-            values_s = ["sqp", "partial_condensing_hpipm", "erk", "merit_backtracking", "true", "false", "false"];
+            values_s = ["sqp", "partial_condensing_hpipm", "erk", "merit_backtracking", "false", "false", "false"];
             %solver_params_s = dictionary(field_s,values_s);
 
             field_d = ["qp_solver_cond_N", "nlp_solver_max_iter","line_search_use_sufficient_descent","nlp_solver_tol_stat","nlp_solver_tol_eq","nlp_solver_tol_ineq","nlp_solver_tol_comp"];
@@ -408,7 +408,8 @@ classdef NMPC_controller < casadi.Callback
 %                 u(2) = sign(ut_old)*v_bounds;
 %                 u(1) = (u(2)/ut_old)*u(1);
             if t_angle > 120
-                u(1) = -0.001;
+                u(1) = -0.002;
+                u(2) = u(2)*2;
             end
 %                 
 %             end
