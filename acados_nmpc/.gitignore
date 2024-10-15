@@ -32,8 +32,15 @@ codegen/
 octave-workspace
 
 cad_models/
+statistics_RAL/
+test_curvatures/
+tests/
 
 # c-code generation
 build/
 c_generated_code/
 *.json
+
+# .mat
+*.mat
+*.fig
