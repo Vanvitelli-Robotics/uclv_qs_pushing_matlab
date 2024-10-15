@@ -36,4 +36,8 @@ acados_nmpc/build/*
 acados_nmpc/slprj
 c_generated_code/
 
+*.json
+*.mat
+*.slx
+
 

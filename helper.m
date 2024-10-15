@@ -22,21 +22,21 @@ classdef helper
             mode_vect_num = str2num(char(mode_vect_str));
         end
 
-        function my_plot_robot(time, traj, x_s, y_s, theta_s, S_p_y, u_n, u_t)
-            if length(traj(1,:)) < length(time)
-                traj = [traj traj(:,end).*ones(length(traj(:,end)),length(time)-length(traj(1,:)))];
-            end
+        function my_plot_robot(time, time_traj, traj, x_s, y_s, theta_s, S_p_y, u_n, u_t)
+            %             if length(traj(1,:)) < length(time)
+            %                 traj = [traj traj(:,end).*ones(length(traj(:,end)),length(time)-length(traj(1,:)))];
+            %             end
             set(0,'DefaultLineLineWidth',1.5);
             figure,
-            ax1 = subplot(3,2,1); plot(time,x_s), hold on, plot(time,traj(1,:)), xlabel('t [s]'), ylabel('x_S'),legend('x_S','xref_S'), subtitle('x_S tracking'), grid on
-            ax2 = subplot(3,2,3); plot(time,y_s), hold on, plot(time,traj(2,:)), xlabel('t [s]'), ylabel('y_S'),legend('y_S','yref_S'), subtitle('y_S tracking'), grid on
-            ax3 = subplot(3,2,5); plot(time,theta_s), hold on, plot(time,traj(3,:)),xlabel('t [s]'), ylabel('\theta_S'), legend('\theta_S','\thetaref_S'), subtitle('\theta_S tracking'), grid on
+            ax1 = subplot(3,2,1); plot(time,x_s), hold on, plot(time_traj,traj(1,:)), xlabel('t [s]'), ylabel('x_S'),legend('x_S','xref_S'), grid on %subtitle("x_S tracking")
+            ax2 = subplot(3,2,3); plot(time,y_s), hold on, plot(time_traj,traj(2,:)), xlabel('t [s]'), ylabel('y_S'),legend('y_S','yref_S'), grid on %subtitle("y_S tracking"),
+            ax3 = subplot(3,2,5); plot(time,theta_s), hold on, plot(time_traj,traj(3,:)),xlabel('t [s]'), ylabel('\theta_S'), legend('\theta_S','\thetaref_S'), grid on, %subtitle("\theta_S tracking"), grid on
             %             ax4 = subplot(3,2,2); plot(time,S_p_x),hold on, plot(time,traj(4,:)),xlabel('t [s]'), ylabel('S_ p_x'), legend('S_ p_x','ref'), subtitle('S_ p_x tracking'), grid on
-            ax5 = subplot(3,2,2); plot(time,S_p_y),hold on, plot(time,traj(4,:)),xlabel('t [s]'), ylabel('S_ p_y'), legend('S_ p_y','ref'), subtitle('S_ p_y tracking'), grid on
+            ax5 = subplot(3,2,2); plot(time,S_p_y),hold on, plot(time_traj,traj(4,:)),xlabel('t [s]'), ylabel('S_ p_y'), legend('S_ p_y','ref'), grid on % subtitle("S_ p_y tracking"), grid on
 
             figure
-            ax6 = subplot(2,1,1); plot(time,u_n), xlabel('t [s]'), ylabel('u_n'), subtitle("normal control"), grid on
-            ax7 = subplot(2,1,2); plot(time,u_t), xlabel('t [s]'), ylabel('u_t'), subtitle("tangential control"), grid on
+            ax6 = subplot(2,1,1); plot(time,u_n), xlabel('t [s]'), ylabel('u_n'), grid on, %subtitle("normal control"), grid on
+            ax7 = subplot(2,1,2); plot(time,u_t), xlabel('t [s]'), ylabel('u_t'), grid on %subtitle("tangential control"), grid on
 
             linkaxes([ax1,ax2,ax3,ax5,ax6,ax7],'x');
             xlim([ax1,ax2,ax3,ax5,ax6,ax7],[0 time(end)])
@@ -47,24 +47,24 @@ classdef helper
                 traj = [traj traj(:,end).*ones(length(traj(:,end)),length(time)-length(traj(1,:)))];
             end
             set(0,'DefaultLineLineWidth',1.5);
-            figure,
-            ax1 = subplot(3,2,1); plot(time,x_s), hold on, plot(time,traj(1,:)), xlabel('t [s]'), ylabel('x_S'),legend('x_S','xref_S'), subtitle('x_S tracking'), grid on
-            ax2 = subplot(3,2,3); plot(time,y_s), hold on, plot(time,traj(2,:)), xlabel('t [s]'), ylabel('y_S'),legend('y_S','yref_S'), subtitle('y_S tracking'), grid on
-            ax3 = subplot(3,2,5); plot(time,theta_s), hold on, plot(time,traj(3,:)),xlabel('t [s]'), ylabel('\theta_S'), legend('\theta_S','\thetaref_S'), subtitle('\theta_S tracking'), grid on
+            figure(100),
+            ax1 = subplot(3,2,1); plot(time,x_s), hold on, plot(time,traj(1,:)), xlabel('t [s]'), ylabel('x_S'),legend('x_S','xref_S'), grid on %subtitle('x_S tracking'), grid on
+            ax2 = subplot(3,2,3); plot(time,y_s), hold on, plot(time,traj(2,:)), xlabel('t [s]'), ylabel('y_S'),legend('y_S','yref_S'), grid on %subtitle('y_S tracking'), grid on
+            ax3 = subplot(3,2,5); plot(time,theta_s), hold on, plot(time,traj(3,:)),xlabel('t [s]'), ylabel('\theta_S'), legend('\theta_S','\thetaref_S'), grid on %subtitle('\theta_S tracking'), grid on
             %             ax4 = subplot(3,2,2); plot(time,S_p_x),hold on, plot(time,traj(4,:)),xlabel('t [s]'), ylabel('S_ p_x'), legend('S_ p_x','ref'), subtitle('S_ p_x tracking'), grid on
-            ax5 = subplot(3,2,2); plot(time,S_p_y),hold on, plot(time,traj(4,:)),xlabel('t [s]'), ylabel('S_ p_y'), legend('S_ p_y','ref'), subtitle('S_ p_y tracking'), grid on
+            ax5 = subplot(3,2,2); plot(time,S_p_y),hold on, plot(time,traj(4,:)),xlabel('t [s]'), ylabel('S_ p_y'), legend('S_ p_y','ref'), grid on %subtitle('S_ p_y tracking'), grid on
 
-            figure
-            ax6 = subplot(2,1,1); plot(time,u_n), xlabel('t [s]'), ylabel('u_n'), subtitle("normal control"), grid on
-            ax7 = subplot(2,1,2); plot(time,u_t), xlabel('t [s]'), ylabel('u_t'), subtitle("tangential control"), grid on
+            figure(200)
+            ax6 = subplot(2,1,1); plot(time,u_n), xlabel('t [s]'), ylabel('u_n'), grid on %subtitle("normal control"), grid on
+            ax7 = subplot(2,1,2); plot(time,u_t), xlabel('t [s]'), ylabel('u_t'), grid on %subtitle("tangential control"), grid on
 
-%             figure
-%             ax8 = subplot(2,1,1); plot(time, cost_function_vect), xlabel('t [s]'), ylabel('cost_function'), subtitle("Cost function"), grid on
-%             ax9 = subplot(2,1,2); plot(time(mode_vect==1), mode_vect(mode_vect==1),'*', "Color",'r'), hold on
-%             plot(time(mode_vect==2), mode_vect(mode_vect==2),'*', "Color",'g'),
-%             plot(time(mode_vect==3), mode_vect(mode_vect==3),'*', "Color",'y'),
-%             hold off
-%             xlabel('t [s]'), ylabel('mode'), subtitle("Mode"), legend('sticking','sliding left', 'sliding right'), grid on
+            %             figure
+            %             ax8 = subplot(2,1,1); plot(time, cost_function_vect), xlabel('t [s]'), ylabel('cost_function'), subtitle("Cost function"), grid on
+            %             ax9 = subplot(2,1,2); plot(time(mode_vect==1), mode_vect(mode_vect==1),'*', "Color",'r'), hold on
+            %             plot(time(mode_vect==2), mode_vect(mode_vect==2),'*', "Color",'g'),
+            %             plot(time(mode_vect==3), mode_vect(mode_vect==3),'*', "Color",'y'),
+            %             hold off
+            %             xlabel('t [s]'), ylabel('mode'), subtitle("Mode"), legend('sticking','sliding left', 'sliding right'), grid on
 
             linkaxes([ax1,ax2,ax3,ax5,ax6,ax7],'x') %,ax8,ax9],'x');
             xlim([ax1,ax2,ax3,ax5,ax6,ax7],[0 time(end)]) %,ax8,ax9]
@@ -75,7 +75,7 @@ classdef helper
             % Input: 2D position [x,y,theta]
 
             % Slider frame
-%                 theta = -theta;
+            %                 theta = -theta;
             p0_s = [x(1) y(1) 0];
             quat0_s = quaternion(helper.my_rotz(theta(1)),'rotmat','frame');
             figure
@@ -155,24 +155,24 @@ classdef helper
                     x(:,i) = x(:,i) + [1e-5*randn(1,2) randn()*1e-3 randn()*1e-4]';
                 end
 
-%                 alpha = plant.SP.getNormalizedCurvature(x(4,i));
-%                 scale_alpha = 0.8;
-%                  u(2,i) = (1-scale_alpha*alpha)*u(2,i);
-                
+                %                 alpha = plant.SP.getNormalizedCurvature(x(4,i));
+                %                 scale_alpha = 0.8;
+                %                  u(2,i) = (1-scale_alpha*alpha)*u(2,i);
+
                 v_alpha = 0.005*200;
                 t_angle = abs(plant.SP.getAngleCurvatures(x(4,i)));
                 v_bound = min(v_alpha/t_angle,u_t);
 
                 u(2,i) = v_bound;
-                
+
 
                 if delay_buff_plant == 0
                     x_dot_ = plant.evalModelVariableShape(x(:,i),u(:,i)); %plant.eval_model(x(:,i),u(:,i));
-%                     x_dot_ = plant.eval_model(x(:,i),u(:,i));
-%                     x_dot_ = plant.eval_model_variable_shape(x(:,i),u(:,i));
+                    %                     x_dot_ = plant.eval_model(x(:,i),u(:,i));
+                    %                     x_dot_ = plant.eval_model_variable_shape(x(:,i),u(:,i));
                 else
                     x_dot_ = plant.evalModelVariableShape(x(:,i),u_buff_plant(:,end));
-%                     x_dot_ = plant.eval_model(x(:,i),u_buff_plant(:,end));
+                    %                     x_dot_ = plant.eval_model(x(:,i),u_buff_plant(:,end));
                     u_buff_plant = [u(:,i) u_buff_plant(:,1:end-1)];
                 end
 
@@ -192,7 +192,7 @@ classdef helper
             u_t = u(2,:);
         end
 
-        function [x_s, x_sim, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_sim_vec,mode_vect, found_sol] = closed_loop_matlab(plant, controller,x0, time_sim, print_, sim_noise, debug_cost,disturbance_)
+        function [x_s, x_sim, y_s, theta_s, S_p_x, S_p_y, u_n, u_t, time_sim_vec,mode_vect, found_sol] = closed_loop_matlab(plant, controller,x0, time_sim, print_, sim_noise, debug_cost,disturbance_,amplitude_dist, t_dist)
             % CLOSED LOOP SIMULATION
             index = 0;
             % Time of overall simulation
@@ -213,13 +213,25 @@ classdef helper
 
 
             %             tic;
+            f = @(x,c) norm([c.S_p_x c.S_p_y] - c.plant.SP.evalSpline(c.plant.SP.FC,x))^2;
+            options = optimoptions('fminunc','Display','off');
+            s0_spline = 0;
             for i = 1:time_sim_
-                disp("Time: " + i*controller.sample_time);
+                %                 disp("Time: " + i*controller.sample_time);
                 if disturbance_ == true
-                    if i == 33
-                        disp("Disturbance")
-                        x(2,i) = x(2,i) + 0.02;
-                        x(4,i) = x(4,i) - 0.02;
+                    if i == t_dist
+                        %                         disp("Disturbance")
+                        x(2,i) = x(2,i) + amplitude_dist;
+                        
+                        Sp = plant.SP.evalSpline(plant.SP.FC, x(4,i));
+                        Spy_dist = Sp(2) - amplitude_dist;
+
+                        c.S_p_x = -plant.slider_params.xwidth/2; c.S_p_y = Spy_dist; c.plant = plant;
+                        smin_spline = fminunc(@(x) f(x,c),s0_spline,options);
+                        s0_spline = smin_spline;
+                        s0_spline = mod(s0_spline,plant.SP.b)-(plant.SP.b)*(s0_spline<0);
+                        x(4,i) = s0_spline;
+                        %                         x(3,i) = x(3,i) + deg2rad(-30);
                     end
                 end
 
@@ -232,25 +244,25 @@ classdef helper
                 xk_sim = controller.delay_buffer_sim(plant, x(:,i));
                 x_sim = [x_sim xk_sim];
                 % solve OCP
-                tic;
+                %                 tic;
                 u(:,i) = controller.solve(xk_sim,i+controller.delay_buff_comp);
-                toc;
-%                 u(:,i) = [0.01; 0.00];
+                %                 toc;
+                %                 u(:,i) = [0.01; 0.00];
 
                 controller.u_buff_contr = [u(:,i) controller.u_buff_contr(:,1:end-1)];
                 status = controller.ocp_solver.get('status');
                 if status~=0
-                    disp('acados ocp solver failed');
+                    %                     disp('acados ocp solver failed');
                     found_sol(i) = false;
                     %                         keyboard
                 else
                     found_sol(i) = true;
                 end
-            
+
 
                 if print_ == true
                     controller.ocp_solver.print;
-                    
+
                     sqp_iter = controller.ocp_solver.get('sqp_iter');
                     time_tot = controller.ocp_solver.get('time_tot');
                     time_lin = controller.ocp_solver.get('time_lin');
@@ -260,7 +272,7 @@ classdef helper
                         status, sqp_iter, time_tot*1e3, time_lin*1e3, time_qp_sol*1e3);
                 end
 
-                
+
 
                 if debug_cost == true
                     if i*controller.sample_time < 0.06 || (i*controller.sample_time > 0.85 && i*controller.sample_time < 1.2)% && mod(i,5)==0)
@@ -278,16 +290,16 @@ classdef helper
                 %%%%%%%%%%%%%%%% PLANT SIM
 
                 if delay_buff_plant == 0
-%                     [x_dot_, mode_] = plant.eval_model(x(:,i),u(:,i));
+                    %                     [x_dot_, mode_] = plant.eval_model(x(:,i),u(:,i));
                     x_dot_ = plant.evalModelVariableShape(x(:,i),u(:,i));
                 else
-%                     [x_dot_, mode_] = plant.eval_model(x(:,i),u_buff_plant(:,end));
+                    %                     [x_dot_, mode_] = plant.eval_model(x(:,i),u_buff_plant(:,end));
                     x_dot_ = plant.evalModelVariableShape(x(:,i),u_buff_plant(:,end));
                     mode_ = 0;
                     u_buff_plant = [u(:,i) u_buff_plant(:,1:end-1)];
                 end
 
-                mode_vect(i) = mode_;
+                %                 mode_vect(i) = mode_;
 
 
 
