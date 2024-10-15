@@ -33,6 +33,8 @@ classdef PusherSliderModel < casadi.Callback
         cad_model = struct;
         has_cad_model = false
 
+        object_name;
+
         SP; % Spline object interpolating cad model points
 
     end
@@ -40,18 +42,20 @@ classdef PusherSliderModel < casadi.Callback
     methods
 
         % Constructor
-        function self = PusherSliderModel(name, slider_parameters, time_delay,cad_model_path,order_spline,pcl_path)
+        function self = PusherSliderModel(name, slider_parameters, time_delay,cad_model_path,order_spline,pcl_path, object_name)
             % Constructor of the pusher_slider model.
             % Input: name = string
             %        slider_parameters = struct
             % Ouptut: object instance of PusherSliderModel
             self@casadi.Callback();
             self.slider_params=slider_parameters;
+            self.object_name = object_name;
             self.slider_params.f_max = self.slider_params.mu_sg*self.slider_params.m*helper.g;
 %             self.slider_params.tau_max = self.tau_max_func(self.slider_params.mu_sg, self.slider_params.m, helper.g, self.slider_params.area, self.slider_params.xwidth, self.slider_params.ywidth);
             self.slider_params.c_ellipse = self.slider_params.tau_max/self.slider_params.f_max;
             self.set_delay(time_delay);
             self.open_cad_model(cad_model_path,order_spline,pcl_path);
+           
             construct(self, name);
         end
 
@@ -100,7 +104,9 @@ classdef PusherSliderModel < casadi.Callback
 
             Pxy_sorted = Pxy_sorted.*(1/self.cad_model.scale_factor);
             Pxy_sorted(end+1,:) = Pxy_sorted(1,:);
-%             Pxy_sorted = flipud(Pxy_sorted);
+            if(self.object_name == "montana" || self.object_name == "pulirapid")
+                Pxy_sorted = flipud(Pxy_sorted);
+            end
 
         end
 
@@ -561,7 +567,7 @@ classdef PusherSliderModel < casadi.Callback
 
             % ---- s_dot evaluation
             NT_p_dot_sl = c_sl*[u_n u_t]';
-            s_dot_sl = NT_p_dot_sl-NT_p_dot_sl(1)*v_l;
+            s_dot_sl = [u_n u_t]'-u_n*[1 gamma_l]'; %NT_p_dot_sl-NT_p_dot_sl(1)*v_l;
             
             F_sl = [W_R_S*S_R_NT*factor_matrix*Q*P_sl; factor_matrix*b_sl'];
             x_dot_sl = [F_sl*[u_n u_t]'; s_dot_sl(2)];
@@ -573,7 +579,7 @@ classdef PusherSliderModel < casadi.Callback
 
             % ---- s_dot evaluation
             NT_p_dot_sr = c_sr*[u_n u_t]';
-            s_dot_sr = NT_p_dot_sr-NT_p_dot_sr(1)*v_r;
+            s_dot_sr = [u_n u_t]'-u_n*[1 gamma_r]';%NT_p_dot_sr-NT_p_dot_sr(1)*v_r;
 
             F_sr = [W_R_S*S_R_NT*factor_matrix*Q*P_sr; factor_matrix*b_sr'];
             x_dot_sr = [F_sr*[u_n u_t]'; s_dot_sr(2)];

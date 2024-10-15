@@ -30,6 +30,16 @@ function slider = object_selection(obj)
             slider.tau_max = 0.0101;
             slider.cad_model_path = "/home/workstation/pusher_slider_matlab/cad_models/Montana_cad_model.stl";
             slider.pcl_path = '/home/workstation/pusher_slider_matlab/cad_models/Montana_cad_model_planar_section_34.ply';
+        case 'pulirapid'
+            slider.mu_sg = 0.22;                                  % friction coefficient between slider and ground
+            slider.mu_sp = 0.1;                                 % friction coefficient between slider and pusher
+            slider.xwidth = 0.13;                               % width of the slider along x-direction [m]
+            slider.ywidth = 0.23;                                % width of the slider along y-direction [m]
+            slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
+            slider.m = 0.500;                                    % slider mass [kg]
+            slider.tau_max = 0.0251;
+            slider.cad_model_path = "../cad_models/pulirapid_ricarica_simplified.stl";
+            slider.pcl_path = "pulirapid_ricarica_test_curvatura2_ply.ply";%
         otherwise
             disp("Invalid object! Please, chose between: santal, balea, montana")
             return;

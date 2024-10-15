@@ -25,8 +25,8 @@ t_curvatures = t_curvatures./diff(s_values);
 curvatures = p.SP.getCurvatures(s_values);
 
 figure, plot(s_values(1:end-1), abs(t_curvatures/max(t_curvatures))), hold on
-plot(s_values(1:end-1), t_diff/max(t_diff))
-plot(s_values, curvatures/max(curvatures))
+figure, plot(s_values(1:end-1), t_diff/max(t_diff))
+figure, plot(s_values, curvatures/max(curvatures))
 
 
 %%
@@ -73,7 +73,7 @@ end
 % 
 % open('test_curvatures/objects.fig')
 subplot(3,1,1),hold on, plot(s_values,v_boundd)%;,'DisplayName',obj_txt)
-subplot(3,1,2),hold on, plot(s_values,t_angle);%,'DisplayName',obj_txt)
+subplot(3,1,2),hold on, plot(s_values,-t_angle);%,'DisplayName',obj_txt)
 t_angle = 0:0.01:250;
 subplot(3,1,3),hold on, plot(t_angle, min(0.5*controller.v_alpha./(abs(t_angle-3)+0.0001)+controller.d_v_bound, controller.u_t_ub));%,'DisplayName',obj_txt)
 

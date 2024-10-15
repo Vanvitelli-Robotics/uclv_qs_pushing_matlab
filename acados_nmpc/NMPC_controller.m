@@ -13,14 +13,14 @@ classdef NMPC_controller < casadi.Callback
     properties
 
         % Weight matrices for objective function
-        W_x = diag([100, 1, 1,  1e-3]);
-        W_x_e = 2*diag([100, 1, 1, 1e-3]);
-        W_u = diag([1 1]);
+        W_x = 0.01*diag([100 100 0.1 0]);  % State matrix weight
+        W_x_e = 200*diag([1000 1000 0.1 0]); %diag([100 100 0 0 0]);
+        W_u = diag([1e-3 1e-3]);
 
         % Costraints
         h_constr_lb = [];  % lower bound constraint on the constrained variables h
         h_constr_ub = [];  % upper bound constraint on the constrained variables h
-        u_n_ub = 0.05;
+        u_n_ub = 0.03;
         u_t_ub = 0.05;
         u_n_lb = 0;
         u_t_lb = -0.05;
@@ -95,9 +95,10 @@ classdef NMPC_controller < casadi.Callback
 
 %             self.set_v_alpha(0.005*200);
 %             self.d_v_bound = 0;
-            self.set_v_alpha(1*0.5719);%0.005*200);
+            self.set_v_alpha(0.002*500); %1*0.5719);%0.005*200);
             self.d_v_bound = 0.0;
             self.t_angle0 = 3+0*2.831;
+            
 
             construct(self, name);
         end
@@ -139,8 +140,7 @@ classdef NMPC_controller < casadi.Callback
 %             self.ocp_solver.set('constr_lh', [self.h_constr_lb(2:end)]);% 2*self.u_t_lb 0]); % lower bound on h
 %             self.ocp_solver.set('constr_uh', [self.h_constr_ub(2:end)]);% 0 2*self.u_t_ub]);  % upper bound on h
         end
-        
-        
+
         function clear_variables(self)
             % Usefull method to clean some variables for the new experiment
             self.utraj = [];
@@ -233,9 +233,9 @@ classdef NMPC_controller < casadi.Callback
             v_bound_f = Function('v_bound_f',{self.sym_model.sym_x(4)},{v_bound});
             u_t_bound_n = Function('u_t_bound_n',{self.sym_model.sym_x(4)},{(self.sym_model.sym_u(2)-v_bound_f(s_mod(self.sym_model.sym_x(4))))});
             u_t_bound_p = Function('u_t_bound_p',{self.sym_model.sym_x(4)},{(self.sym_model.sym_u(2)+v_bound_f(s_mod(self.sym_model.sym_x(4))))});
-% 
-%             expr_h = vertcat(self.sym_model.sym_u(1),self.sym_model.sym_u(2)); % (self.sym_model.sym_u(2)+v_bound_f(s_mod(self.sym_model.sym_x(4)))));
-            expr_h = vertcat(self.sym_model.sym_u(1),u_t_bound_n(self.sym_model.sym_x(4)),u_t_bound_p(self.sym_model.sym_x(4))); % (self.sym_model.sym_u(2)+v_bound_f(s_mod(self.sym_model.sym_x(4)))));
+%           
+            expr_h = vertcat(self.sym_model.sym_x(4), self.sym_model.sym_u(1),self.sym_model.sym_u(2)); % (self.sym_model.sym_u(2)+v_bound_f(s_mod(self.sym_model.sym_x(4)))));
+%             expr_h = vertcat(self.sym_model.sym_u(1),u_t_bound_n(self.sym_model.sym_x(4)),u_t_bound_p(self.sym_model.sym_x(4))); % (self.sym_model.sym_u(2)+v_bound_f(s_mod(self.sym_model.sym_x(4)))));
     
             ocp_model.set('constr_type', 'bgh');
 %             ocp_model.set('constr_type', 'auto');
@@ -243,13 +243,13 @@ classdef NMPC_controller < casadi.Callback
 % 
 %             ocp_model.set('constr_lh', self.h_constr_lb); % lower bound on h
 %             ocp_model.set('constr_uh', self.h_constr_ub);  % upper bound on h
-% 
-            ocp_model.set('constr_lh', [self.h_constr_lb(2:end-1) 2*self.u_t_lb -0]); % lower bound on h
-            ocp_model.set('constr_uh', [self.h_constr_ub(2:end-1) 0 2*self.u_t_ub]);  % upper bound on h
+
+%             ocp_model.set('constr_lh', [self.h_constr_lb(2:end-1) 2*self.u_t_lb -0]); % lower bound on h
+%             ocp_model.set('constr_uh', [self.h_constr_ub(2:end-1) 0 2*self.u_t_ub]);  % upper bound on h
 
 
-%             ocp_model.set('constr_lh', [self.h_constr_lb(2:end)]);% 2*self.u_t_lb 0]); % lower bound on h
-%             ocp_model.set('constr_uh', [self.h_constr_ub(2:end)]);% 0 2*self.u_t_ub]);  % upper bound on h
+            ocp_model.set('constr_lh', [-0.06 self.h_constr_lb(2:end)]);% 2*self.u_t_lb 0]); % lower bound on h
+            ocp_model.set('constr_uh', [0.011 self.h_constr_ub(2:end)]);% 0 2*self.u_t_ub]);  % upper bound on h
 
 
             % % on the state
@@ -269,7 +269,7 @@ classdef NMPC_controller < casadi.Callback
 
         function ocp_opts = create_ocp_opts(self)
             field_s = ["nlp_solver", "qp_solver", "sim_method",  "globalization", "codgen_model", "compile_model", "compile_interface"];
-            values_s = ["sqp", "partial_condensing_hpipm", "erk", "merit_backtracking", "false", "false", "false"];
+            values_s = ["sqp", "partial_condensing_hpipm", "erk", "merit_backtracking", "true", "true", "true"];
             %solver_params_s = dictionary(field_s,values_s);
 
             field_d = ["qp_solver_cond_N", "nlp_solver_max_iter","line_search_use_sufficient_descent","nlp_solver_tol_stat","nlp_solver_tol_eq","nlp_solver_tol_ineq","nlp_solver_tol_comp"];
@@ -329,7 +329,7 @@ classdef NMPC_controller < casadi.Callback
         function u = solve(self,x0, index_time)
             % update initial state
             %             tic
-            x0(4) = mod(x0(4),self.plant.SP.b);
+            x0(4) = mod(x0(4),self.plant.SP.b)-(self.plant.SP.b)*(x0(4)<0);
 
             self.ocp_solver.set('constr_x0', x0);
             
@@ -356,7 +356,7 @@ classdef NMPC_controller < casadi.Callback
 
             v_bounds = self.update_tangential_velocity_bounds(x0(4));
             if abs(self.utraj(2,1)) > v_bounds 
-                disp("Violated constraint")
+%                 disp("Violated constraint")
                 
                 ut_old = self.utraj(2,1);
                 self.utraj(2,1) = sign(ut_old)*v_bounds;
@@ -407,12 +407,14 @@ classdef NMPC_controller < casadi.Callback
 %                 ut_old = u(2);
 %                 u(2) = sign(ut_old)*v_bounds;
 %                 u(1) = (u(2)/ut_old)*u(1);
-            if t_angle > 120
-                u(1) = -0.002;
-                u(2) = u(2)*2;
-            end
+%             if t_angle > 120
+%                 u(1) = -0.002;
+%                 u(2) = u(2)*2;
+%             end
 %                 
 %             end
+
+%             u = [0; 0.005];
 
 
             self.cost_function_vect = [self.cost_function_vect; self.ocp_solver.get_cost];
@@ -422,7 +424,8 @@ classdef NMPC_controller < casadi.Callback
 
         function set_reference_trajectory(self,y_ref)
             % Update reference trajectory
-            self.y_ref = [repmat([self.initial_condition; 0; 0],1,self.delay_buff_comp) y_ref];%[zeros(size(y_ref,1),self.delay_buff_comp) y_ref];
+%             self.y_ref = [repmat([self.initial_condition; 0; 0],1,self.delay_buff_comp) y_ref];%[zeros(size(y_ref,1),self.delay_buff_comp) y_ref];
+            self.y_ref = [repmat([0; 0; 0; 0; 0; 0],1,self.delay_buff_comp) y_ref];
             self.y_ref(self.sym_model.nx+self.sym_model.nu,1:self.delay_buff_comp) = self.y_ref(self.sym_model.nx+self.sym_model.nu,self.delay_buff_comp+1);
             %             self.y_ref = y_ref(:,self.delay_buff_comp:end);
         end

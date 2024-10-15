@@ -118,7 +118,7 @@ classdef TrajectoryGenerator < handle
             orientations(:,:,end) = eye(3);
 
 
-            trajectory = waypointTrajectory(self.waypoints_, time_tf, 'SampleRate', Fs, 'AutoPitch', true);% 'Orientation',orientations);
+            trajectory = waypointTrajectory(self.waypoints_, time_tf, 'SampleRate', Fs);% 'AutoPitch', true);% 'Orientation',orientations);
 
             % lookup pose information for entire trajectory
             [pos, orient] = lookupPose(trajectory, time_tf(1):1/Fs:time_tf(end));

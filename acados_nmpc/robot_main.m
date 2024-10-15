@@ -44,7 +44,7 @@ mpc_state_sub = rossubscriber("/mpc_state","std_msgs/Float64MultiArray", {@get_m
 
 function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, tftree, p, controller, start_time, command_pub, command_msg, time_exp, params)
     global x x_sim u time_vec print_ found_sol f s0_spline options
-    tic
+%     tic
     mpc_pose.X = mpc_state.Data(1);
     mpc_pose.Y = mpc_state.Data(2);
     mpc_pose.Theta = mpc_state.Data(3);
@@ -62,7 +62,7 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, tftree, p, controller, s
         clear tftree
 %         rosshutdown
         disp("Saving parameters")
-        helper.save_parameters("exp_robot_traj",x,x_sim,u,time_vec-time_vec(1), params);
+        helper.save_parameters("pulirapid_v1",x,x_sim,u,time_vec-time_vec(1), params);
         return
     end
 
@@ -90,8 +90,10 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, tftree, p, controller, s
     % Delay Buffer Simulation
     xk = controller.delay_buffer_sim(p, x(:,end));
     x_sim = [x_sim xk];
+    tic
     u = [u controller.solve(xk,round(time_vec(end)/controller.sample_time)+controller.delay_buff_comp)];
-%     if t.seconds > 1
+    toc
+    %     if t.seconds > 1
 %         u_ = [0.0; 0.005];
 %     else
 %         u_ = [0 0]';
@@ -126,6 +128,9 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, tftree, p, controller, s
     R_NT_S_3d = [R_NT_S zeros(2,1); zeros(1,2), 1];
     R_NT_W = T_S0B(1:3,1:3)*helper.my_rotz(xk(3))*R_NT_S_3d;
     u_robot = R_NT_W*[u(:,end);0];
+
+    % OPEN LOOP
+%     u_robot = [-0.005; -0*0.005];
     
     % Calculate omega-y to rotate the end-effector
 %     R_P_W = getTransform(tftree, "base_link", "push_frame",rostime(0));
@@ -137,7 +142,7 @@ function get_mpc_state(mpc_state_sub, mpc_state, T_BS0, tftree, p, controller, s
     send(command_pub,command_msg)
 
     %     helper.save_parameters("exp_robot",x,u,time_vec, params);
-    toc
+%     toc
 end
 
 function T = transformToMatrix(transf)
