@@ -40,4 +40,9 @@ build
 *.mat
 *.slx
 
+# Debug files
+motion_cone.m
+my_animate.m
+nonlinear_model_simulation.m
+pusher_slider_model.m
 
