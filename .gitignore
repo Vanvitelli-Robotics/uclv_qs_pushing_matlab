@@ -31,6 +31,8 @@ codegen/
 octave-workspace
 
 cad_models/
+casadi_nmpc/
+fmincon_nmpc/
 acados_nmpc/c_generated_code/*
 acados_nmpc/build/*
 acados_nmpc/slprj
