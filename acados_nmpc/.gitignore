@@ -27,6 +27,7 @@ codegen/
 # Simulink cache files
 *.slxc
 *.slx
+simulation_model_closed_loop.slx.r2018b
 
 # Octave session info
 octave-workspace
@@ -57,3 +58,11 @@ robot_main.m
 robot_main_original.m
 test_acados_model.m
 test_optimum_problem_shape_variable.m
+
+#.sh 
+run_matlab
+run_matlab18_acados
+run_matlab22_acados
+run_matlab23_acados
+
+

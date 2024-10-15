@@ -1,2 +1,0 @@
-#!/bin/bash
-gnome-terminal --title="matlab_acados" -- bash -c 'source env.sh; sleep 2; matlab'
