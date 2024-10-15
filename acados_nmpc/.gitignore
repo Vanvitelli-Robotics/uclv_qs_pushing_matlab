@@ -26,18 +26,21 @@ codegen/
 
 # Simulink cache files
 *.slxc
+*.slx
 
 # Octave session info
 octave-workspace
 
-cad_models
-casadi_nmpc
-fmincon_nmpc
-c_generated_code
-build
+cad_models/
+statistics_RAL/
+test_curvatures/
+tests/
 
+# c-code generation
+build/
+c_generated_code/
 *.json
+
+# .mat
 *.mat
-*.slx
-
-
+*.fig
