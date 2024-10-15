@@ -2,9 +2,6 @@ clear all
 close all
 clc
 
-% rosinit('192.168.2.94',11310)
-% rosshutdown
-
 % %%%%%%%%%%%%%%%%%%%%%% SETUP ACADOS %%%%%%%%%%%%%%%%%%%%%%
 % Setting path variables
 model_path = fullfile(pwd,'.');
@@ -23,25 +20,21 @@ if linux_set == false
     env_vars_acados;
 end
 
-% SANTAL
 % %%%%%%%%%%%%%%%%%%%%%% SETUP REAL MODEL %%%%%%%%%%%%%%%%%%%%%%
+% Select the object from object_database file
 object_name = "santal";
-slider = object_selection(object_name);
-plant_time_delay = 0;                               % delay of the plant [s]
+slider = object_selection(object_name); % load the physical parameters of the selected object
+plant_time_delay = 0;                   % delay of the plant [s]
 
 % Create Pusher Slider object
-cad_model_path = slider.cad_model_path; %"/home/workstation/pusher_slider_matlab/cad_models/cad_santal_centered_scaled_rotated_reduced.stl"; %"../cad_models/cuboide_santal_rotated.stl";
-pcl_path = slider.pcl_path; %'/home/workstation/pusher_slider_matlab/cad_models/santal_planar_surface_simplified.ply';
+cad_model_path = slider.cad_model_path;
+pcl_path = slider.pcl_path; 
 order_spline = 3;
 p = PusherSliderModel('real_plant',slider, plant_time_delay,cad_model_path,order_spline,pcl_path,object_name);
-% p.symbolic_model();
 p.symbolic_model_variable_shape();
 
 
-
-
 % %%%%%%%%%%%%%%%%%%%%%% SETUP CONTROLLER %%%%%%%%%%%%%%%%%%%%%%
-
 % Controller parameters
 sample_time = 0.05;
 Hp = 10;
@@ -52,6 +45,7 @@ controller.create_ocp_solver();
 
 
 %% SETTING PARAMETERS FOR CONTROLLER AND PLANT
+
 % t_dist = [4/0.05 7/0.05];
 t_dist = [15/0.05 27/0.05];
 
@@ -64,9 +58,9 @@ y_dist = [0.0315    0.0406   -0.015   0.0001    0.0132];
 
 
 numSim = length(y_dist);
-current_sim_num = 25;
+current_sim_num = 0;
 
-for index_t_dist = 2 : length(t_dist)
+for index_t_dist = 1 : length(t_dist)
     if index_t_dist == 1
         y_dist = [-0.035   -0.0161   -0.0127   -0.0021   -0.0018];
     else
@@ -76,62 +70,23 @@ for index_t_dist = 2 : length(t_dist)
     for index_x0 = 1 : length(x0_x)
         for index_y_dist = 1: length(y_dist)
             % Change delay of the plant and the delay to compensate with the controller
-            p.set_delay(0.35*0); %0.35
+            p.set_delay(0.35*0);
             controller.set_delay_comp(0.35*0);
 
             % Set initial condition
-            % x0 = [0.0 0 deg2rad(0) slider.ywidth/2*0.3]';
             x0 = [x0_x(index_x0) x0_y(index_x0) deg2rad(x0_theta(index_x0)) x0_Spy(index_x0)]';
             controller.initial_condition_update(x0);
 
             % Set matrix weights
-            % Working matrix non variable shape
-            % % W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
-            % % W_x_e = 200*diag([.05 .05 200 0]);
-            % % W_u = diag([.1 0.8]);            % Control matrix weight
-
-            % Matrix for variable shape
-            % W_x = 0.01*diag([100 100 .001 0]);  % State matrix weight
-            % W_x_e = 200*diag([1000 1000 100 0]); %diag([100 100 0 0 0]);
-            % W_u = diag([0 0]);
-
-            % Working matrix variable shape 2
-            % W_x = 1*diag([100 100 .001 0]);  % State matrix weight
-            % W_x_e = 200*diag([1000 1000 1 0]); %diag([100 100 0 0 0]);
-            % W_u = 1*diag([10 1]);
-
-            % montana, santal
-            W_x = 0.01*diag([100 100 0.1 0]);  % State matrix weight
-            W_x_e = 200*diag([1000 1000 0.1 0]); %diag([100 100 0 0 0]);
+            W_x = 0.01*diag([100 100 0.1 0]);  
+            W_x_e = 200*diag([1000 1000 0.1 0]); 
             W_u = diag([1e-3 1e-3]);
-
-            % INTELLIMAN DEMO
-            % W_x = 1*diag([10 10 0.1 0]);  % State matrix weight
-            % W_x_e = 200*diag([1000 1000 0.1 0]); %diag([100 100 0 0 0]);
-            % W_u = diag([1e-3 1e-3]);
-
-
-            % santal comparison with FOM
-            % W_x = 1*diag([100 100 10*0.1 0]);  % State matrix weight
-            % W_x_e = 200*diag([1000 1000 10*0.1 0]); %diag([100 100 0 0 0]);
-            % W_u = diag([1e-3 1e-3]);
-
-            % balea
-            % W_x = 0.01*diag([100 100 0.001 0]);  % State matrix weight
-            % W_x_e = 200*diag([1000 1000 0.001 0]); %diag([100 100 0 0 0]);
-            % W_u = diag([0 0]);
-
-            % final experiment
-            % W_x = 0.01*diag([100 100 0.001 0]);  % State matrix weight
-            % W_x_e = 200*diag([1000 1000 0.001 0]); %diag([100 100 0 0 0]);
-            % W_u = diag([0 0]);
 
             controller.update_cost_function(W_x,W_u,W_x_e,0,Hp-1);
 
             % Set constraints
             u_n_lb = 0.0; u_n_ub = 0.03;
             u_t_lb = -0.05; u_t_ub = 0.05;
-            % u_t_lb = -0.03; u_t_ub = 0.03;
             % controller.update_constraints(u_n_ub, u_t_ub, u_n_lb, u_t_lb);
 
             % set constraints tangential velocity
@@ -232,8 +187,6 @@ for index_t_dist = 2 : length(t_dist)
             % load('traj_demo_pushing.mat','traj')
             % time_sim = time(end)+10;
 
-            % x0(3) = traj(3,1);
-
 
             % Set control reference
             u_n_ref = 0.0; u_t_ref = 0;
@@ -241,7 +194,6 @@ for index_t_dist = 2 : length(t_dist)
 
             % Set overall reference
             controller.set_reference_trajectory([traj; control_ref]);
-            % controller.set_reference_trajectory(traj);
 
 
             %%%%%%%%%%%%% SIMULATION START %%%%%%%%%%%%%%%%%%%%%
@@ -251,10 +203,10 @@ for index_t_dist = 2 : length(t_dist)
             sym_type = "matlab";
             print_robot = false;
 
-
             current_sim_num = current_sim_num +1;
             total_sim_num = length(t_dist)*length(y_dist)*length(x0_x);
             disp(strcat("START SIMULATION ",num2str(current_sim_num),"/",num2str(total_sim_num)))
+            
             % Simulation
             if simulation_ == true
                 if(strcmp(sym_type,"simulink"))
@@ -292,15 +244,14 @@ for index_t_dist = 2 : length(t_dist)
             params.controller.cost_function_vect = controller.cost_function_vect;
             params.S_p_x = repmat(-p.slider_params.xwidth/2,1,length(params.x_S));
             save(filename,"params")
-            %  time_plot = params.t;
 
-%             if sym_type == "robot"
-%                 %     params.t = params.t(1:end-1);
-%                 %time_plot(1:length(controller.y_ref)),
-%                 helper.my_plot_robot(params.t(1:end-1), time, controller.y_ref(1:4,1:length(time)), params.x_S, params.y_S, params.theta_S, params.S_p_y, params.u_n, params.u_t);
-%             else
+            if sym_type == "robot"
+                params.t = params.t(1:end-1);
+                time_plot(1:length(controller.y_ref)),
+                helper.my_plot_robot(params.t(1:end-1), time, controller.y_ref(1:4,1:length(time)), params.x_S, params.y_S, params.theta_S, params.S_p_y, params.u_n, params.u_t);
+            else
                 helper.my_plot(params.t(1:end), [params.controller.y_ref(1:3,:); params.controller.y_ref(4,:)], params.x_S, params.y_S, params.theta_S, params.S_p_y, params.u_n, params.u_t, params.controller.cost_function_vect);%, helper.convert_str2num(params.mode_vect));
-%             end
+            end
 %                pause;
         end
     end
@@ -310,29 +261,12 @@ end
 return
 
 %% ANIMATE
-% helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))]);
-% load('mdpi_away.mat')
-% params.x_S = mdpi.x;
-% params.y_S = mdpi.y;
-% params.theta_S = mdpi.theta;
-% params.t = mdpi.t;
-% params.S_p_y = mdpi.rx_ry(:,2);
-% params.S_p_x = mdpi.rx_ry(:,1);
 
-
-
-% % load("ral_disturbance.mat")
-% load('FOM_UPPER_7delay_2.mat')
-% params = struct; params.x_S = p.x_state_vec(:,1); params.y_S = p.x_state_vec(:,2); params.theta_S = p.x_state_vec(:,3); params.S_p_x = -p.a/2*ones(1,length(params.x_S)); params.S_p_y = p.rpusher_vec(:,2); params.t = p.t_vec;
-% helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.1,p.x_star_vect,cad_model_path);
-
-
-
-% if sym_type == "robot"
-%     S_p = p.SP.evalSpline(p.SP.FC,params.S_p_y);
-%     params.S_p_x = S_p(:,1);
-%     params.S_p_y = S_p(:,2);
-% end
+if sym_type == "robot"
+    S_p = p.SP.evalSpline(p.SP.FC,params.S_p_y);
+    params.S_p_x = S_p(:,1);
+    params.S_p_y = S_p(:,2);
+end
 
 helper.my_animate(params.x_S,params.y_S,params.theta_S,params.S_p_x,params.S_p_y, params.t,0.5, [controller.y_ref repmat(controller.y_ref(:,end),1,(abs(length(params.x_S) - length(controller.y_ref))))],cad_model_path);
 

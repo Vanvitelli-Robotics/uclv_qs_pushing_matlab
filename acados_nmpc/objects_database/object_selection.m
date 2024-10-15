@@ -8,7 +8,7 @@ function slider = object_selection(obj)
             slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
             slider.m = 0.2875;                                    % slider mass [kg]
             slider.tau_max = 0.0251;
-            slider.cad_model_path = "/home/workstation/pusher_slider_matlab/cad_models/cad_santal_centered_scaled_rotated_reduced.stl";
+            slider.cad_model_path = "cad_santal_centered_scaled_rotated_reduced.stl";
             slider.pcl_path = "planar_surface_santal_36_uniformed.ply";%
         case 'balea'
             slider.mu_sg = 0.35;
@@ -18,8 +18,8 @@ function slider = object_selection(obj)
             slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
             slider.m = 0.1713;
             slider.tau_max = 0.0042;
-            slider.cad_model_path = "/home/workstation/pusher_slider_matlab/cad_models/Balea_cad_model v1.stl";
-            slider.pcl_path = '/home/workstation/pusher_slider_matlab/cad_models/Balea_cad_model_planar_surface_36.ply';
+            slider.cad_model_path = "Balea_cad_model v1.stl";
+            slider.pcl_path = 'Balea_cad_model_planar_surface_36.ply';
         case 'montana'
             slider.mu_sg = 0.20;
             slider.mu_sp = 0.10;
@@ -28,8 +28,8 @@ function slider = object_selection(obj)
             slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
             slider.m = 0.2467;
             slider.tau_max = 0.0101;
-            slider.cad_model_path = "/home/workstation/pusher_slider_matlab/cad_models/Montana_cad_model.stl";
-            slider.pcl_path = '/home/workstation/pusher_slider_matlab/cad_models/Montana_cad_model_planar_section_34.ply';
+            slider.cad_model_path = "Montana_cad_model.stl";
+            slider.pcl_path = 'Montana_cad_model_planar_section_34.ply';
         case 'pulirapid'
             slider.mu_sg = 0.22;                                  % friction coefficient between slider and ground
             slider.mu_sp = 0.1;                                 % friction coefficient between slider and pusher
@@ -38,7 +38,7 @@ function slider = object_selection(obj)
             slider.area = slider.xwidth * slider.ywidth;          % slider area [m^2]
             slider.m = 0.500;                                    % slider mass [kg]
             slider.tau_max = 0.0251;
-            slider.cad_model_path = "../cad_models/pulirapid_ricarica_simplified.stl";
+            slider.cad_model_path = "pulirapid_ricarica_simplified.stl";
             slider.pcl_path = "pulirapid_ricarica_test_curvatura2_ply.ply";%
         otherwise
             disp("Invalid object! Please, chose between: santal, balea, montana")
