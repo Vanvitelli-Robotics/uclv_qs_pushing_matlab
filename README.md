@@ -43,8 +43,3 @@ Ensure that the environment variables for acados are correctly set up. For Windo
 3. **Run the main script**  
 Execute main.m in MATLAB to set up the model and run the NMPC.
 
-
-
-## License
-
-
