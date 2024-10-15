@@ -30,7 +30,7 @@ codegen/
 # Octave session info
 octave-workspace
 
-cad_models
+cad_models/not_used
 casadi_nmpc
 fmincon_nmpc
 c_generated_code

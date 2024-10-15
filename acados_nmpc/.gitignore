@@ -31,10 +31,9 @@ codegen/
 # Octave session info
 octave-workspace
 
-cad_models/
-statistics_RAL/
-test_curvatures/
-tests/
+statistics_RAL
+test_curvatures
+tests
 
 # c-code generation
 build/
@@ -44,3 +43,17 @@ c_generated_code/
 # .mat
 *.mat
 *.fig
+
+#.m debug
+get_function_smooth.m
+optimum_abscissa.m
+pusher_slider_model_MPC.m
+pusher_slider_model_sym.m
+test_optimum_abscissa.m
+bspline_symbolic.m
+main_variable_shape.m
+nmpc_solver.m
+robot_main.m
+robot_main_original.m
+test_acados_model.m
+test_optimum_problem_shape_variable.m
