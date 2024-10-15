@@ -8,7 +8,6 @@ This workspace is designed to simulate and control through a Nonlinear Model Pre
 - [Installaion](#installation)
 - [Usage](#usage)
 - [Organization](#organization)
-- [License](#license)
 
 ## Installation
 ⚠️ **Software compatibility:** the code has been tested on **MATLAB2022b** (and **later**), both on Linux and Windows. If you use an older Matlab version, you should be not able to use some extra functions of the code, since they require toolbox not available in previous Matlab versions; in this case, just comment out them and you will able to run the simulation anyway.  
