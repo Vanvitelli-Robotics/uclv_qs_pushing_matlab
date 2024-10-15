@@ -41,5 +41,5 @@ The code is implementend through the object-oriented programming approach. The k
 Ensure that the environment variables for acados are correctly set up. For Windows, this is handled in the file acados_nmpc/env_vars_acados.m.
 
 3. **Run the main script**  
-Execute main.m in MATLAB to set up the model and run the NMPC.
+After setting all the plant and the controller parameters, just execute main.m in MATLAB to start the simulation.
 
