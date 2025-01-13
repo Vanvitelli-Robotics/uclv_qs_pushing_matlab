@@ -2,7 +2,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 # Nonlinear Model Predictive Control for Robotic Pushing of Planar Objects with Generic Shape
-This workspace is designed to simulate and control through a Nonlinear Model Predictive Control (NMPC) the pusher-slider system modeled under the quasi-static assumption. The NMPC, set up to perform the _pushing_ manouvre of planar objects with generic shape, has been implemented through [acados](https://docs.acados.org/) in the Matlab environment.
+This workspace is designed to simulate and control through a Nonlinear Model Predictive Control (NMPC) the pusher-slider system modeled under the quasi-static assumption. The NMPC, set up to perform the _pushing_ manouvre of planar objects with generic shape, has been implemented through [acados](https://docs.acados.org/) in the Matlab environment. Have a look at the attached video!
 
 [![Have a looK!](intro.jpg)](https://www.youtube.com/watch?v=d6VJz0RBUEw)
 
