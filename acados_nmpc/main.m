@@ -4,6 +4,7 @@ clc
 
 % %%%%%%%%%%%%%%%%%%%%%% SETUP ACADOS %%%%%%%%%%%%%%%%%%%%%%
 % Setting path variables
+addpath("/home/workstation/acados/")
 model_path = fullfile(pwd,'.');
 addpath(model_path);
 model_path = fullfile(pwd,'..');
@@ -49,26 +50,26 @@ controller.create_ocp_solver();
 % t_dist = [4/0.05 7/0.05];
 t_dist = [15/0.05 27/0.05];
 
-x0_x = [0.0260   0.0107    0.0155    0.0146   -0.0065];
-x0_y = [0.0093   -0.0197    0.0124   -0.0081   -0.0134];
-x0_theta = [-8.0492   -4.4300    0.9376    9.1501    9.2978]; %degree
-x0_Spy = [-0.0382  -0.0248   -0.0010   -0.0070    0.0011];
-y_dist = [0.0315    0.0406   -0.015   0.0001    0.0132];
+x0_x = [0 0.0260   0.0107    0.0155    0.0146   -0.0065];
+x0_y = [0 0.0093   -0.0197    0.0124   -0.0081   -0.0134];
+x0_theta = [0 -8.0492   -4.4300    0.9376    9.1501    9.2978]; %degree
+x0_Spy = [0 -0.0382  -0.0248   -0.0010   -0.0070    0.0011];
+y_dist = [0 0.0315    0.0406   -0.015   0.0001    0.0132];
 
 
 
 numSim = length(y_dist);
 current_sim_num = 0;
 
-for index_t_dist = 1 : length(t_dist)
+for index_t_dist = 1 : 1%length(t_dist)
     if index_t_dist == 1
-        y_dist = [-0.035   -0.0161   -0.0127   -0.0021   -0.0018];
+        y_dist = [0 -0.035   -0.0161   -0.0127   -0.0021   -0.0018];
     else
-        y_dist = [0.0215    -0.0306   -0.015   0.017    0.0132];
+        y_dist = [0 0.0215    -0.0306   -0.015   0.017    0.0132];
     end
 
-    for index_x0 = 1 : length(x0_x)
-        for index_y_dist = 1: length(y_dist)
+    for index_x0 = 1 : 1 %length(x0_x)
+        for index_y_dist = 1: 1 %length(y_dist)
             % Change delay of the plant and the delay to compensate with the controller
             p.set_delay(0.35*0);
             controller.set_delay_comp(0.35*0);
@@ -107,7 +108,6 @@ for index_t_dist = 1 : length(t_dist)
             % [time, traj] = traj_gen.straight_line(true);
 
             x0_w = [0 0 0];
-            % x0_w = [0 0 0];
             % xf_w = [
             % %       0.05 0 0; %trajectory exp
             %         0.1 0.0 0;
@@ -147,45 +147,27 @@ for index_t_dist = 1 : length(t_dist)
             % %         0 0.20 0;
             %     ];
 
-% % % %             xf_w = [
-% % % %                 %       0.05 0 0; %trajectory exp
-% % % % %                 0.0 0.1 0;
-% % % % %                 0.0 0.30 0;
-% % % %                 %         0.20 0.20 0;
-% % % %                 %         0 0.20 0;
-% % % %                 0.10 0 0;
-% % % %                 ];
+            xf_w = [
+                %       0.05 0 0; %trajectory exp
+%                 0.0 0.1 0;
+%                 0.0 0.30 0;
+                %         0.20 0.20 0;
+                %         0 0.20 0;
+                0.10 0 0;
+                ];
 
 
 
-% % % %             traj_gen.waypoints_ = [x0_w; xf_w];
-            % traj_gen.waypoints_velocities = [0.005 0.01 0.01];
-            % traj_gen.waypoints_velocities = [0.005 0.003];
-% % % %             traj_gen.waypoints_velocities = [0.010];% 0.01];
+            traj_gen.waypoints_ = [x0_w; xf_w];
+            traj_gen.waypoints_velocities = [0.010];% 0.01];
 
-            % disturbance parameters
-            % traj_gen.waypoints_velocities = [0.005 0.003 0.005];% 0.003 0.005];
-
-% % % % % %             [time, traj] = traj_gen.waypoints_gen;
-%             [time, traj] = traj_gen.waypoint_gen_fixed_angle;
-% % % % % %             traj = [traj(1:3,:); traj(end,:)];
-            load('x_finals.mat');
-            traj = [x_finals_struct.x; x_finals_struct.y; x_finals_struct.theta; zeros(1,length(x_finals_struct.x))];
-            time_sim = length(x_finals_struct.x)*sample_time;
-            time = 0:sample_time:time_sim;
-            time = time(1:end-1);
-
-            % time_sim = x_finals_struct.t(end);%time(end)+15;
-            % time = x_finals_struct.t(1:length(x_finals_struct.x));
-
-            % % load('time_demo_pushing_UTRAJ.mat','time')
-            % % load('traj_demo_pushing_UTRAJ.mat','traj')
-            % % traj(2,:) = -traj(2,:);
-
-            %
-            % load('time_demo_pushing.mat','time')
-            % load('traj_demo_pushing.mat','traj')
-            % time_sim = time(end)+10;
+            [time, traj] = traj_gen.waypoints_gen;
+            traj = [traj(1:3,:); traj(end,:)];
+% % % % %             load('x_finals.mat');
+% % % % %             traj = [x_finals_struct.x; x_finals_struct.y; x_finals_struct.theta; zeros(1,length(x_finals_struct.x))];
+% % % % %             time_sim = length(x_finals_struct.x)*sample_time;
+% % % % %             time = 0:sample_time:time_sim;
+% % % % %             time = time(1:end-1);
 
 
             % Set control reference
