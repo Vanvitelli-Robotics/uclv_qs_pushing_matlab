@@ -47,3 +47,21 @@ Ensure that the environment variables for acados are correctly set up. For Windo
 3. **Run the main script**  
 After setting all the plant and the controller parameters, just execute main.m in MATLAB to start the simulation.
 
+## How to cite 
+
+If you use this software in a research project, please cite as follows:
+```
+@ARTICLE{10873858,
+  author={Federico, Sara and Costanzo, Marco and De Simone, Marco and Natale, Ciro},
+  journal={IEEE Robotics and Automation Letters}, 
+  title={Nonlinear Model Predictive Control for Robotic Pushing of Planar Objects with Generic Shape}, 
+  year={2025},
+  volume={},
+  number={},
+  pages={1-8},
+  keywords={Robots;Shape;Splines (mathematics);Vectors;Computational modeling;Analytical models;Trajectory;Nonlinear dynamical systems;Training;Robot kinematics;Contact Modeling;Dexterous Manipulation;Optimization and Optimal Control},
+  doi={10.1109/LRA.2025.3539092}}
+
+
+```
+
